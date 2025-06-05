@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { CalendarIcon, Info } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +27,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     leaveType: "",
     startDate: undefined as Date | undefined,
     endDate: undefined as Date | undefined,
+    isHalfDay: false,
   });
 
   const leaveTypes = [
@@ -94,7 +95,10 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     if (formData.startDate && formData.endDate) {
       const timeDiff = formData.endDate.getTime() - formData.startDate.getTime();
       const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
-      return dayDiff > 0 ? dayDiff : 0;
+      const totalDays = dayDiff > 0 ? dayDiff : 0;
+      
+      // If it's a half day request, divide by 2
+      return formData.isHalfDay ? totalDays * 0.5 : totalDays;
     }
     return 0;
   };
@@ -220,6 +224,17 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
             </div>
           </div>
 
+          <div className="flex items-center space-x-3">
+            <Switch
+              id="halfDay"
+              checked={formData.isHalfDay}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isHalfDay: checked }))}
+            />
+            <Label htmlFor="halfDay" className="text-sm font-medium">
+              Half Day Request
+            </Label>
+          </div>
+
           {formData.startDate && formData.endDate && (
             <Card className="border-blue-200 bg-blue-50">
               <CardContent className="p-4">
@@ -227,6 +242,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                   <Info className="h-4 w-4" />
                   <span className="text-sm font-medium">
                     Duration: {calculateDays()} day{calculateDays() > 1 ? 's' : ''}
+                    {formData.isHalfDay && " (Half Day)"}
                   </span>
                 </div>
               </CardContent>
