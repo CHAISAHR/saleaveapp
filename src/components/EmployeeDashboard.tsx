@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,16 +75,32 @@ export const EmployeeDashboard = ({ onNewRequest, currentUser, activeView = 'req
   };
 
   const getStatusBadge = (status: string) => {
-    const variants = {
-      approved: 'default',
-      rejected: 'destructive',
-      pending: 'secondary'
-    };
-    return (
-      <Badge variant={variants[status as keyof typeof variants] || 'outline'}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
-    );
+    switch (status) {
+      case 'approved':
+        return (
+          <Badge variant="default">
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </Badge>
+        );
+      case 'rejected':
+        return (
+          <Badge variant="destructive">
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </Badge>
+        );
+      case 'pending':
+        return (
+          <Badge variant="secondary">
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="outline">
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </Badge>
+        );
+    }
   };
 
   if (activeView === 'balance') {
