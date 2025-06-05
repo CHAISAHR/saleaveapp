@@ -4,63 +4,99 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Plus, Calendar, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
-
 interface EmployeeDashboardProps {
   onNewRequest: () => void;
   currentUser: any;
   activeView?: 'requests' | 'balance';
 }
-
-export const EmployeeDashboard = ({ onNewRequest, currentUser, activeView = 'requests' }: EmployeeDashboardProps) => {
+export const EmployeeDashboard = ({
+  onNewRequest,
+  currentUser,
+  activeView = 'requests'
+}: EmployeeDashboardProps) => {
   // Sample leave balances
-  const leaveBalances = [
-    { type: 'Annual', used: 8, total: 20, accrued: 12.5, unit: 'days' },
-    { type: 'Sick', used: 3, total: 36, accrued: 36, unit: 'days' },
-    { type: 'Maternity', used: 0, total: 90, accrued: 90, unit: 'days' },
-    { type: 'Parental', used: 0, total: 20, accrued: 20, unit: 'days' },
-    { type: 'Family', used: 1, total: 3, accrued: 3, unit: 'days' },
-    { type: 'Adoption', used: 0, total: 20, accrued: 20, unit: 'days' },
-    { type: 'Study', used: 2, total: 6, accrued: 6, unit: 'days' },
-    { type: 'Wellness', used: 0, total: 2, accrued: 2, unit: 'days' }
-  ];
+  const leaveBalances = [{
+    type: 'Annual',
+    used: 8,
+    total: 20,
+    accrued: 12.5,
+    unit: 'days'
+  }, {
+    type: 'Sick',
+    used: 3,
+    total: 36,
+    accrued: 36,
+    unit: 'days'
+  }, {
+    type: 'Maternity',
+    used: 0,
+    total: 90,
+    accrued: 90,
+    unit: 'days'
+  }, {
+    type: 'Parental',
+    used: 0,
+    total: 20,
+    accrued: 20,
+    unit: 'days'
+  }, {
+    type: 'Family',
+    used: 1,
+    total: 3,
+    accrued: 3,
+    unit: 'days'
+  }, {
+    type: 'Adoption',
+    used: 0,
+    total: 20,
+    accrued: 20,
+    unit: 'days'
+  }, {
+    type: 'Study',
+    used: 2,
+    total: 6,
+    accrued: 6,
+    unit: 'days'
+  }, {
+    type: 'Wellness',
+    used: 0,
+    total: 2,
+    accrued: 2,
+    unit: 'days'
+  }];
 
   // Sample leave requests
-  const leaveRequests = [
-    {
-      id: 1,
-      title: "Family Vacation",
-      type: "Annual",
-      startDate: "2024-07-15",
-      endDate: "2024-07-19",
-      days: 5,
-      status: "approved",
-      submittedDate: "2024-06-15",
-      description: "Summer vacation with family"
-    },
-    {
-      id: 2,
-      title: "Medical Appointment",
-      type: "Sick",
-      startDate: "2024-06-20",
-      endDate: "2024-06-20",
-      days: 1,
-      status: "pending",
-      submittedDate: "2024-06-18",
-      description: "Regular health check-up"
-    },
-    {
-      id: 3,
-      title: "Conference Attendance",
-      type: "Study",
-      startDate: "2024-08-10",
-      endDate: "2024-08-12",
-      days: 3,
-      status: "rejected",
-      submittedDate: "2024-06-10",
-      description: "Professional development conference"
-    }
-  ];
-
+  const leaveRequests = [{
+    id: 1,
+    title: "Family Vacation",
+    type: "Annual",
+    startDate: "2024-07-15",
+    endDate: "2024-07-19",
+    days: 5,
+    status: "approved",
+    submittedDate: "2024-06-15",
+    description: "Summer vacation with family"
+  }, {
+    id: 2,
+    title: "Medical Appointment",
+    type: "Sick",
+    startDate: "2024-06-20",
+    endDate: "2024-06-20",
+    days: 1,
+    status: "pending",
+    submittedDate: "2024-06-18",
+    description: "Regular health check-up"
+  }, {
+    id: 3,
+    title: "Conference Attendance",
+    type: "Study",
+    startDate: "2024-08-10",
+    endDate: "2024-08-12",
+    days: 3,
+    status: "rejected",
+    submittedDate: "2024-06-10",
+    description: "Professional development conference"
+  }];
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'approved':
@@ -73,39 +109,28 @@ export const EmployeeDashboard = ({ onNewRequest, currentUser, activeView = 'req
         return <Clock className="h-4 w-4 text-gray-500" />;
     }
   };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
-        return (
-          <Badge variant="default">
+        return <Badge variant="default" className="bg-lime-600">
             {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Badge>
-        );
+          </Badge>;
       case 'rejected':
-        return (
-          <Badge variant="destructive">
+        return <Badge variant="destructive">
             {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Badge>
-        );
+          </Badge>;
       case 'pending':
-        return (
-          <Badge variant="secondary">
+        return <Badge variant="secondary">
             {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Badge>
-        );
+          </Badge>;
       default:
-        return (
-          <Badge variant="outline">
+        return <Badge variant="outline">
             {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Badge>
-        );
+          </Badge>;
     }
   };
-
   if (activeView === 'balance') {
-    return (
-      <div className="space-y-6">
+    return <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Leave Balance</h2>
@@ -118,12 +143,10 @@ export const EmployeeDashboard = ({ onNewRequest, currentUser, activeView = 'req
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {leaveBalances.map((balance) => {
-            const percentage = (balance.used / balance.total) * 100;
-            const remaining = balance.total - balance.used;
-            
-            return (
-              <Card key={balance.type} className="hover:shadow-md transition-shadow">
+          {leaveBalances.map(balance => {
+          const percentage = balance.used / balance.total * 100;
+          const remaining = balance.total - balance.used;
+          return <Card key={balance.type} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-gray-600">
                     {balance.type} Leave
@@ -143,16 +166,13 @@ export const EmployeeDashboard = ({ onNewRequest, currentUser, activeView = 'req
                       <span>Remaining: {remaining}</span>
                     </div>
                     
-                    {balance.type === 'Annual' && (
-                      <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                    {balance.type === 'Annual' && <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
                         Accrues 1.66 days/month
-                      </div>
-                    )}
+                      </div>}
                   </div>
                 </CardContent>
-              </Card>
-            );
-          })}
+              </Card>;
+        })}
         </div>
 
         <Card>
@@ -189,12 +209,9 @@ export const EmployeeDashboard = ({ onNewRequest, currentUser, activeView = 'req
             </div>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">My Leave Requests</h2>
@@ -279,8 +296,7 @@ export const EmployeeDashboard = ({ onNewRequest, currentUser, activeView = 'req
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {leaveRequests.map((request) => (
-              <div key={request.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            {leaveRequests.map(request => <div key={request.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                 <div className="flex items-center space-x-4">
                   {getStatusIcon(request.status)}
                   <div>
@@ -300,11 +316,9 @@ export const EmployeeDashboard = ({ onNewRequest, currentUser, activeView = 'req
                     <p>{request.submittedDate}</p>
                   </div>
                 </div>
-              </div>
-            ))}
+              </div>)}
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
