@@ -103,6 +103,15 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     return 0;
   };
 
+  const getCalendarDays = () => {
+    if (formData.startDate && formData.endDate) {
+      const timeDiff = formData.endDate.getTime() - formData.startDate.getTime();
+      const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+      return dayDiff > 0 ? dayDiff : 0;
+    }
+    return 0;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -238,12 +247,29 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
           {formData.startDate && formData.endDate && (
             <Card className="border-blue-200 bg-blue-50">
               <CardContent className="p-4">
-                <div className="flex items-center space-x-2 text-blue-700">
-                  <Info className="h-4 w-4" />
-                  <span className="text-sm font-medium">
-                    Duration: {calculateDays()} day{calculateDays() > 1 ? 's' : ''}
-                    {formData.isHalfDay && " (Half Day)"}
-                  </span>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2 text-blue-700">
+                    <Info className="h-4 w-4" />
+                    <span className="text-sm font-medium">Leave Days Summary</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-blue-600">Calendar Days:</span>
+                      <span className="font-medium text-blue-800">{getCalendarDays()} day{getCalendarDays() > 1 ? 's' : ''}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-blue-600">Leave Days Applied:</span>
+                      <span className="font-medium text-blue-800">
+                        {calculateDays()} day{calculateDays() > 1 ? 's' : ''}
+                        {formData.isHalfDay && " (Half Day)"}
+                      </span>
+                    </div>
+                  </div>
+                  {formData.isHalfDay && (
+                    <div className="text-xs text-blue-600 bg-blue-100 p-2 rounded mt-2">
+                      Half-day requests count as 0.5 days per calendar day selected.
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
