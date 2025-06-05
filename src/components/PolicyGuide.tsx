@@ -272,7 +272,7 @@ export const PolicyGuide = () => {
                   <h4 className="font-medium text-gray-900">Approval Authority</h4>
                   <ul className="text-gray-600 space-y-1">
                     <li>• Direct manager approval required for all requests</li>
-                    <li>• HR approval needed for extended leave (>2 weeks)</li>
+                    <li>• HR approval needed for extended leave ({'>'}2 weeks)</li>
                     <li>• CEO approval for sabbaticals</li>
                   </ul>
                 </div>
@@ -299,7 +299,7 @@ export const PolicyGuide = () => {
                 <div className="space-y-2 text-sm">
                   <h4 className="font-medium text-gray-900">Documentation</h4>
                   <ul className="text-gray-600 space-y-1">
-                    <li>• Medical certificates for sick leave >3 days</li>
+                    <li>• Medical certificates for sick leave {'>'}3 days</li>
                     <li>• Birth certificates for parental leave</li>
                     <li>• Course enrollment for study leave</li>
                   </ul>

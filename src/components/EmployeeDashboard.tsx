@@ -168,7 +168,7 @@ export const EmployeeDashboard = ({ onNewRequest, currentUser, activeView = 'req
                 <ul className="space-y-1 text-gray-600">
                   <li>• Submit requests 2 weeks in advance</li>
                   <li>• Manager approval required</li>
-                  <li>• Medical certificates for sick leave >3 days</li>
+                  <li>• Medical certificates for sick leave {'>'}3 days</li>
                 </ul>
               </div>
             </div>
