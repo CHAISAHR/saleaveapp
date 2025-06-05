@@ -1,120 +1,102 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Clock, Users, AlertCircle, CheckCircle, Calendar } from "lucide-react";
-
 export const PolicyGuide = () => {
-  const leaveTypes = [
-    {
-      type: "Annual Leave",
-      allocation: "20 days per year",
-      accrual: "1.66 days per month",
-      carryOver: "Expires 6 months after leave year end",
-      eligibility: "All permanent employees",
-      requirements: "2 weeks advance notice for planned leave",
-      icon: Calendar,
-      color: "blue"
-    },
-    {
-      type: "Sick Leave",
-      allocation: "36 days per year",
-      accrual: "Full allocation at year start",
-      carryOver: "No expiry",
-      eligibility: "All employees from day one",
-      requirements: "Medical certificate required for >3 consecutive days",
-      icon: FileText,
-      color: "red"
-    },
-    {
-      type: "Maternity Leave",
-      allocation: "90 days",
-      accrual: "Available when needed",
-      carryOver: "Must be used within specified period",
-      eligibility: "Female employees",
-      requirements: "Medical certification required",
-      icon: Users,
-      color: "pink"
-    },
-    {
-      type: "Parental Leave",
-      allocation: "20 days",
-      accrual: "Available when needed",
-      carryOver: "Must be used within 12 months of birth/adoption",
-      eligibility: "All parents",
-      requirements: "Birth/adoption certificate required",
-      icon: Users,
-      color: "green"
-    },
-    {
-      type: "Family Leave",
-      allocation: "3 days per year",
-      accrual: "Full allocation at year start",
-      carryOver: "No carryover",
-      eligibility: "All permanent employees",
-      requirements: "Documentation may be required",
-      icon: Users,
-      color: "orange"
-    },
-    {
-      type: "Adoption Leave",
-      allocation: "20 days",
-      accrual: "Available when needed",
-      carryOver: "Must be used within adoption period",
-      eligibility: "Adoptive parents",
-      requirements: "Legal adoption documentation required",
-      icon: Users,
-      color: "purple"
-    },
-    {
-      type: "Study Leave",
-      allocation: "6 days per year",
-      accrual: "Full allocation at year start",
-      carryOver: "No carryover",
-      eligibility: "Employees with >1 year service",
-      requirements: "Course approval and proof of attendance",
-      icon: FileText,
-      color: "indigo"
-    },
-    {
-      type: "Wellness Leave",
-      allocation: "2 days per year",
-      accrual: "Full allocation at year start",
-      carryOver: "No carryover",
-      eligibility: "All permanent employees",
-      requirements: "Self-certification acceptable",
-      icon: CheckCircle,
-      color: "teal"
-    }
-  ];
-
-  const applicationProcess = [
-    {
-      step: 1,
-      title: "Submit Request",
-      description: "Use the leave management system to submit your request with all required details.",
-      icon: FileText
-    },
-    {
-      step: 2,
-      title: "Manager Review",
-      description: "Your direct manager will review the request and may contact you for clarification.",
-      icon: Users
-    },
-    {
-      step: 3,
-      title: "Approval Decision",
-      description: "You'll receive an email notification with the approval decision and any comments.",
-      icon: CheckCircle
-    },
-    {
-      step: 4,
-      title: "Calendar Update",
-      description: "Approved leave will be automatically added to team calendars and payroll systems.",
-      icon: Calendar
-    }
-  ];
-
+  const leaveTypes = [{
+    type: "Annual Leave",
+    allocation: "20 days per year",
+    accrual: "1.66 days per month",
+    carryOver: "Expires 6 months after leave year end",
+    eligibility: "All permanent employees",
+    requirements: "2 weeks advance notice for planned leave",
+    icon: Calendar,
+    color: "blue"
+  }, {
+    type: "Sick Leave",
+    allocation: "36 days per year",
+    accrual: "Full allocation at year start",
+    carryOver: "No expiry",
+    eligibility: "All employees from day one",
+    requirements: "Medical certificate required for >3 consecutive days",
+    icon: FileText,
+    color: "red"
+  }, {
+    type: "Maternity Leave",
+    allocation: "90 days",
+    accrual: "Available when needed",
+    carryOver: "Must be used within specified period",
+    eligibility: "Female employees",
+    requirements: "Medical certification required",
+    icon: Users,
+    color: "pink"
+  }, {
+    type: "Parental Leave",
+    allocation: "20 days",
+    accrual: "Available when needed",
+    carryOver: "Must be used within 12 months of birth/adoption",
+    eligibility: "All parents",
+    requirements: "Birth/adoption certificate required",
+    icon: Users,
+    color: "green"
+  }, {
+    type: "Family Leave",
+    allocation: "3 days per year",
+    accrual: "Full allocation at year start",
+    carryOver: "No carryover",
+    eligibility: "All permanent employees",
+    requirements: "Documentation may be required",
+    icon: Users,
+    color: "orange"
+  }, {
+    type: "Adoption Leave",
+    allocation: "20 days",
+    accrual: "Available when needed",
+    carryOver: "Must be used within adoption period",
+    eligibility: "Adoptive parents",
+    requirements: "Legal adoption documentation required",
+    icon: Users,
+    color: "purple"
+  }, {
+    type: "Study Leave",
+    allocation: "6 days per year",
+    accrual: "Full allocation at year start",
+    carryOver: "No carryover",
+    eligibility: "Employees with >1 year service",
+    requirements: "Course approval and proof of attendance",
+    icon: FileText,
+    color: "indigo"
+  }, {
+    type: "Wellness Leave",
+    allocation: "2 days per year",
+    accrual: "Full allocation at year start",
+    carryOver: "No carryover",
+    eligibility: "All permanent employees",
+    requirements: "Self-certification acceptable",
+    icon: CheckCircle,
+    color: "teal"
+  }];
+  const applicationProcess = [{
+    step: 1,
+    title: "Submit Request",
+    description: "Use the leave management system to submit your request with all required details.",
+    icon: FileText
+  }, {
+    step: 2,
+    title: "Manager Review",
+    description: "Your direct manager will review the request and may contact you for clarification.",
+    icon: Users
+  }, {
+    step: 3,
+    title: "Approval Decision",
+    description: "You'll receive an email notification with the approval decision and any comments.",
+    icon: CheckCircle
+  }, {
+    step: 4,
+    title: "Calendar Update",
+    description: "Approved leave will be automatically added to team calendars and payroll systems.",
+    icon: Calendar
+  }];
   const getColorClasses = (color: string) => {
     const colorMap = {
       blue: "bg-blue-100 text-blue-800 border-blue-200",
@@ -128,9 +110,7 @@ export const PolicyGuide = () => {
     };
     return colorMap[color as keyof typeof colorMap] || colorMap.blue;
   };
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">Leave Policy Guide</h2>
         <p className="text-gray-600">Complete information about leave types, policies, and procedures</p>
@@ -146,9 +126,8 @@ export const PolicyGuide = () => {
         <TabsContent value="leave-types" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {leaveTypes.map((leave, index) => {
-              const IconComponent = leave.icon;
-              return (
-                <Card key={index} className="hover:shadow-md transition-shadow">
+            const IconComponent = leave.icon;
+            return <Card key={index} className="hover:shadow-md transition-shadow">
                   <CardHeader>
                     <div className="flex items-center space-x-3">
                       <div className={`p-2 rounded-lg ${getColorClasses(leave.color)}`}>
@@ -183,9 +162,8 @@ export const PolicyGuide = () => {
                       </p>
                     </div>
                   </CardContent>
-                </Card>
-              );
-            })}
+                </Card>;
+          })}
           </div>
         </TabsContent>
 
@@ -198,9 +176,8 @@ export const PolicyGuide = () => {
             <CardContent>
               <div className="space-y-6">
                 {applicationProcess.map((step, index) => {
-                  const IconComponent = step.icon;
-                  return (
-                    <div key={index} className="flex items-start space-x-4">
+                const IconComponent = step.icon;
+                return <div key={index} className="flex items-start space-x-4">
                       <div className="flex-shrink-0">
                         <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
                           {step.step}
@@ -213,39 +190,15 @@ export const PolicyGuide = () => {
                         </div>
                         <p className="text-gray-600">{step.description}</p>
                       </div>
-                    </div>
-                  );
-                })}
+                    </div>;
+              })}
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Important Timelines</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-gray-900">Advance Notice Required</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• Annual Leave: 2 weeks minimum</li>
-                    <li>• Study Leave: 4 weeks minimum</li>
-                    <li>• Planned Medical: 1 week preferred</li>
-                    <li>• Emergency: As soon as possible</li>
-                  </ul>
-                </div>
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-gray-900">Response Times</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• Standard requests: 3-5 business days</li>
-                    <li>• Emergency requests: 24 hours</li>
-                    <li>• Complex requests: Up to 10 business days</li>
-                    <li>• Email notifications: Immediate</li>
-                  </ul>
-                </div>
-              </div>
-            </CardContent>
+            
+            
           </Card>
         </TabsContent>
 
@@ -263,7 +216,7 @@ export const PolicyGuide = () => {
                   <h4 className="font-medium text-gray-900">Eligibility</h4>
                   <ul className="text-gray-600 space-y-1">
                     <li>• All permanent employees are entitled to leave benefits</li>
-                    <li>• Probationary employees have limited access</li>
+                    <li>• Employees serving notice are not eligible for annual leave</li>
                     <li>• Part-time employees receive pro-rated allocations</li>
                   </ul>
                 </div>
@@ -339,6 +292,5 @@ export const PolicyGuide = () => {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>;
 };
