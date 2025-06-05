@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,6 @@ import { AdminDashboard } from "@/components/AdminDashboard";
 import { LeaveRequestForm } from "@/components/LeaveRequestForm";
 import { HolidayCalendar } from "@/components/HolidayCalendar";
 import { PolicyGuide } from "@/components/PolicyGuide";
-
 const Index = () => {
   const [userRole, setUserRole] = useState<'employee' | 'manager' | 'admin'>('employee');
   const [showRequestForm, setShowRequestForm] = useState(false);
@@ -30,28 +28,23 @@ const Index = () => {
 
   // Role-based tab configuration
   const getAvailableTabs = () => {
-    const baseTabs = [
-      {
-        value: "dashboard",
-        icon: UserCheck,
-        label: userRole === 'employee' ? 'My Requests' : userRole === 'manager' ? 'Team Requests' : 'Admin Panel'
-      },
-      {
-        value: "balance",
-        icon: Calendar,
-        label: userRole === 'employee' ? 'Balance' : userRole === 'manager' ? 'Team Balances' : 'System Overview'
-      },
-      {
-        value: "holidays",
-        icon: Calendar,
-        label: "Holidays"
-      },
-      {
-        value: "about",
-        icon: FileText,
-        label: "About"
-      }
-    ];
+    const baseTabs = [{
+      value: "dashboard",
+      icon: UserCheck,
+      label: userRole === 'employee' ? 'My Requests' : userRole === 'manager' ? 'Team Requests' : 'Admin Panel'
+    }, {
+      value: "balance",
+      icon: Calendar,
+      label: userRole === 'employee' ? 'Balance' : userRole === 'manager' ? 'Team Balances' : 'System Overview'
+    }, {
+      value: "holidays",
+      icon: Calendar,
+      label: "Holidays"
+    }, {
+      value: "about",
+      icon: FileText,
+      label: "About"
+    }];
 
     // Add admin-specific tab
     if (userRole === 'admin') {
@@ -61,14 +54,10 @@ const Index = () => {
         label: "Administration"
       });
     }
-
     return baseTabs;
   };
-
   const availableTabs = getAvailableTabs();
-
-  return (
-    <div className="min-h-screen bg-gray-50">
+  return <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -78,51 +67,29 @@ const Index = () => {
                 <Calendar className="h-6 w-6" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">LeaveManager</h1>
+                <h1 className="text-xl font-semibold text-gray-900">LeaveApp_SA</h1>
                 <p className="text-sm text-gray-500">HR Management System</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-4">
               {/* Role switcher - only show if user has manager or admin privileges */}
-              {(currentUser.role === 'manager' || currentUser.role === 'admin') && (
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant={userRole === 'employee' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setUserRole('employee')}
-                  >
+              {(currentUser.role === 'manager' || currentUser.role === 'admin') && <div className="flex items-center space-x-2">
+                  <Button variant={userRole === 'employee' ? 'default' : 'outline'} size="sm" onClick={() => setUserRole('employee')}>
                     Employee View
                   </Button>
-                  {currentUser.role === 'manager' && (
-                    <Button
-                      variant={userRole === 'manager' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setUserRole('manager')}
-                    >
+                  {currentUser.role === 'manager' && <Button variant={userRole === 'manager' ? 'default' : 'outline'} size="sm" onClick={() => setUserRole('manager')}>
                       Manager View
-                    </Button>
-                  )}
-                  {currentUser.role === 'admin' && (
-                    <>
-                      <Button
-                        variant={userRole === 'manager' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setUserRole('manager')}
-                      >
+                    </Button>}
+                  {currentUser.role === 'admin' && <>
+                      <Button variant={userRole === 'manager' ? 'default' : 'outline'} size="sm" onClick={() => setUserRole('manager')}>
                         Manager View
                       </Button>
-                      <Button
-                        variant={userRole === 'admin' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setUserRole('admin')}
-                      >
+                      <Button variant={userRole === 'admin' ? 'default' : 'outline'} size="sm" onClick={() => setUserRole('admin')}>
                         Admin View
                       </Button>
-                    </>
-                  )}
-                </div>
-              )}
+                    </>}
+                </div>}
               
               <div className="flex items-center space-x-3">
                 <div className="text-right">
@@ -147,46 +114,23 @@ const Index = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className={`grid w-full grid-cols-${availableTabs.length}`}>
-            {availableTabs.map((tab) => (
-              <TabsTrigger key={tab.value} value={tab.value} className="flex items-center space-x-2">
+            {availableTabs.map(tab => <TabsTrigger key={tab.value} value={tab.value} className="flex items-center space-x-2">
                 <tab.icon className="h-4 w-4" />
                 <span>{tab.label}</span>
-              </TabsTrigger>
-            ))}
+              </TabsTrigger>)}
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
-            {userRole === 'employee' ? (
-              <EmployeeDashboard 
-                onNewRequest={() => setShowRequestForm(true)}
-                currentUser={currentUser}
-              />
-            ) : userRole === 'manager' ? (
-              <ManagerDashboard currentUser={currentUser} />
-            ) : (
-              <AdminDashboard currentUser={currentUser} />
-            )}
+            {userRole === 'employee' ? <EmployeeDashboard onNewRequest={() => setShowRequestForm(true)} currentUser={currentUser} /> : userRole === 'manager' ? <ManagerDashboard currentUser={currentUser} /> : <AdminDashboard currentUser={currentUser} />}
           </TabsContent>
 
           <TabsContent value="balance" className="space-y-6">
-            {userRole === 'employee' ? (
-              <EmployeeDashboard 
-                onNewRequest={() => setShowRequestForm(true)}
-                currentUser={currentUser}
-                activeView="balance"
-              />
-            ) : userRole === 'manager' ? (
-              <ManagerDashboard currentUser={currentUser} activeView="balance" />
-            ) : (
-              <AdminDashboard currentUser={currentUser} activeView="system" />
-            )}
+            {userRole === 'employee' ? <EmployeeDashboard onNewRequest={() => setShowRequestForm(true)} currentUser={currentUser} activeView="balance" /> : userRole === 'manager' ? <ManagerDashboard currentUser={currentUser} activeView="balance" /> : <AdminDashboard currentUser={currentUser} activeView="system" />}
           </TabsContent>
 
-          {userRole === 'admin' && (
-            <TabsContent value="admin" className="space-y-6">
+          {userRole === 'admin' && <TabsContent value="admin" className="space-y-6">
               <AdminDashboard currentUser={currentUser} activeView="admin" />
-            </TabsContent>
-          )}
+            </TabsContent>}
 
           <TabsContent value="holidays" className="space-y-6">
             <HolidayCalendar userRole={userRole} />
@@ -199,15 +143,7 @@ const Index = () => {
       </main>
 
       {/* Leave Request Form Modal */}
-      {showRequestForm && (
-        <LeaveRequestForm
-          isOpen={showRequestForm}
-          onClose={() => setShowRequestForm(false)}
-          currentUser={currentUser}
-        />
-      )}
-    </div>
-  );
+      {showRequestForm && <LeaveRequestForm isOpen={showRequestForm} onClose={() => setShowRequestForm(false)} currentUser={currentUser} />}
+    </div>;
 };
-
 export default Index;
