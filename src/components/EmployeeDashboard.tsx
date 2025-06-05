@@ -191,14 +191,14 @@ export const EmployeeDashboard = ({
                 <h5 className="font-medium text-gray-900 mb-2">Accrual Rates</h5>
                 <ul className="space-y-1 text-gray-600">
                   <li>• Annual: 1.66 days per month</li>
-                  <li>• Sick: Full allocation at year start</li>
+                  <li>• Sick: 1 day per month, accumulates to 36 in 3 years.</li>
                   <li>• Other: Full allocation at year start</li>
                 </ul>
               </div>
               <div>
                 <h5 className="font-medium text-gray-900 mb-2">Application Requirements</h5>
                 <ul className="space-y-1 text-gray-600">
-                  <li>• Submit requests 2 weeks in advance</li>
+                  <li>• Submit requests 2 working days in advance</li>
                   <li>• Manager approval required</li>
                   <li>• Medical certificates for sick leave {'>'}3 days</li>
                 </ul>
