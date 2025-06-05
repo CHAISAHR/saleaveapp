@@ -155,7 +155,7 @@ export const EmployeeDashboard = ({
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-2xl font-bold text-gray-900">{remaining}</span>
+                      <span className="text-2xl font-bold text-lime-700">{remaining}</span>
                       <span className="text-sm text-gray-500">of {balance.total} days</span>
                     </div>
                     
