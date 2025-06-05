@@ -1,14 +1,18 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, Clock, MapPin } from "lucide-react";
+import { CalendarIcon, Clock, MapPin, Plus, Settings } from "lucide-react";
 
-export const HolidayCalendar = () => {
+interface HolidayCalendarProps {
+  userRole?: 'employee' | 'manager' | 'admin';
+}
+
+export const HolidayCalendar = ({ userRole = 'employee' }: HolidayCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
-  // Sample holiday data
+  // Sample holiday data - in production, this would come from the database
   const holidays = [
     {
       id: 1,
@@ -124,9 +128,17 @@ export const HolidayCalendar = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">Holiday Calendar</h2>
-        <p className="text-gray-600">Company holidays and office closure dates</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Holiday Calendar</h2>
+          <p className="text-gray-600">Company holidays and office closure dates</p>
+        </div>
+        {userRole === 'admin' && (
+          <Button variant="outline" className="flex items-center space-x-2">
+            <Settings className="h-4 w-4" />
+            <span>Manage Holidays</span>
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -134,11 +146,21 @@ export const HolidayCalendar = () => {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <CalendarIcon className="h-5 w-5" />
-                <span>2024 Calendar</span>
-              </CardTitle>
-              <CardDescription>Click on any date to view details</CardDescription>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="flex items-center space-x-2">
+                    <CalendarIcon className="h-5 w-5" />
+                    <span>2024 Calendar</span>
+                  </CardTitle>
+                  <CardDescription>Click on any date to view details</CardDescription>
+                </div>
+                {userRole === 'admin' && (
+                  <Badge variant="outline" className="text-xs">
+                    <Settings className="h-3 w-3 mr-1" />
+                    Admin View
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <Calendar

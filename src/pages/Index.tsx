@@ -5,26 +5,67 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserCheck, Calendar, Users, FileText, Plus } from "lucide-react";
+import { UserCheck, Calendar, Users, FileText, Plus, Settings } from "lucide-react";
 import { EmployeeDashboard } from "@/components/EmployeeDashboard";
 import { ManagerDashboard } from "@/components/ManagerDashboard";
+import { AdminDashboard } from "@/components/AdminDashboard";
 import { LeaveRequestForm } from "@/components/LeaveRequestForm";
 import { HolidayCalendar } from "@/components/HolidayCalendar";
 import { PolicyGuide } from "@/components/PolicyGuide";
 
 const Index = () => {
-  const [userRole, setUserRole] = useState<'employee' | 'manager'>('employee');
+  const [userRole, setUserRole] = useState<'employee' | 'manager' | 'admin'>('employee');
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Sample user data
+  // Sample user data with role
   const currentUser = {
     name: "Sarah Johnson",
     email: "sarah.johnson@company.com",
     department: "Marketing",
     avatar: "",
-    employeeId: "EMP001"
+    employeeId: "EMP001",
+    role: "employee" // This would come from the backend authentication
   };
+
+  // Role-based tab configuration
+  const getAvailableTabs = () => {
+    const baseTabs = [
+      {
+        value: "dashboard",
+        icon: UserCheck,
+        label: userRole === 'employee' ? 'My Requests' : userRole === 'manager' ? 'Team Requests' : 'Admin Panel'
+      },
+      {
+        value: "balance",
+        icon: Calendar,
+        label: userRole === 'employee' ? 'Balance' : userRole === 'manager' ? 'Team Balances' : 'System Overview'
+      },
+      {
+        value: "holidays",
+        icon: Calendar,
+        label: "Holidays"
+      },
+      {
+        value: "about",
+        icon: FileText,
+        label: "About"
+      }
+    ];
+
+    // Add admin-specific tab
+    if (userRole === 'admin') {
+      baseTabs.splice(2, 0, {
+        value: "admin",
+        icon: Settings,
+        label: "Administration"
+      });
+    }
+
+    return baseTabs;
+  };
+
+  const availableTabs = getAvailableTabs();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -43,27 +84,52 @@ const Index = () => {
             </div>
             
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant={userRole === 'employee' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setUserRole('employee')}
-                >
-                  Employee View
-                </Button>
-                <Button
-                  variant={userRole === 'manager' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setUserRole('manager')}
-                >
-                  Manager View
-                </Button>
-              </div>
+              {/* Role switcher - only show if user has manager or admin privileges */}
+              {(currentUser.role === 'manager' || currentUser.role === 'admin') && (
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant={userRole === 'employee' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setUserRole('employee')}
+                  >
+                    Employee View
+                  </Button>
+                  {currentUser.role === 'manager' && (
+                    <Button
+                      variant={userRole === 'manager' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setUserRole('manager')}
+                    >
+                      Manager View
+                    </Button>
+                  )}
+                  {currentUser.role === 'admin' && (
+                    <>
+                      <Button
+                        variant={userRole === 'manager' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setUserRole('manager')}
+                      >
+                        Manager View
+                      </Button>
+                      <Button
+                        variant={userRole === 'admin' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setUserRole('admin')}
+                      >
+                        Admin View
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
               
               <div className="flex items-center space-x-3">
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900">{currentUser.name}</p>
-                  <p className="text-xs text-gray-500">{currentUser.department}</p>
+                  <p className="text-xs text-gray-500">
+                    {currentUser.department} • {currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)}
+                  </p>
                 </div>
                 <Avatar>
                   <AvatarImage src={currentUser.avatar} />
@@ -80,23 +146,13 @@ const Index = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="dashboard" className="flex items-center space-x-2">
-              <UserCheck className="h-4 w-4" />
-              <span>{userRole === 'employee' ? 'My Requests' : 'Team Requests'}</span>
-            </TabsTrigger>
-            <TabsTrigger value="balance" className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4" />
-              <span>{userRole === 'employee' ? 'Balance' : 'Team Balances'}</span>
-            </TabsTrigger>
-            <TabsTrigger value="holidays" className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4" />
-              <span>Holidays</span>
-            </TabsTrigger>
-            <TabsTrigger value="about" className="flex items-center space-x-2">
-              <FileText className="h-4 w-4" />
-              <span>About</span>
-            </TabsTrigger>
+          <TabsList className={`grid w-full grid-cols-${availableTabs.length}`}>
+            {availableTabs.map((tab) => (
+              <TabsTrigger key={tab.value} value={tab.value} className="flex items-center space-x-2">
+                <tab.icon className="h-4 w-4" />
+                <span>{tab.label}</span>
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
@@ -105,8 +161,10 @@ const Index = () => {
                 onNewRequest={() => setShowRequestForm(true)}
                 currentUser={currentUser}
               />
-            ) : (
+            ) : userRole === 'manager' ? (
               <ManagerDashboard currentUser={currentUser} />
+            ) : (
+              <AdminDashboard currentUser={currentUser} />
             )}
           </TabsContent>
 
@@ -117,13 +175,21 @@ const Index = () => {
                 currentUser={currentUser}
                 activeView="balance"
               />
-            ) : (
+            ) : userRole === 'manager' ? (
               <ManagerDashboard currentUser={currentUser} activeView="balance" />
+            ) : (
+              <AdminDashboard currentUser={currentUser} activeView="system" />
             )}
           </TabsContent>
 
+          {userRole === 'admin' && (
+            <TabsContent value="admin" className="space-y-6">
+              <AdminDashboard currentUser={currentUser} activeView="admin" />
+            </TabsContent>
+          )}
+
           <TabsContent value="holidays" className="space-y-6">
-            <HolidayCalendar />
+            <HolidayCalendar userRole={userRole} />
           </TabsContent>
 
           <TabsContent value="about" className="space-y-6">
