@@ -4,7 +4,7 @@ import { Configuration, PublicClientApplication } from '@azure/msal-browser';
 // MSAL configuration
 const msalConfig: Configuration = {
   auth: {
-    clientId: process.env.VITE_AZURE_CLIENT_ID || 'your-client-id-here', // Replace with your Azure App Registration Client ID
+    clientId: import.meta.env.VITE_AZURE_CLIENT_ID || 'your-client-id-here', // Replace with your Azure App Registration Client ID
     authority: 'https://login.microsoftonline.com/common',
     redirectUri: window.location.origin,
   },
