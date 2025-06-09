@@ -1,12 +1,16 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, Clock, MapPin, Plus, Settings } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { CalendarIcon, Clock, MapPin, Plus, Settings, CalendarDays } from "lucide-react";
+
 interface HolidayCalendarProps {
   userRole?: 'employee' | 'manager' | 'admin';
 }
+
 export const HolidayCalendar = ({
   userRole = 'employee'
 }: HolidayCalendarProps) => {
@@ -84,7 +88,10 @@ export const HolidayCalendar = ({
     description: "Annual company event",
     officeStatus: "optional"
   }];
+
+  const publicHolidays = holidays.filter(holiday => holiday.type === 'public');
   const upcomingHolidays = holidays.filter(holiday => new Date(holiday.date) >= new Date()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(0, 5);
+
   const getHolidayType = (type: string) => {
     switch (type) {
       case 'public':
@@ -104,6 +111,7 @@ export const HolidayCalendar = ({
         };
     }
   };
+
   const getOfficeStatus = (status: string) => {
     switch (status) {
       case 'closed':
@@ -126,57 +134,83 @@ export const HolidayCalendar = ({
 
   // Create date objects for holidays to highlight on calendar
   const holidayDates = holidays.map(holiday => new Date(holiday.date));
-  return <div className="space-y-6">
+
+  return (
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Holiday Calendar</h2>
           <p className="text-gray-600">Company holidays and office closure dates</p>
         </div>
-        {userRole === 'admin' && <Button variant="outline" className="flex items-center space-x-2">
+        {userRole === 'admin' && (
+          <Button variant="outline" className="flex items-center space-x-2">
             <Settings className="h-4 w-4" />
             <span>Manage Holidays</span>
-          </Button>}
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calendar */}
+        {/* Public Holidays Table */}
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
                 <div>
                   <CardTitle className="flex items-center space-x-2">
-                    <CalendarIcon className="h-5 w-5" />
-                    <span>2024 Calendar</span>
+                    <CalendarDays className="h-5 w-5" />
+                    <span>2024 Public Holidays</span>
                   </CardTitle>
-                  <CardDescription>Click on any date to view details</CardDescription>
+                  <CardDescription>Public holidays that exclude leave calculations</CardDescription>
                 </div>
-                {userRole === 'admin' && <Badge variant="outline" className="text-xs">
+                {userRole === 'admin' && (
+                  <Badge variant="outline" className="text-xs">
                     <Settings className="h-3 w-3 mr-1" />
                     Admin View
-                  </Badge>}
+                  </Badge>
+                )}
               </div>
             </CardHeader>
             <CardContent>
-              <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} className="rounded-md border w-full" modifiers={{
-              holiday: holidayDates
-            }} modifiersStyles={{
-              holiday: {
-                backgroundColor: 'rgb(239 246 255)',
-                color: 'rgb(37 99 235)',
-                fontWeight: 'bold'
-              }
-            }} />
-              <div className="mt-4 flex items-center space-x-4 text-sm text-gray-600">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded"></div>
-                  <span>Holiday</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-gray-100 border border-gray-300 rounded"></div>
-                  <span>Regular Day</span>
-                </div>
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Holiday Name</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Day</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {publicHolidays.map((holiday) => {
+                    const holidayDate = new Date(holiday.date);
+                    const statusInfo = getOfficeStatus(holiday.officeStatus);
+                    
+                    return (
+                      <TableRow key={holiday.id}>
+                        <TableCell className="font-medium">{holiday.name}</TableCell>
+                        <TableCell>
+                          {holidayDate.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          {holidayDate.toLocaleDateString('en-US', {
+                            weekday: 'long'
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          <span className={`text-xs ${statusInfo.color}`}>
+                            {statusInfo.label}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </div>
@@ -194,9 +228,10 @@ export const HolidayCalendar = ({
             <CardContent>
               <div className="space-y-4">
                 {upcomingHolidays.map(holiday => {
-                const typeInfo = getHolidayType(holiday.type);
-                const statusInfo = getOfficeStatus(holiday.officeStatus);
-                return <div key={holiday.id} className="border-l-4 border-blue-500 pl-4 py-2">
+                  const typeInfo = getHolidayType(holiday.type);
+                  const statusInfo = getOfficeStatus(holiday.officeStatus);
+                  return (
+                    <div key={holiday.id} className="border-l-4 border-blue-500 pl-4 py-2">
                       <div className="flex items-start justify-between">
                         <div>
                           <h4 className="font-medium text-gray-900">{holiday.name}</h4>
@@ -205,11 +240,11 @@ export const HolidayCalendar = ({
                             <CalendarIcon className="h-3 w-3 text-gray-400" />
                             <span className="text-xs text-gray-500">
                               {new Date(holiday.date).toLocaleDateString('en-US', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
                             </span>
                           </div>
                           <div className="flex items-center space-x-2 mt-1">
@@ -223,8 +258,9 @@ export const HolidayCalendar = ({
                           {typeInfo.label}
                         </Badge>
                       </div>
-                    </div>;
-              })}
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -245,7 +281,7 @@ export const HolidayCalendar = ({
                 <li>• All federal public holidays are observed</li>
                 <li>• Office is closed on these days</li>
                 <li>• No leave deduction required</li>
-                <li>• No leave deduction required</li>
+                <li>• Excluded from leave calculations</li>
               </ul>
             </div>
             
@@ -260,8 +296,15 @@ export const HolidayCalendar = ({
             </div>
           </div>
           
-          
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <h4 className="font-semibold text-blue-900 mb-2">Leave Calculation</h4>
+            <p className="text-sm text-blue-700">
+              When calculating leave days, weekends and public holidays are automatically excluded. 
+              Only working days are counted towards your leave balance.
+            </p>
+          </div>
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 };

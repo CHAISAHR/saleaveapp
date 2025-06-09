@@ -89,18 +89,49 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     }
   ];
 
+  // Public holidays for 2024
+  const publicHolidays = [
+    new Date(2024, 0, 1),  // New Year's Day
+    new Date(2024, 0, 15), // Martin Luther King Jr. Day
+    new Date(2024, 1, 19), // Presidents' Day
+    new Date(2024, 4, 27), // Memorial Day
+    new Date(2024, 6, 4),  // Independence Day
+    new Date(2024, 8, 2),  // Labor Day
+    new Date(2024, 10, 28), // Thanksgiving Day
+    new Date(2024, 11, 25), // Christmas Day
+  ];
+
   const selectedLeaveType = leaveTypes.find(type => type.value === formData.leaveType);
 
-  const calculateDays = () => {
-    if (formData.startDate && formData.endDate) {
-      const timeDiff = formData.endDate.getTime() - formData.startDate.getTime();
-      const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
-      const totalDays = dayDiff > 0 ? dayDiff : 0;
-      
-      // If it's a half day request, divide by 2
-      return formData.isHalfDay ? totalDays * 0.5 : totalDays;
+  const isWeekend = (date: Date) => {
+    const day = date.getDay();
+    return day === 0 || day === 6; // Sunday or Saturday
+  };
+
+  const isPublicHoliday = (date: Date) => {
+    return publicHolidays.some(holiday => 
+      holiday.getDate() === date.getDate() &&
+      holiday.getMonth() === date.getMonth() &&
+      holiday.getFullYear() === date.getFullYear()
+    );
+  };
+
+  const calculateWorkingDays = () => {
+    if (!formData.startDate || !formData.endDate) return 0;
+
+    let workingDays = 0;
+    const currentDate = new Date(formData.startDate);
+    const endDate = new Date(formData.endDate);
+
+    while (currentDate <= endDate) {
+      if (!isWeekend(currentDate) && !isPublicHoliday(currentDate)) {
+        workingDays++;
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
     }
-    return 0;
+
+    // If it's a half day request, divide by 2
+    return formData.isHalfDay ? workingDays * 0.5 : workingDays;
   };
 
   const getCalendarDays = () => {
@@ -112,7 +143,27 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     return 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const sendEmailNotifications = async (requestData: any) => {
+    try {
+      // In a real application, this would call your backend API to send emails
+      console.log('Sending email to manager about leave request:', requestData);
+      console.log('Sending confirmation email to employee:', currentUser.email);
+      
+      // Simulate email sending
+      const emailData = {
+        managerEmail: `${currentUser.department.toLowerCase()}.manager@company.com`,
+        employeeEmail: currentUser.email,
+        requestDetails: requestData,
+        timestamp: new Date().toISOString()
+      };
+      
+      console.log('Email notifications sent:', emailData);
+    } catch (error) {
+      console.error('Failed to send email notifications:', error);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.title || !formData.leaveType || !formData.startDate || !formData.endDate) {
@@ -124,18 +175,24 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       return;
     }
 
-    const days = calculateDays();
+    const workingDays = calculateWorkingDays();
     
-    console.log("Leave request submitted:", {
+    const requestData = {
       ...formData,
-      days,
+      workingDays,
       submittedBy: currentUser.name,
-      submittedDate: new Date().toISOString()
-    });
+      submittedDate: new Date().toISOString(),
+      status: 'pending'
+    };
+
+    console.log("Leave request submitted:", requestData);
+
+    // Send email notifications
+    await sendEmailNotifications(requestData);
 
     toast({
       title: "Request Submitted",
-      description: `Your ${selectedLeaveType?.label.toLowerCase()} request for ${days} day${days > 1 ? 's' : ''} has been submitted for approval.`,
+      description: `Your ${selectedLeaveType?.label.toLowerCase()} request for ${workingDays} working day${workingDays > 1 ? 's' : ''} has been submitted for approval. Email notifications have been sent.`,
     });
 
     onClose();
@@ -258,18 +315,17 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                       <span className="font-medium text-blue-800">{getCalendarDays()} day{getCalendarDays() > 1 ? 's' : ''}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-blue-600">Leave Days Applied:</span>
+                      <span className="text-blue-600">Working Days Applied:</span>
                       <span className="font-medium text-blue-800">
-                        {calculateDays()} day{calculateDays() > 1 ? 's' : ''}
+                        {calculateWorkingDays()} day{calculateWorkingDays() > 1 ? 's' : ''}
                         {formData.isHalfDay && " (Half Day)"}
                       </span>
                     </div>
                   </div>
-                  {formData.isHalfDay && (
-                    <div className="text-xs text-blue-600 bg-blue-100 p-2 rounded mt-2">
-                      Half-day requests count as 0.5 days per calendar day selected.
-                    </div>
-                  )}
+                  <div className="text-xs text-blue-600 bg-blue-100 p-2 rounded mt-2">
+                    Working days exclude weekends and public holidays. 
+                    {formData.isHalfDay && " Half-day requests count as 0.5 days per working day selected."}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -304,9 +360,9 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                   </div>
                 )}
                 
-                {selectedLeaveType.value === 'sick' && calculateDays() > 3 && (
+                {selectedLeaveType.value === 'sick' && calculateWorkingDays() > 3 && (
                   <div className="mt-2 text-xs text-blue-700 bg-blue-50 p-2 rounded">
-                    <strong>Note:</strong> Medical certificate required for sick leave exceeding 3 consecutive days.
+                    <strong>Note:</strong> Medical certificate required for sick leave exceeding 3 consecutive working days.
                   </div>
                 )}
               </CardContent>
