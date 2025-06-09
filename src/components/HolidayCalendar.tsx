@@ -2,91 +2,119 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CalendarIcon, Clock, MapPin, Plus, Settings, CalendarDays } from "lucide-react";
+import { CalendarDays, Settings } from "lucide-react";
+
 interface HolidayCalendarProps {
   userRole?: 'employee' | 'manager' | 'admin';
 }
+
 export const HolidayCalendar = ({
   userRole = 'employee'
 }: HolidayCalendarProps) => {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  // South African public holidays for 2025
+  const holidays = [
+    {
+      id: 1,
+      name: "New Year's Day",
+      date: "2025-01-01",
+      type: "public",
+      description: "New Year's Day",
+      officeStatus: "closed"
+    },
+    {
+      id: 2,
+      name: "Human Rights Day",
+      date: "2025-03-21",
+      type: "public",
+      description: "Human Rights Day",
+      officeStatus: "closed"
+    },
+    {
+      id: 3,
+      name: "Good Friday",
+      date: "2025-04-18",
+      type: "public",
+      description: "Good Friday",
+      officeStatus: "closed"
+    },
+    {
+      id: 4,
+      name: "Family Day",
+      date: "2025-04-21",
+      type: "public",
+      description: "Family Day",
+      officeStatus: "closed"
+    },
+    {
+      id: 5,
+      name: "Freedom Day",
+      date: "2025-04-27",
+      type: "public",
+      description: "Freedom Day",
+      officeStatus: "closed"
+    },
+    {
+      id: 6,
+      name: "Workers' Day",
+      date: "2025-05-01",
+      type: "public",
+      description: "Workers' Day",
+      officeStatus: "closed"
+    },
+    {
+      id: 7,
+      name: "Youth Day",
+      date: "2025-06-16",
+      type: "public",
+      description: "Youth Day",
+      officeStatus: "closed"
+    },
+    {
+      id: 8,
+      name: "National Women's Day",
+      date: "2025-08-09",
+      type: "public",
+      description: "National Women's Day",
+      officeStatus: "closed"
+    },
+    {
+      id: 9,
+      name: "Heritage Day",
+      date: "2025-09-24",
+      type: "public",
+      description: "Heritage Day",
+      officeStatus: "closed"
+    },
+    {
+      id: 10,
+      name: "Day of Reconciliation",
+      date: "2025-12-16",
+      type: "public",
+      description: "Day of Reconciliation",
+      officeStatus: "closed"
+    },
+    {
+      id: 11,
+      name: "Christmas Day",
+      date: "2025-12-25",
+      type: "public",
+      description: "Christmas Day",
+      officeStatus: "closed"
+    },
+    {
+      id: 12,
+      name: "Day of Goodwill",
+      date: "2025-12-26",
+      type: "public",
+      description: "Day of Goodwill",
+      officeStatus: "closed"
+    }
+  ];
 
-  // Sample holiday data - in production, this would come from the database
-  const holidays = [{
-    id: 1,
-    name: "New Year's Day",
-    date: "2024-01-01",
-    type: "public",
-    description: "National public holiday",
-    officeStatus: "closed"
-  }, {
-    id: 2,
-    name: "Martin Luther King Jr. Day",
-    date: "2024-01-15",
-    type: "public",
-    description: "Federal holiday",
-    officeStatus: "closed"
-  }, {
-    id: 3,
-    name: "Presidents' Day",
-    date: "2024-02-19",
-    type: "public",
-    description: "Federal holiday",
-    officeStatus: "closed"
-  }, {
-    id: 4,
-    name: "Memorial Day",
-    date: "2024-05-27",
-    type: "public",
-    description: "Federal holiday",
-    officeStatus: "closed"
-  }, {
-    id: 5,
-    name: "Independence Day",
-    date: "2024-07-04",
-    type: "public",
-    description: "National holiday",
-    officeStatus: "closed"
-  }, {
-    id: 6,
-    name: "Labor Day",
-    date: "2024-09-02",
-    type: "public",
-    description: "Federal holiday",
-    officeStatus: "closed"
-  }, {
-    id: 7,
-    name: "Thanksgiving Day",
-    date: "2024-11-28",
-    type: "public",
-    description: "National holiday",
-    officeStatus: "closed"
-  }, {
-    id: 8,
-    name: "Black Friday",
-    date: "2024-11-29",
-    type: "company",
-    description: "Company floating holiday",
-    officeStatus: "closed"
-  }, {
-    id: 9,
-    name: "Christmas Day",
-    date: "2024-12-25",
-    type: "public",
-    description: "National holiday",
-    officeStatus: "closed"
-  }, {
-    id: 10,
-    name: "Company Summer Picnic",
-    date: "2024-08-15",
-    type: "company",
-    description: "Annual company event",
-    officeStatus: "optional"
-  }];
   const publicHolidays = holidays.filter(holiday => holiday.type === 'public');
   const upcomingHolidays = holidays.filter(holiday => new Date(holiday.date) >= new Date()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(0, 5);
+
   const getHolidayType = (type: string) => {
     switch (type) {
       case 'public':
@@ -106,6 +134,7 @@ export const HolidayCalendar = ({
         };
     }
   };
+
   const getOfficeStatus = (status: string) => {
     switch (status) {
       case 'closed':
@@ -126,18 +155,19 @@ export const HolidayCalendar = ({
     }
   };
 
-  // Create date objects for holidays to highlight on calendar
-  const holidayDates = holidays.map(holiday => new Date(holiday.date));
-  return <div className="space-y-6">
+  return (
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Holiday Calendar</h2>
-          <p className="text-gray-600">Company holidays and office closure dates</p>
+          <p className="text-gray-600">South African public holidays and office closure dates for 2025</p>
         </div>
-        {userRole === 'admin' && <Button variant="outline" className="flex items-center space-x-2">
+        {userRole === 'admin' && (
+          <Button variant="outline" className="flex items-center space-x-2">
             <Settings className="h-4 w-4" />
             <span>Manage Holidays</span>
-          </Button>}
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -149,14 +179,16 @@ export const HolidayCalendar = ({
                 <div>
                   <CardTitle className="flex items-center space-x-2">
                     <CalendarDays className="h-5 w-5" />
-                    <span>Public Holidays</span>
+                    <span>South African Public Holidays 2025</span>
                   </CardTitle>
                   <CardDescription>Public holidays that exclude leave calculations</CardDescription>
                 </div>
-                {userRole === 'admin' && <Badge variant="outline" className="text-xs">
+                {userRole === 'admin' && (
+                  <Badge variant="outline" className="text-xs">
                     <Settings className="h-3 w-3 mr-1" />
                     Admin View
-                  </Badge>}
+                  </Badge>
+                )}
               </div>
             </CardHeader>
             <CardContent>
@@ -171,29 +203,31 @@ export const HolidayCalendar = ({
                 </TableHeader>
                 <TableBody>
                   {publicHolidays.map(holiday => {
-                  const holidayDate = new Date(holiday.date);
-                  const statusInfo = getOfficeStatus(holiday.officeStatus);
-                  return <TableRow key={holiday.id}>
+                    const holidayDate = new Date(holiday.date);
+                    const statusInfo = getOfficeStatus(holiday.officeStatus);
+                    return (
+                      <TableRow key={holiday.id}>
                         <TableCell className="font-medium">{holiday.name}</TableCell>
                         <TableCell>
-                          {holidayDate.toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
+                          {holidayDate.toLocaleDateString('en-ZA', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
                         </TableCell>
                         <TableCell>
-                          {holidayDate.toLocaleDateString('en-US', {
-                        weekday: 'long'
-                      })}
+                          {holidayDate.toLocaleDateString('en-ZA', {
+                            weekday: 'long'
+                          })}
                         </TableCell>
                         <TableCell>
                           <span className={`text-xs ${statusInfo.color}`}>
                             {statusInfo.label}
                           </span>
                         </TableCell>
-                      </TableRow>;
-                })}
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>
@@ -288,5 +322,6 @@ export const HolidayCalendar = ({
           </div>
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 };

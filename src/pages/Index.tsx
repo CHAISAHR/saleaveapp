@@ -1,9 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserCheck, Calendar, Users, FileText, Plus, Settings } from "lucide-react";
+import { Calendar, Settings, Users } from "lucide-react";
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from "@/components/ui/navigation-menu";
 import { EmployeeDashboard } from "@/components/EmployeeDashboard";
 import { ManagerDashboard } from "@/components/ManagerDashboard";
@@ -16,6 +16,8 @@ import { SignInButton } from "@/components/SignInButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { ManualSignInForm } from "@/components/ManualSignInForm";
 import { ManualSignUpForm } from "@/components/ManualSignUpForm";
+import { AdminPanel } from "@/components/AdminPanel";
+
 const Index = () => {
   const {
     user,
@@ -29,6 +31,22 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
 
+  // Determine user role based on email or stored data
+  const determineUserRole = (userEmail: string): 'employee' | 'manager' | 'admin' => {
+    // Admin users (you can modify this logic as needed)
+    const adminEmails = ['admin@company.com', 'hr@company.com'];
+    
+    // Manager users (you can modify this logic as needed)
+    const managerEmails = ['sarah.johnson@company.com', 'manager@company.com'];
+    
+    if (adminEmails.includes(userEmail)) {
+      return 'admin';
+    } else if (managerEmails.includes(userEmail)) {
+      return 'manager';
+    }
+    return 'employee';
+  };
+
   // Sample user data with role - in real app this would come from your backend
   const currentUser = {
     name: user?.name || "Sarah Johnson",
@@ -36,43 +54,66 @@ const Index = () => {
     department: "Marketing",
     avatar: "",
     employeeId: "EMP001",
-    role: "manager" // This would come from your backend based on the authenticated user
+    role: determineUserRole(user?.username || "sarah.johnson@company.com")
   };
+
+  // Set initial role based on user's actual role
+  useEffect(() => {
+    if (user) {
+      const actualRole = determineUserRole(user.username);
+      setUserRole(actualRole);
+    }
+  }, [user]);
 
   // Show loading state
   if (loading) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
           <p className="mt-4 text-gray-600">Loading...</p>
         </div>
-      </div>;
+      </div>
+    );
   }
 
   // Show sign-in page if not authenticated
   if (!isAuthenticated) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="bg-blue-600 text-white p-3 rounded-lg mx-auto w-fit mb-4">
               <Calendar className="h-8 w-8" />
             </div>
             <CardTitle className="text-2xl">LeaveApp_SA</CardTitle>
-            <CardDescription>HR Management System</CardDescription>
+            <CardDescription>HR Management System - South Africa</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Auth mode toggle */}
             <div className="flex space-x-2">
-              <Button variant={authMode === 'signin' ? 'default' : 'outline'} className="flex-1" onClick={() => setAuthMode('signin')}>
+              <Button
+                variant={authMode === 'signin' ? 'default' : 'outline'}
+                className="flex-1"
+                onClick={() => setAuthMode('signin')}
+              >
                 Sign In
               </Button>
-              <Button variant={authMode === 'signup' ? 'default' : 'outline'} className="flex-1" onClick={() => setAuthMode('signup')}>
+              <Button
+                variant={authMode === 'signup' ? 'default' : 'outline'}
+                className="flex-1"
+                onClick={() => setAuthMode('signup')}
+              >
                 Sign Up
               </Button>
             </div>
 
             {/* Auth forms */}
-            {authMode === 'signin' ? <ManualSignInForm onSignIn={manualLogin} /> : <ManualSignUpForm onSignUp={manualSignUp} />}
+            {authMode === 'signin' ? (
+              <ManualSignInForm onSignIn={manualLogin} />
+            ) : (
+              <ManualSignUpForm onSignUp={manualSignUp} />
+            )}
             
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -88,43 +129,60 @@ const Index = () => {
             <div className="flex justify-center">
               <SignInButton />
             </div>
+
+            {/* Admin login hint */}
+            <div className="text-center">
+              <p className="text-xs text-gray-500">
+                Admin access: admin@company.com
+              </p>
+            </div>
           </CardContent>
         </Card>
-      </div>;
+      </div>
+    );
   }
 
   // Role-based tab configuration
   const getAvailableTabs = () => {
-    const baseTabs = [{
-      value: "dashboard",
-      icon: UserCheck,
-      label: userRole === 'employee' ? 'My Requests' : userRole === 'manager' ? 'Team Requests' : 'Admin Panel'
-    }, {
-      value: "balance",
-      icon: Calendar,
-      label: userRole === 'employee' ? 'Balance' : userRole === 'manager' ? 'Team Balances' : 'System Overview'
-    }, {
-      value: "holidays",
-      icon: Calendar,
-      label: "Holidays"
-    }, {
-      value: "about",
-      icon: FileText,
-      label: "About"
-    }];
+    const baseTabs = [
+      {
+        value: "dashboard",
+        icon: Calendar,
+        label: userRole === 'employee' ? 'My Requests' : userRole === 'manager' ? 'Team Requests' : 'Admin Panel'
+      },
+      {
+        value: "balance",
+        icon: Calendar,
+        label: userRole === 'employee' ? 'Balance' : userRole === 'manager' ? 'Team Balances' : 'System Overview'
+      },
+      {
+        value: "holidays",
+        icon: Calendar,
+        label: "Holidays"
+      }
+    ];
 
-    // Add admin-specific tab
+    // Add admin-specific tabs
     if (userRole === 'admin') {
       baseTabs.splice(2, 0, {
+        value: "user-management",
+        icon: Users,
+        label: "User Management"
+      });
+      baseTabs.splice(3, 0, {
         value: "admin",
         icon: Settings,
         label: "Administration"
       });
     }
+
     return baseTabs;
   };
+
   const availableTabs = getAvailableTabs();
-  return <div className="min-h-screen bg-gray-50">
+
+  return (
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -135,7 +193,6 @@ const Index = () => {
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">LeaveApp_SA</h1>
-                
               </div>
             </div>
             
@@ -143,34 +200,63 @@ const Index = () => {
             <div className="flex-1 flex justify-center">
               <NavigationMenu>
                 <NavigationMenuList className="flex space-x-1">
-                  {availableTabs.map(tab => <NavigationMenuItem key={tab.value}>
-                      <NavigationMenuLink className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors cursor-pointer ${activeTab === tab.value ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`} onClick={() => setActiveTab(tab.value)}>
+                  {availableTabs.map(tab => (
+                    <NavigationMenuItem key={tab.value}>
+                      <NavigationMenuLink
+                        className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors cursor-pointer ${
+                          activeTab === tab.value
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                        }`}
+                        onClick={() => setActiveTab(tab.value)}
+                      >
                         <tab.icon className="h-4 w-4" />
                         <span>{tab.label}</span>
                       </NavigationMenuLink>
-                    </NavigationMenuItem>)}
+                    </NavigationMenuItem>
+                  ))}
                 </NavigationMenuList>
               </NavigationMenu>
             </div>
             
             <div className="flex items-center space-x-4">
-              {/* Role switcher - only show if user has manager or admin privileges */}
-              {(currentUser.role === 'manager' || currentUser.role === 'admin') && <div className="flex items-center space-x-2">
-                  <Button variant={userRole === 'employee' ? 'default' : 'outline'} size="sm" onClick={() => setUserRole('employee')}>
-                    Employee View
-                  </Button>
-                  {currentUser.role === 'manager' && <Button variant={userRole === 'manager' ? 'default' : 'outline'} size="sm" onClick={() => setUserRole('manager')}>
+              {/* Role indicator */}
+              <Badge variant={userRole === 'admin' ? 'default' : userRole === 'manager' ? 'secondary' : 'outline'}>
+                {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+              </Badge>
+
+              {/* Role switcher - only show for managers and admins */}
+              {(currentUser.role === 'manager' || currentUser.role === 'admin') && (
+                <div className="flex items-center space-x-2">
+                  {currentUser.role === 'admin' && (
+                    <Button
+                      variant={userRole === 'employee' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setUserRole('employee')}
+                    >
+                      Employee View
+                    </Button>
+                  )}
+                  {(currentUser.role === 'manager' || currentUser.role === 'admin') && (
+                    <Button
+                      variant={userRole === 'manager' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setUserRole('manager')}
+                    >
                       Manager View
-                    </Button>}
-                  {currentUser.role === 'admin' && <>
-                      <Button variant={userRole === 'manager' ? 'default' : 'outline'} size="sm" onClick={() => setUserRole('manager')}>
-                        Manager View
-                      </Button>
-                      <Button variant={userRole === 'admin' ? 'default' : 'outline'} size="sm" onClick={() => setUserRole('admin')}>
-                        Admin View
-                      </Button>
-                    </>}
-                </div>}
+                    </Button>
+                  )}
+                  {currentUser.role === 'admin' && (
+                    <Button
+                      variant={userRole === 'admin' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setUserRole('admin')}
+                    >
+                      Admin View
+                    </Button>
+                  )}
+                </div>
+              )}
               
               {/* User Dropdown */}
               <UserDropdown currentUser={currentUser} />
@@ -182,24 +268,54 @@ const Index = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="space-y-6">
-          {activeTab === 'dashboard' && <>
-              {userRole === 'employee' ? <EmployeeDashboard onNewRequest={() => setShowRequestForm(true)} currentUser={currentUser} /> : userRole === 'manager' ? <ManagerDashboard currentUser={currentUser} /> : <AdminDashboard currentUser={currentUser} />}
-            </>}
+          {activeTab === 'dashboard' && (
+            <>
+              {userRole === 'employee' ? (
+                <EmployeeDashboard onNewRequest={() => setShowRequestForm(true)} currentUser={currentUser} />
+              ) : userRole === 'manager' ? (
+                <ManagerDashboard currentUser={currentUser} />
+              ) : (
+                <AdminDashboard currentUser={currentUser} />
+              )}
+            </>
+          )}
 
-          {activeTab === 'balance' && <>
-              {userRole === 'employee' ? <EmployeeDashboard onNewRequest={() => setShowRequestForm(true)} currentUser={currentUser} activeView="balance" /> : userRole === 'manager' ? <ManagerDashboard currentUser={currentUser} activeView="balance" /> : <AdminDashboard currentUser={currentUser} activeView="system" />}
-            </>}
+          {activeTab === 'balance' && (
+            <>
+              {userRole === 'employee' ? (
+                <EmployeeDashboard onNewRequest={() => setShowRequestForm(true)} currentUser={currentUser} activeView="balance" />
+              ) : userRole === 'manager' ? (
+                <ManagerDashboard currentUser={currentUser} activeView="balance" />
+              ) : (
+                <AdminDashboard currentUser={currentUser} activeView="system" />
+              )}
+            </>
+          )}
 
-          {activeTab === 'admin' && userRole === 'admin' && <AdminDashboard currentUser={currentUser} activeView="admin" />}
+          {activeTab === 'user-management' && userRole === 'admin' && (
+            <AdminPanel currentUser={currentUser} />
+          )}
 
-          {activeTab === 'holidays' && <HolidayCalendar userRole={userRole} />}
+          {activeTab === 'admin' && userRole === 'admin' && (
+            <AdminDashboard currentUser={currentUser} activeView="admin" />
+          )}
 
-          {activeTab === 'about' && <PolicyGuide />}
+          {activeTab === 'holidays' && (
+            <HolidayCalendar userRole={userRole} />
+          )}
         </div>
       </main>
 
       {/* Leave Request Form Modal */}
-      {showRequestForm && <LeaveRequestForm isOpen={showRequestForm} onClose={() => setShowRequestForm(false)} currentUser={currentUser} />}
-    </div>;
+      {showRequestForm && (
+        <LeaveRequestForm
+          isOpen={showRequestForm}
+          onClose={() => setShowRequestForm(false)}
+          currentUser={currentUser}
+        />
+      )}
+    </div>
+  );
 };
+
 export default Index;
