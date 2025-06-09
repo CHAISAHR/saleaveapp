@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,11 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CalendarIcon, Clock, MapPin, Plus, Settings, CalendarDays } from "lucide-react";
-
 interface HolidayCalendarProps {
   userRole?: 'employee' | 'manager' | 'admin';
 }
-
 export const HolidayCalendar = ({
   userRole = 'employee'
 }: HolidayCalendarProps) => {
@@ -88,10 +85,8 @@ export const HolidayCalendar = ({
     description: "Annual company event",
     officeStatus: "optional"
   }];
-
   const publicHolidays = holidays.filter(holiday => holiday.type === 'public');
   const upcomingHolidays = holidays.filter(holiday => new Date(holiday.date) >= new Date()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(0, 5);
-
   const getHolidayType = (type: string) => {
     switch (type) {
       case 'public':
@@ -111,7 +106,6 @@ export const HolidayCalendar = ({
         };
     }
   };
-
   const getOfficeStatus = (status: string) => {
     switch (status) {
       case 'closed':
@@ -134,20 +128,16 @@ export const HolidayCalendar = ({
 
   // Create date objects for holidays to highlight on calendar
   const holidayDates = holidays.map(holiday => new Date(holiday.date));
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Holiday Calendar</h2>
           <p className="text-gray-600">Company holidays and office closure dates</p>
         </div>
-        {userRole === 'admin' && (
-          <Button variant="outline" className="flex items-center space-x-2">
+        {userRole === 'admin' && <Button variant="outline" className="flex items-center space-x-2">
             <Settings className="h-4 w-4" />
             <span>Manage Holidays</span>
-          </Button>
-        )}
+          </Button>}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -159,16 +149,14 @@ export const HolidayCalendar = ({
                 <div>
                   <CardTitle className="flex items-center space-x-2">
                     <CalendarDays className="h-5 w-5" />
-                    <span>2024 Public Holidays</span>
+                    <span>Public Holidays</span>
                   </CardTitle>
                   <CardDescription>Public holidays that exclude leave calculations</CardDescription>
                 </div>
-                {userRole === 'admin' && (
-                  <Badge variant="outline" className="text-xs">
+                {userRole === 'admin' && <Badge variant="outline" className="text-xs">
                     <Settings className="h-3 w-3 mr-1" />
                     Admin View
-                  </Badge>
-                )}
+                  </Badge>}
               </div>
             </CardHeader>
             <CardContent>
@@ -182,33 +170,30 @@ export const HolidayCalendar = ({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {publicHolidays.map((holiday) => {
-                    const holidayDate = new Date(holiday.date);
-                    const statusInfo = getOfficeStatus(holiday.officeStatus);
-                    
-                    return (
-                      <TableRow key={holiday.id}>
+                  {publicHolidays.map(holiday => {
+                  const holidayDate = new Date(holiday.date);
+                  const statusInfo = getOfficeStatus(holiday.officeStatus);
+                  return <TableRow key={holiday.id}>
                         <TableCell className="font-medium">{holiday.name}</TableCell>
                         <TableCell>
                           {holidayDate.toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
                         </TableCell>
                         <TableCell>
                           {holidayDate.toLocaleDateString('en-US', {
-                            weekday: 'long'
-                          })}
+                        weekday: 'long'
+                      })}
                         </TableCell>
                         <TableCell>
                           <span className={`text-xs ${statusInfo.color}`}>
                             {statusInfo.label}
                           </span>
                         </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                      </TableRow>;
+                })}
                 </TableBody>
               </Table>
             </CardContent>
@@ -228,10 +213,9 @@ export const HolidayCalendar = ({
             <CardContent>
               <div className="space-y-4">
                 {upcomingHolidays.map(holiday => {
-                  const typeInfo = getHolidayType(holiday.type);
-                  const statusInfo = getOfficeStatus(holiday.officeStatus);
-                  return (
-                    <div key={holiday.id} className="border-l-4 border-blue-500 pl-4 py-2">
+                const typeInfo = getHolidayType(holiday.type);
+                const statusInfo = getOfficeStatus(holiday.officeStatus);
+                return <div key={holiday.id} className="border-l-4 border-blue-500 pl-4 py-2">
                       <div className="flex items-start justify-between">
                         <div>
                           <h4 className="font-medium text-gray-900">{holiday.name}</h4>
@@ -240,11 +224,11 @@ export const HolidayCalendar = ({
                             <CalendarIcon className="h-3 w-3 text-gray-400" />
                             <span className="text-xs text-gray-500">
                               {new Date(holiday.date).toLocaleDateString('en-US', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                              })}
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
                             </span>
                           </div>
                           <div className="flex items-center space-x-2 mt-1">
@@ -258,9 +242,8 @@ export const HolidayCalendar = ({
                           {typeInfo.label}
                         </Badge>
                       </div>
-                    </div>
-                  );
-                })}
+                    </div>;
+              })}
               </div>
             </CardContent>
           </Card>
@@ -305,6 +288,5 @@ export const HolidayCalendar = ({
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
