@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,9 +21,10 @@ import { PolicyGuide } from "@/components/PolicyGuide";
 import { UserDropdown } from "@/components/UserDropdown";
 import { SignInButton } from "@/components/SignInButton";
 import { useAuth } from "@/contexts/AuthContext";
+import { ManualSignInForm } from "@/components/ManualSignInForm";
 
 const Index = () => {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading, manualLogin } = useAuth();
   const [userRole, setUserRole] = useState<'employee' | 'manager' | 'admin'>('employee');
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -63,11 +63,23 @@ const Index = () => {
             <CardTitle className="text-2xl">LeaveApp_SA</CardTitle>
             <CardDescription>HR Management System</CardDescription>
           </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-gray-600 mb-6">
-              Please sign in with your Microsoft account to continue
-            </p>
-            <SignInButton />
+          <CardContent className="space-y-6">
+            <ManualSignInForm onSignIn={manualLogin} />
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex justify-center">
+              <SignInButton />
+            </div>
           </CardContent>
         </Card>
       </div>
