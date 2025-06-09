@@ -8,6 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: () => Promise<void>;
   manualLogin: (email: string, password: string) => Promise<void>;
+  manualSignUp: (email: string, password: string, confirmPassword: string) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
 }
@@ -93,6 +94,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const manualSignUp = async (email: string, password: string, confirmPassword: string) => {
+    try {
+      // Basic validation
+      if (password !== confirmPassword) {
+        throw new Error('Passwords do not match');
+      }
+      
+      if (password.length < 6) {
+        throw new Error('Password must be at least 6 characters long');
+      }
+
+      // Simulate registration - in real app, this would call your backend
+      console.log('Manual sign up attempt:', email);
+      
+      // Create a mock user object similar to MSAL account structure
+      const mockUser: AccountInfo = {
+        homeAccountId: `manual-${email}`,
+        environment: 'manual',
+        tenantId: 'manual-tenant',
+        username: email,
+        localAccountId: `manual-${email}`,
+        name: email.split('@')[0], // Use email prefix as name
+        idTokenClaims: {
+          aud: 'manual',
+          iss: 'manual',
+          iat: Date.now() / 1000,
+          exp: (Date.now() / 1000) + 3600,
+          sub: `manual-${email}`,
+          email: email
+        }
+      };
+
+      setUser(mockUser);
+      localStorage.setItem('manualUser', JSON.stringify(mockUser));
+    } catch (error) {
+      console.error('Manual sign up error:', error);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       const accounts = msalInstance.getAllAccounts();
@@ -111,6 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated: !!user,
     login,
     manualLogin,
+    manualSignUp,
     logout,
     loading,
   };

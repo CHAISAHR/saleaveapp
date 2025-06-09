@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,12 +23,14 @@ import { UserDropdown } from "@/components/UserDropdown";
 import { SignInButton } from "@/components/SignInButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { ManualSignInForm } from "@/components/ManualSignInForm";
+import { ManualSignUpForm } from "@/components/ManualSignUpForm";
 
 const Index = () => {
-  const { user, isAuthenticated, loading, manualLogin } = useAuth();
+  const { user, isAuthenticated, loading, manualLogin, manualSignUp } = useAuth();
   const [userRole, setUserRole] = useState<'employee' | 'manager' | 'admin'>('employee');
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
 
   // Sample user data with role - in real app this would come from your backend
   const currentUser = {
@@ -64,7 +67,30 @@ const Index = () => {
             <CardDescription>HR Management System</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <ManualSignInForm onSignIn={manualLogin} />
+            {/* Auth mode toggle */}
+            <div className="flex space-x-2">
+              <Button 
+                variant={authMode === 'signin' ? 'default' : 'outline'} 
+                className="flex-1"
+                onClick={() => setAuthMode('signin')}
+              >
+                Sign In
+              </Button>
+              <Button 
+                variant={authMode === 'signup' ? 'default' : 'outline'} 
+                className="flex-1"
+                onClick={() => setAuthMode('signup')}
+              >
+                Sign Up
+              </Button>
+            </div>
+
+            {/* Auth forms */}
+            {authMode === 'signin' ? (
+              <ManualSignInForm onSignIn={manualLogin} />
+            ) : (
+              <ManualSignUpForm onSignUp={manualSignUp} />
+            )}
             
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
