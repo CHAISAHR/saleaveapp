@@ -1,18 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserCheck, Calendar, Users, FileText, Plus, Settings } from "lucide-react";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
+import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from "@/components/ui/navigation-menu";
 import { EmployeeDashboard } from "@/components/EmployeeDashboard";
 import { ManagerDashboard } from "@/components/ManagerDashboard";
 import { AdminDashboard } from "@/components/AdminDashboard";
@@ -24,9 +16,14 @@ import { SignInButton } from "@/components/SignInButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { ManualSignInForm } from "@/components/ManualSignInForm";
 import { ManualSignUpForm } from "@/components/ManualSignUpForm";
-
 const Index = () => {
-  const { user, isAuthenticated, loading, manualLogin, manualSignUp } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    loading,
+    manualLogin,
+    manualSignUp
+  } = useAuth();
   const [userRole, setUserRole] = useState<'employee' | 'manager' | 'admin'>('employee');
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -44,20 +41,17 @@ const Index = () => {
 
   // Show loading state
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
           <p className="mt-4 text-gray-600">Loading...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
 
   // Show sign-in page if not authenticated
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="bg-blue-600 text-white p-3 rounded-lg mx-auto w-fit mb-4">
@@ -69,28 +63,16 @@ const Index = () => {
           <CardContent className="space-y-6">
             {/* Auth mode toggle */}
             <div className="flex space-x-2">
-              <Button 
-                variant={authMode === 'signin' ? 'default' : 'outline'} 
-                className="flex-1"
-                onClick={() => setAuthMode('signin')}
-              >
+              <Button variant={authMode === 'signin' ? 'default' : 'outline'} className="flex-1" onClick={() => setAuthMode('signin')}>
                 Sign In
               </Button>
-              <Button 
-                variant={authMode === 'signup' ? 'default' : 'outline'} 
-                className="flex-1"
-                onClick={() => setAuthMode('signup')}
-              >
+              <Button variant={authMode === 'signup' ? 'default' : 'outline'} className="flex-1" onClick={() => setAuthMode('signup')}>
                 Sign Up
               </Button>
             </div>
 
             {/* Auth forms */}
-            {authMode === 'signin' ? (
-              <ManualSignInForm onSignIn={manualLogin} />
-            ) : (
-              <ManualSignUpForm onSignUp={manualSignUp} />
-            )}
+            {authMode === 'signin' ? <ManualSignInForm onSignIn={manualLogin} /> : <ManualSignUpForm onSignUp={manualSignUp} />}
             
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -108,8 +90,7 @@ const Index = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>;
   }
 
   // Role-based tab configuration
@@ -142,11 +123,8 @@ const Index = () => {
     }
     return baseTabs;
   };
-
   const availableTabs = getAvailableTabs();
-
-  return (
-    <div className="min-h-screen bg-gray-50">
+  return <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -157,7 +135,7 @@ const Index = () => {
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">LeaveApp_SA</h1>
-                <p className="text-sm text-gray-500">HR Management System</p>
+                
               </div>
             </div>
             
@@ -165,65 +143,34 @@ const Index = () => {
             <div className="flex-1 flex justify-center">
               <NavigationMenu>
                 <NavigationMenuList className="flex space-x-1">
-                  {availableTabs.map(tab => (
-                    <NavigationMenuItem key={tab.value}>
-                      <NavigationMenuLink
-                        className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors cursor-pointer ${
-                          activeTab === tab.value 
-                            ? 'bg-blue-100 text-blue-700' 
-                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                        }`}
-                        onClick={() => setActiveTab(tab.value)}
-                      >
+                  {availableTabs.map(tab => <NavigationMenuItem key={tab.value}>
+                      <NavigationMenuLink className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors cursor-pointer ${activeTab === tab.value ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`} onClick={() => setActiveTab(tab.value)}>
                         <tab.icon className="h-4 w-4" />
                         <span>{tab.label}</span>
                       </NavigationMenuLink>
-                    </NavigationMenuItem>
-                  ))}
+                    </NavigationMenuItem>)}
                 </NavigationMenuList>
               </NavigationMenu>
             </div>
             
             <div className="flex items-center space-x-4">
               {/* Role switcher - only show if user has manager or admin privileges */}
-              {(currentUser.role === 'manager' || currentUser.role === 'admin') && (
-                <div className="flex items-center space-x-2">
-                  <Button 
-                    variant={userRole === 'employee' ? 'default' : 'outline'} 
-                    size="sm" 
-                    onClick={() => setUserRole('employee')}
-                  >
+              {(currentUser.role === 'manager' || currentUser.role === 'admin') && <div className="flex items-center space-x-2">
+                  <Button variant={userRole === 'employee' ? 'default' : 'outline'} size="sm" onClick={() => setUserRole('employee')}>
                     Employee View
                   </Button>
-                  {currentUser.role === 'manager' && (
-                    <Button 
-                      variant={userRole === 'manager' ? 'default' : 'outline'} 
-                      size="sm" 
-                      onClick={() => setUserRole('manager')}
-                    >
+                  {currentUser.role === 'manager' && <Button variant={userRole === 'manager' ? 'default' : 'outline'} size="sm" onClick={() => setUserRole('manager')}>
                       Manager View
-                    </Button>
-                  )}
-                  {currentUser.role === 'admin' && (
-                    <>
-                      <Button 
-                        variant={userRole === 'manager' ? 'default' : 'outline'} 
-                        size="sm" 
-                        onClick={() => setUserRole('manager')}
-                      >
+                    </Button>}
+                  {currentUser.role === 'admin' && <>
+                      <Button variant={userRole === 'manager' ? 'default' : 'outline'} size="sm" onClick={() => setUserRole('manager')}>
                         Manager View
                       </Button>
-                      <Button 
-                        variant={userRole === 'admin' ? 'default' : 'outline'} 
-                        size="sm" 
-                        onClick={() => setUserRole('admin')}
-                      >
+                      <Button variant={userRole === 'admin' ? 'default' : 'outline'} size="sm" onClick={() => setUserRole('admin')}>
                         Admin View
                       </Button>
-                    </>
-                  )}
-                </div>
-              )}
+                    </>}
+                </div>}
               
               {/* User Dropdown */}
               <UserDropdown currentUser={currentUser} />
@@ -235,54 +182,24 @@ const Index = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="space-y-6">
-          {activeTab === 'dashboard' && (
-            <>
-              {userRole === 'employee' ? (
-                <EmployeeDashboard onNewRequest={() => setShowRequestForm(true)} currentUser={currentUser} />
-              ) : userRole === 'manager' ? (
-                <ManagerDashboard currentUser={currentUser} />
-              ) : (
-                <AdminDashboard currentUser={currentUser} />
-              )}
-            </>
-          )}
+          {activeTab === 'dashboard' && <>
+              {userRole === 'employee' ? <EmployeeDashboard onNewRequest={() => setShowRequestForm(true)} currentUser={currentUser} /> : userRole === 'manager' ? <ManagerDashboard currentUser={currentUser} /> : <AdminDashboard currentUser={currentUser} />}
+            </>}
 
-          {activeTab === 'balance' && (
-            <>
-              {userRole === 'employee' ? (
-                <EmployeeDashboard onNewRequest={() => setShowRequestForm(true)} currentUser={currentUser} activeView="balance" />
-              ) : userRole === 'manager' ? (
-                <ManagerDashboard currentUser={currentUser} activeView="balance" />
-              ) : (
-                <AdminDashboard currentUser={currentUser} activeView="system" />
-              )}
-            </>
-          )}
+          {activeTab === 'balance' && <>
+              {userRole === 'employee' ? <EmployeeDashboard onNewRequest={() => setShowRequestForm(true)} currentUser={currentUser} activeView="balance" /> : userRole === 'manager' ? <ManagerDashboard currentUser={currentUser} activeView="balance" /> : <AdminDashboard currentUser={currentUser} activeView="system" />}
+            </>}
 
-          {activeTab === 'admin' && userRole === 'admin' && (
-            <AdminDashboard currentUser={currentUser} activeView="admin" />
-          )}
+          {activeTab === 'admin' && userRole === 'admin' && <AdminDashboard currentUser={currentUser} activeView="admin" />}
 
-          {activeTab === 'holidays' && (
-            <HolidayCalendar userRole={userRole} />
-          )}
+          {activeTab === 'holidays' && <HolidayCalendar userRole={userRole} />}
 
-          {activeTab === 'about' && (
-            <PolicyGuide />
-          )}
+          {activeTab === 'about' && <PolicyGuide />}
         </div>
       </main>
 
       {/* Leave Request Form Modal */}
-      {showRequestForm && (
-        <LeaveRequestForm 
-          isOpen={showRequestForm} 
-          onClose={() => setShowRequestForm(false)} 
-          currentUser={currentUser} 
-        />
-      )}
-    </div>
-  );
+      {showRequestForm && <LeaveRequestForm isOpen={showRequestForm} onClose={() => setShowRequestForm(false)} currentUser={currentUser} />}
+    </div>;
 };
-
 export default Index;
