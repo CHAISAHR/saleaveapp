@@ -134,8 +134,8 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    // If it's a half day request, divide by 2
-    return formData.isHalfDay ? workingDays * 0.5 : workingDays;
+    // If it's a half day request, deduct 0.5 from the working days
+    return formData.isHalfDay ? Math.max(0, workingDays - 0.5) : workingDays;
   };
 
   const getCalendarDays = () => {
