@@ -1,0 +1,197 @@
+
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarHeader,
+  SidebarFooter,
+} from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Users, Settings, Database, LogOut, User } from "lucide-react";
+
+interface AppSidebarProps {
+  currentUser: any;
+  userRole: 'employee' | 'manager' | 'admin';
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+  onRoleChange?: (role: 'employee' | 'manager' | 'admin') => void;
+}
+
+export const AppSidebar = ({ 
+  currentUser, 
+  userRole, 
+  activeTab, 
+  onTabChange,
+  onRoleChange 
+}: AppSidebarProps) => {
+  const { logout } = useAuth();
+
+  const getNavigationItems = () => {
+    const baseItems = [
+      {
+        value: "dashboard",
+        icon: Calendar,
+        label: userRole === 'employee' ? 'My Requests' : userRole === 'manager' ? 'Team Requests' : 'Dashboard'
+      },
+      {
+        value: "balance",
+        icon: Calendar,
+        label: userRole === 'employee' ? 'Balance' : userRole === 'manager' ? 'Team Balances' : 'System Overview'
+      },
+      {
+        value: "holidays",
+        icon: Calendar,
+        label: "Holidays"
+      }
+    ];
+
+    if (userRole === 'admin') {
+      baseItems.splice(1, 0, {
+        value: "all-requests",
+        icon: Database,
+        label: "All Leave Requests"
+      });
+      baseItems.splice(2, 0, {
+        value: "all-balances",
+        icon: Users,
+        label: "All Balances"
+      });
+      baseItems.splice(4, 0, {
+        value: "user-management",
+        icon: Users,
+        label: "User Management"
+      });
+      baseItems.splice(5, 0, {
+        value: "admin",
+        icon: Settings,
+        label: "Administration"
+      });
+    }
+
+    return baseItems;
+  };
+
+  const navigationItems = getNavigationItems();
+
+  const handleSignOut = async () => {
+    await logout();
+  };
+
+  return (
+    <Sidebar>
+      <SidebarHeader className="p-4">
+        <div className="flex items-center space-x-3">
+          <div className="bg-blue-600 text-white p-2 rounded-lg">
+            <Calendar className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold text-gray-900">LeaveApp_SA</h1>
+          </div>
+        </div>
+      </SidebarHeader>
+
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navigationItems.map((item) => (
+                <SidebarMenuItem key={item.value}>
+                  <SidebarMenuButton
+                    isActive={activeTab === item.value}
+                    onClick={() => onTabChange(item.value)}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Role switcher for managers and admins */}
+        {(currentUser.role === 'manager' || currentUser.role === 'admin') && onRoleChange && (
+          <SidebarGroup>
+            <SidebarGroupLabel>View As</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <div className="space-y-1 px-2">
+                {currentUser.role === 'admin' && (
+                  <Button
+                    variant={userRole === 'employee' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => onRoleChange('employee')}
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Employee View
+                  </Button>
+                )}
+                {(currentUser.role === 'manager' || currentUser.role === 'admin') && (
+                  <Button
+                    variant={userRole === 'manager' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => onRoleChange('manager')}
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    Manager View
+                  </Button>
+                )}
+                {currentUser.role === 'admin' && (
+                  <Button
+                    variant={userRole === 'admin' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => onRoleChange('admin')}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Admin View
+                  </Button>
+                )}
+              </div>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+      </SidebarContent>
+
+      <SidebarFooter className="p-4">
+        <div className="space-y-3">
+          {/* User info */}
+          <div className="flex items-center space-x-3">
+            <Avatar>
+              <AvatarImage src={currentUser.avatar} />
+              <AvatarFallback className="bg-blue-100 text-blue-600">
+                {currentUser.name.split(' ').map((n: string) => n[0]).join('')}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">{currentUser.name}</p>
+              <p className="text-xs text-gray-500 truncate">{currentUser.department}</p>
+            </div>
+          </div>
+          
+          {/* Role badge */}
+          <Badge variant={userRole === 'admin' ? 'default' : userRole === 'manager' ? 'secondary' : 'outline'} className="w-full justify-center">
+            {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+          </Badge>
+          
+          {/* Sign out button */}
+          <Button variant="ghost" size="sm" onClick={handleSignOut} className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50">
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign out
+          </Button>
+        </div>
+      </SidebarFooter>
+    </Sidebar>
+  );
+};

@@ -4,10 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Settings, Users } from "lucide-react";
-import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from "@/components/ui/navigation-menu";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 import { EmployeeDashboard } from "@/components/EmployeeDashboard";
 import { ManagerDashboard } from "@/components/ManagerDashboard";
 import { AdminDashboard } from "@/components/AdminDashboard";
+import { AdminAllRequests } from "@/components/AdminAllRequests";
+import { AdminAllBalances } from "@/components/AdminAllBalances";
 import { LeaveRequestForm } from "@/components/LeaveRequestForm";
 import { HolidayCalendar } from "@/components/HolidayCalendar";
 import { PolicyGuide } from "@/components/PolicyGuide";
@@ -17,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ManualSignInForm } from "@/components/ManualSignInForm";
 import { ManualSignUpForm } from "@/components/ManualSignUpForm";
 import { AdminPanel } from "@/components/AdminPanel";
+import { ForfeitRibbon } from "@/components/ForfeitRibbon";
 
 const Index = () => {
   const {
@@ -142,169 +146,90 @@ const Index = () => {
     );
   }
 
-  // Role-based tab configuration
-  const getAvailableTabs = () => {
-    const baseTabs = [
-      {
-        value: "dashboard",
-        icon: Calendar,
-        label: userRole === 'employee' ? 'My Requests' : userRole === 'manager' ? 'Team Requests' : 'Admin Panel'
-      },
-      {
-        value: "balance",
-        icon: Calendar,
-        label: userRole === 'employee' ? 'Balance' : userRole === 'manager' ? 'Team Balances' : 'System Overview'
-      },
-      {
-        value: "holidays",
-        icon: Calendar,
-        label: "Holidays"
-      }
-    ];
-
-    // Add admin-specific tabs
-    if (userRole === 'admin') {
-      baseTabs.splice(2, 0, {
-        value: "user-management",
-        icon: Users,
-        label: "User Management"
-      });
-      baseTabs.splice(3, 0, {
-        value: "admin",
-        icon: Settings,
-        label: "Administration"
-      });
-    }
-
-    return baseTabs;
+  // Employee balance data for forfeit ribbon
+  const employeeBalance = {
+    broughtForward: 5,
+    annualUsed: 3
   };
 
-  const availableTabs = getAvailableTabs();
+  const renderMainContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return userRole === 'employee' ? (
+          <EmployeeDashboard onNewRequest={() => setShowRequestForm(true)} currentUser={currentUser} />
+        ) : userRole === 'manager' ? (
+          <ManagerDashboard currentUser={currentUser} />
+        ) : (
+          <AdminDashboard currentUser={currentUser} />
+        );
+
+      case 'balance':
+        return userRole === 'employee' ? (
+          <EmployeeDashboard onNewRequest={() => setShowRequestForm(true)} currentUser={currentUser} activeView="balance" />
+        ) : userRole === 'manager' ? (
+          <ManagerDashboard currentUser={currentUser} activeView="balance" />
+        ) : (
+          <AdminDashboard currentUser={currentUser} activeView="system" />
+        );
+
+      case 'all-requests':
+        return userRole === 'admin' ? <AdminAllRequests /> : null;
+
+      case 'all-balances':
+        return userRole === 'admin' ? <AdminAllBalances /> : null;
+
+      case 'user-management':
+        return userRole === 'admin' ? <AdminPanel currentUser={currentUser} /> : null;
+
+      case 'admin':
+        return userRole === 'admin' ? <AdminDashboard currentUser={currentUser} activeView="admin" /> : null;
+
+      case 'holidays':
+        return <HolidayCalendar userRole={userRole} />;
+
+      default:
+        return <div>Page not found</div>;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <div className="bg-blue-600 text-white p-2 rounded-lg">
-                <Calendar className="h-6 w-6" />
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AppSidebar 
+          currentUser={currentUser}
+          userRole={userRole}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onRoleChange={setUserRole}
+        />
+        <SidebarInset>
+          {/* Header */}
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+            <div className="flex-1" />
+            {/* Top right user info */}
+            <div className="flex items-center space-x-3">
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900">{currentUser.name}</p>
+                <p className="text-xs text-gray-500">{currentUser.email}</p>
               </div>
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">LeaveApp_SA</h1>
-              </div>
             </div>
+          </header>
+
+          {/* Main Content */}
+          <main className="flex-1 space-y-4 p-4 md:p-6">
+            {/* Forfeit ribbon for employees */}
+            {userRole === 'employee' && (
+              <ForfeitRibbon 
+                broughtForward={employeeBalance.broughtForward}
+                annualUsed={employeeBalance.annualUsed}
+              />
+            )}
             
-            {/* Horizontal Navigation Menu */}
-            <div className="flex-1 flex justify-center">
-              <NavigationMenu>
-                <NavigationMenuList className="flex space-x-1">
-                  {availableTabs.map(tab => (
-                    <NavigationMenuItem key={tab.value}>
-                      <NavigationMenuLink
-                        className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors cursor-pointer ${
-                          activeTab === tab.value
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                        }`}
-                        onClick={() => setActiveTab(tab.value)}
-                      >
-                        <tab.icon className="h-4 w-4" />
-                        <span>{tab.label}</span>
-                      </NavigationMenuLink>
-                    </NavigationMenuItem>
-                  ))}
-                </NavigationMenuList>
-              </NavigationMenu>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              {/* Role indicator */}
-              <Badge variant={userRole === 'admin' ? 'default' : userRole === 'manager' ? 'secondary' : 'outline'}>
-                {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
-              </Badge>
-
-              {/* Role switcher - only show for managers and admins */}
-              {(currentUser.role === 'manager' || currentUser.role === 'admin') && (
-                <div className="flex items-center space-x-2">
-                  {currentUser.role === 'admin' && (
-                    <Button
-                      variant={userRole === 'employee' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setUserRole('employee')}
-                    >
-                      Employee View
-                    </Button>
-                  )}
-                  {(currentUser.role === 'manager' || currentUser.role === 'admin') && (
-                    <Button
-                      variant={userRole === 'manager' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setUserRole('manager')}
-                    >
-                      Manager View
-                    </Button>
-                  )}
-                  {currentUser.role === 'admin' && (
-                    <Button
-                      variant={userRole === 'admin' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setUserRole('admin')}
-                    >
-                      Admin View
-                    </Button>
-                  )}
-                </div>
-              )}
-              
-              {/* User Dropdown */}
-              <UserDropdown currentUser={currentUser} />
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="space-y-6">
-          {activeTab === 'dashboard' && (
-            <>
-              {userRole === 'employee' ? (
-                <EmployeeDashboard onNewRequest={() => setShowRequestForm(true)} currentUser={currentUser} />
-              ) : userRole === 'manager' ? (
-                <ManagerDashboard currentUser={currentUser} />
-              ) : (
-                <AdminDashboard currentUser={currentUser} />
-              )}
-            </>
-          )}
-
-          {activeTab === 'balance' && (
-            <>
-              {userRole === 'employee' ? (
-                <EmployeeDashboard onNewRequest={() => setShowRequestForm(true)} currentUser={currentUser} activeView="balance" />
-              ) : userRole === 'manager' ? (
-                <ManagerDashboard currentUser={currentUser} activeView="balance" />
-              ) : (
-                <AdminDashboard currentUser={currentUser} activeView="system" />
-              )}
-            </>
-          )}
-
-          {activeTab === 'user-management' && userRole === 'admin' && (
-            <AdminPanel currentUser={currentUser} />
-          )}
-
-          {activeTab === 'admin' && userRole === 'admin' && (
-            <AdminDashboard currentUser={currentUser} activeView="admin" />
-          )}
-
-          {activeTab === 'holidays' && (
-            <HolidayCalendar userRole={userRole} />
-          )}
-        </div>
-      </main>
+            {renderMainContent()}
+          </main>
+        </SidebarInset>
+      </div>
 
       {/* Leave Request Form Modal */}
       {showRequestForm && (
@@ -314,7 +239,7 @@ const Index = () => {
           currentUser={currentUser}
         />
       )}
-    </div>
+    </SidebarProvider>
   );
 };
 

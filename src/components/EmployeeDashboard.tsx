@@ -4,23 +4,27 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Plus, Calendar, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { ForfeitRibbon } from "@/components/ForfeitRibbon";
+
 interface EmployeeDashboardProps {
   onNewRequest: () => void;
   currentUser: any;
   activeView?: 'requests' | 'balance';
 }
+
 export const EmployeeDashboard = ({
   onNewRequest,
   currentUser,
   activeView = 'requests'
 }: EmployeeDashboardProps) => {
-  // Sample leave balances
+  // Sample leave balances with forfeit calculation
   const leaveBalances = [{
     type: 'Annual',
     used: 8,
     total: 20,
     accrued: 12.5,
-    unit: 'days'
+    unit: 'days',
+    broughtForward: 5
   }, {
     type: 'Sick',
     used: 3,
@@ -130,6 +134,9 @@ export const EmployeeDashboard = ({
     }
   };
   if (activeView === 'balance') {
+    // Get annual leave data for forfeit calculation
+    const annualLeave = leaveBalances.find(b => b.type === 'Annual');
+    
     return <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
@@ -141,6 +148,14 @@ export const EmployeeDashboard = ({
             New Request
           </Button>
         </div>
+
+        {/* Forfeit ribbon */}
+        {annualLeave && (
+          <ForfeitRibbon 
+            broughtForward={annualLeave.broughtForward || 0}
+            annualUsed={annualLeave.used}
+          />
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {leaveBalances.map(balance => {
