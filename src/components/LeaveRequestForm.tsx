@@ -89,16 +89,20 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     }
   ];
 
-  // Public holidays for 2024
+  // South African public holidays for 2025
   const publicHolidays = [
-    new Date(2024, 0, 1),  // New Year's Day
-    new Date(2024, 0, 15), // Martin Luther King Jr. Day
-    new Date(2024, 1, 19), // Presidents' Day
-    new Date(2024, 4, 27), // Memorial Day
-    new Date(2024, 6, 4),  // Independence Day
-    new Date(2024, 8, 2),  // Labor Day
-    new Date(2024, 10, 28), // Thanksgiving Day
-    new Date(2024, 11, 25), // Christmas Day
+    new Date(2025, 0, 1),   // New Year's Day
+    new Date(2025, 2, 21),  // Human Rights Day
+    new Date(2025, 3, 18),  // Good Friday
+    new Date(2025, 3, 21),  // Family Day
+    new Date(2025, 3, 27),  // Freedom Day
+    new Date(2025, 4, 1),   // Workers' Day
+    new Date(2025, 5, 16),  // Youth Day
+    new Date(2025, 7, 9),   // National Women's Day
+    new Date(2025, 8, 24),  // Heritage Day
+    new Date(2025, 11, 16), // Day of Reconciliation
+    new Date(2025, 11, 25), // Christmas Day
+    new Date(2025, 11, 26), // Day of Goodwill
   ];
 
   const selectedLeaveType = leaveTypes.find(type => type.value === formData.leaveType);
@@ -323,7 +327,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                     </div>
                   </div>
                   <div className="text-xs text-blue-600 bg-blue-100 p-2 rounded mt-2">
-                    Working days exclude weekends and public holidays. 
+                    Working days exclude weekends and South African public holidays. 
                     {formData.isHalfDay && " Half-day requests count as 0.5 days per working day selected."}
                   </div>
                 </div>
