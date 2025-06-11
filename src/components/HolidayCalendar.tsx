@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CalendarDays, Settings } from "lucide-react";
+import { CalendarDays, Settings, Clock, Calendar, MapPin } from "lucide-react";
 
 interface HolidayCalendarProps {
   userRole?: 'employee' | 'manager' | 'admin';
@@ -255,7 +255,7 @@ export const HolidayCalendar = ({
                           <h4 className="font-medium text-gray-900">{holiday.name}</h4>
                           <p className="text-sm text-gray-600">{holiday.description}</p>
                           <div className="flex items-center space-x-2 mt-1">
-                            <CalendarIcon className="h-3 w-3 text-gray-400" />
+                            <Calendar className="h-3 w-3 text-gray-400" />
                             <span className="text-xs text-gray-500">
                               {new Date(holiday.date).toLocaleDateString('en-US', {
                             weekday: 'long',
