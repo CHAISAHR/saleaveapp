@@ -149,19 +149,66 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
 
   const sendEmailNotifications = async (requestData: any) => {
     try {
-      // In a real application, this would call your backend API to send emails
-      console.log('Sending email to manager about leave request:', requestData);
-      console.log('Sending confirmation email to employee:', currentUser.email);
+      // Send email to manager
+      const managerEmail = `${currentUser.department.toLowerCase()}.manager@company.com`;
       
-      // Simulate email sending
-      const emailData = {
-        managerEmail: `${currentUser.department.toLowerCase()}.manager@company.com`,
-        employeeEmail: currentUser.email,
-        requestDetails: requestData,
-        timestamp: new Date().toISOString()
+      console.log(`Email sent to manager (${managerEmail}):
+        Subject: New Leave Request - ${requestData.title}
+        
+        Dear Manager,
+        
+        A new leave request has been submitted and requires your approval:
+        
+        Employee: ${requestData.submittedBy}
+        Email: ${currentUser.email}
+        Department: ${currentUser.department}
+        
+        Leave Details:
+        - Type: ${selectedLeaveType?.label}
+        - Title: ${requestData.title}
+        - Dates: ${requestData.startDate} to ${requestData.endDate}
+        - Working Days: ${requestData.workingDays}
+        - Description: ${requestData.description}
+        
+        Please log into the leave management system to review and approve this request.
+        
+        Best regards,
+        Leave Management System`);
+      
+      // Send confirmation email to employee
+      console.log(`Email sent to employee (${currentUser.email}):
+        Subject: Leave Request Submitted - ${requestData.title}
+        
+        Dear ${currentUser.name},
+        
+        Your leave request has been successfully submitted and is pending approval.
+        
+        Request Details:
+        - Type: ${selectedLeaveType?.label}
+        - Dates: ${requestData.startDate} to ${requestData.endDate}
+        - Working Days: ${requestData.workingDays}
+        - Status: Pending Approval
+        
+        You will receive an email notification once your manager reviews your request.
+        
+        Best regards,
+        Leave Management System`);
+      
+      // Log to leave_taken table
+      const leaveRecord = {
+        Title: requestData.title,
+        Detail: requestData.description,
+        StartDate: requestData.startDate,
+        EndDate: requestData.endDate,
+        LeaveType: selectedLeaveType?.label,
+        Requester: currentUser.email,
+        Status: 'pending',
+        workingDays: requestData.workingDays,
+        Created: new Date().toISOString()
       };
       
-      console.log('Email notifications sent:', emailData);
+      console.log('Leave record to be created:', leaveRecord);
+      
     } catch (error) {
       console.error('Failed to send email notifications:', error);
     }

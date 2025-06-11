@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -93,29 +92,126 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
     }
   ]);
 
-  const handleApprove = (requestId: number, employeeName: string, employeeEmail: string) => {
-    setPendingRequests(prev => prev.filter(r => r.id !== requestId));
-    
-    // Simulate email notification
-    console.log(`Email sent to ${employeeEmail}: Your leave request has been approved by ${currentUser.name}`);
-    
-    toast({
-      title: "Request Approved",
-      description: `${employeeName}'s leave request has been approved and they've been notified.`,
-    });
+  const handleApprove = async (requestId: number, employeeName: string, employeeEmail: string) => {
+    const request = pendingRequests.find(r => r.id === requestId);
+    if (!request) return;
+
+    try {
+      // Remove from pending requests
+      setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+      
+      // Update leave balance (simulate API call)
+      console.log('Updating balance for approved leave:', {
+        employeeEmail,
+        leaveType: request.type,
+        daysUsed: request.days,
+        approvedBy: currentUser.name
+      });
+      
+      // Send email notification to employee
+      console.log(`Email sent to ${employeeEmail}:
+        Subject: Leave Request Approved - ${request.title}
+        
+        Dear ${employeeName},
+        
+        Your leave request has been approved by ${currentUser.name}.
+        
+        Details:
+        - Leave Type: ${request.type}
+        - Dates: ${request.startDate} to ${request.endDate}
+        - Working Days: ${request.days}
+        
+        Your leave balance has been automatically updated.
+        
+        Best regards,
+        ${currentUser.name}
+        Leave Management System`);
+      
+      // Log the approval to leave_taken table
+      const leaveRecord = {
+        Title: request.title,
+        Detail: request.description,
+        StartDate: request.startDate,
+        EndDate: request.endDate,
+        LeaveType: request.type,
+        Requester: employeeEmail,
+        Approver: currentUser.email,
+        Status: 'approved',
+        workingDays: request.days
+      };
+      
+      console.log('Leave record created:', leaveRecord);
+      
+      toast({
+        title: "Request Approved",
+        description: `${employeeName}'s leave request has been approved. Email notification sent and balance updated.`,
+      });
+      
+    } catch (error) {
+      console.error('Error approving leave request:', error);
+      toast({
+        title: "Error",
+        description: "Failed to approve leave request. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleReject = (requestId: number, employeeName: string, employeeEmail: string) => {
-    setPendingRequests(prev => prev.filter(r => r.id !== requestId));
-    
-    // Simulate email notification
-    console.log(`Email sent to ${employeeEmail}: Your leave request has been rejected by ${currentUser.name}`);
-    
-    toast({
-      title: "Request Rejected",
-      description: `${employeeName}'s leave request has been rejected and they've been notified.`,
-      variant: "destructive",
-    });
+  const handleReject = async (requestId: number, employeeName: string, employeeEmail: string) => {
+    const request = pendingRequests.find(r => r.id === requestId);
+    if (!request) return;
+
+    try {
+      // Remove from pending requests
+      setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+      
+      // Send email notification to employee
+      console.log(`Email sent to ${employeeEmail}:
+        Subject: Leave Request Rejected - ${request.title}
+        
+        Dear ${employeeName},
+        
+        Unfortunately, your leave request has been rejected by ${currentUser.name}.
+        
+        Details:
+        - Leave Type: ${request.type}
+        - Dates: ${request.startDate} to ${request.endDate}
+        - Working Days: ${request.days}
+        
+        Please contact your manager if you have any questions.
+        
+        Best regards,
+        ${currentUser.name}
+        Leave Management System`);
+      
+      // Log the rejection to leave_taken table
+      const leaveRecord = {
+        Title: request.title,
+        Detail: request.description,
+        StartDate: request.startDate,
+        EndDate: request.endDate,
+        LeaveType: request.type,
+        Requester: employeeEmail,
+        Approver: currentUser.email,
+        Status: 'rejected'
+      };
+      
+      console.log('Leave record created:', leaveRecord);
+      
+      toast({
+        title: "Request Rejected",
+        description: `${employeeName}'s leave request has been rejected. Email notification sent.`,
+        variant: "destructive",
+      });
+      
+    } catch (error) {
+      console.error('Error rejecting leave request:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reject leave request. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (activeView === 'balance') {

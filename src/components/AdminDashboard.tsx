@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,10 +12,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Users, Calendar as CalendarIcon, Database, Settings, Plus, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { AdminBalanceManager } from "./AdminBalanceManager";
 
 interface AdminDashboardProps {
   currentUser: any;
-  activeView?: 'dashboard' | 'system' | 'admin';
+  activeView?: 'dashboard' | 'system' | 'admin' | 'balances';
 }
 
 export const AdminDashboard = ({ currentUser, activeView = 'dashboard' }: AdminDashboardProps) => {
@@ -91,6 +91,10 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard' }: AdminD
       description: `${holidayName} has been removed from the calendar.`,
     });
   };
+
+  if (activeView === 'balances') {
+    return <AdminBalanceManager />;
+  }
 
   if (activeView === 'system') {
     return (
