@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { CalendarIcon, Info } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CalendarIcon, Info, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
@@ -147,6 +149,22 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     return 0;
   };
 
+  // Check if balance is insufficient
+  const isBalanceInsufficient = () => {
+    if (!selectedLeaveType) return false;
+    const workingDays = calculateWorkingDays();
+    return selectedLeaveType.balance < workingDays;
+  };
+
+  // Check if sick leave requires medical certificate
+  const requiresMedicalCertificate = () => {
+    if (formData.leaveType === 'sick') {
+      const workingDays = calculateWorkingDays();
+      return workingDays > 1;
+    }
+    return false;
+  };
+
   const sendEmailNotifications = async (requestData: any) => {
     try {
       // Send email to manager
@@ -169,11 +187,39 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         - Dates: ${requestData.startDate} to ${requestData.endDate}
         - Working Days: ${requestData.workingDays}
         - Description: ${requestData.description}
+        ${requestData.requiresHRApproval ? '\n⚠️ REQUIRES HR APPROVAL: Insufficient leave balance' : ''}
+        ${requestData.requiresMedicalCert ? '\n📄 REQUIRES: Medical certificate to be forwarded to HR' : ''}
         
         Please log into the leave management system to review and approve this request.
         
         Best regards,
         Leave Management System`);
+      
+      // Send email to HR if required
+      if (requestData.requiresHRApproval) {
+        console.log(`Email sent to HR (hr@company.com):
+          Subject: Leave Request Requires HR Approval - ${requestData.title}
+          
+          Dear HR Team,
+          
+          A leave request has been submitted that requires HR approval due to insufficient leave balance:
+          
+          Employee: ${requestData.submittedBy}
+          Email: ${currentUser.email}
+          Department: ${currentUser.department}
+          Manager: ${managerEmail}
+          
+          Leave Details:
+          - Type: ${selectedLeaveType?.label}
+          - Available Balance: ${selectedLeaveType?.balance} days
+          - Requested: ${requestData.workingDays} days
+          - Shortfall: ${requestData.workingDays - (selectedLeaveType?.balance || 0)} days
+          
+          Please review this request for final approval after manager approval.
+          
+          Best regards,
+          Leave Management System`);
+      }
       
       // Send confirmation email to employee
       console.log(`Email sent to employee (${currentUser.email}):
@@ -188,6 +234,8 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         - Dates: ${requestData.startDate} to ${requestData.endDate}
         - Working Days: ${requestData.workingDays}
         - Status: Pending Approval
+        ${requestData.requiresHRApproval ? '\n⚠️ Note: This request requires HR approval due to insufficient balance' : ''}
+        ${requestData.requiresMedicalCert ? '\n📄 Action Required: Please forward medical certificate to HR' : ''}
         
         You will receive an email notification once your manager reviews your request.
         
@@ -204,7 +252,8 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         Requester: currentUser.email,
         Status: 'pending',
         workingDays: requestData.workingDays,
-        Created: new Date().toISOString()
+        Created: new Date().toISOString(),
+        requiresHRApproval: requestData.requiresHRApproval
       };
       
       console.log('Leave record to be created:', leaveRecord);
@@ -227,13 +276,17 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     }
 
     const workingDays = calculateWorkingDays();
+    const requiresHRApproval = isBalanceInsufficient();
+    const requiresMedicalCert = requiresMedicalCertificate();
     
     const requestData = {
       ...formData,
       workingDays,
       submittedBy: currentUser.name,
       submittedDate: new Date().toISOString(),
-      status: 'pending'
+      status: 'pending',
+      requiresHRApproval,
+      requiresMedicalCert
     };
 
     console.log("Leave request submitted:", requestData);
@@ -241,9 +294,19 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     // Send email notifications
     await sendEmailNotifications(requestData);
 
+    let toastMessage = `Your ${selectedLeaveType?.label.toLowerCase()} request for ${workingDays} working day${workingDays > 1 ? 's' : ''} has been submitted for approval.`;
+    
+    if (requiresHRApproval) {
+      toastMessage += " This request requires HR approval due to insufficient balance.";
+    }
+    
+    if (requiresMedicalCert) {
+      toastMessage += " Please forward medical certificate to HR.";
+    }
+
     toast({
       title: "Request Submitted",
-      description: `Your ${selectedLeaveType?.label.toLowerCase()} request for ${workingDays} working day${workingDays > 1 ? 's' : ''} has been submitted for approval. Email notifications have been sent.`,
+      description: toastMessage,
     });
 
     onClose();
@@ -351,6 +414,31 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
               Half Day Request
             </Label>
           </div>
+
+          {/* Validation Alerts */}
+          {selectedLeaveType && formData.startDate && formData.endDate && (
+            <div className="space-y-3">
+              {/* Insufficient Balance Alert */}
+              {isBalanceInsufficient() && (
+                <Alert className="border-orange-200 bg-orange-50">
+                  <AlertTriangle className="h-4 w-4 text-orange-600" />
+                  <AlertDescription className="text-orange-800">
+                    <strong>HR Approval Required:</strong> Your available balance ({selectedLeaveType.balance} days) is less than the requested days ({calculateWorkingDays()} days). This request will be forwarded to HR for final approval after manager approval.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Medical Certificate Alert */}
+              {requiresMedicalCertificate() && (
+                <Alert className="border-blue-200 bg-blue-50">
+                  <Info className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-blue-800">
+                    <strong>Medical Certificate Required:</strong> For sick leave exceeding 1 day, please forward a medical certificate to HR.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          )}
 
           {formData.startDate && formData.endDate && (
             <Card className="border-blue-200 bg-blue-50">
