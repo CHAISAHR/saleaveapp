@@ -36,20 +36,53 @@ export interface LeaveRequest {
 }
 
 class BalanceService {
-  // Calculate monthly accrual (1.6667 days per month)
+  // Calculate monthly accrual for annual leave (20/12 = 1.6667 days per month)
   calculateMonthlyAccrual(monthsWorked: number): number {
-    return Number((monthsWorked * 1.6667).toFixed(1));
+    return Number((monthsWorked * (20/12)).toFixed(1));
   }
 
   // Calculate current annual leave balance
-  calculateCurrentBalance(balance: EmployeeBalance): number {
+  // Formula: Broughtforward + Monthly Earned (20/12 per month) - AnnualUsed - Forfeited - Annual_leave_adjustments
+  calculateAnnualLeaveBalance(balance: EmployeeBalance, monthsWorked: number = 12): number {
+    const monthlyEarned = this.calculateMonthlyAccrual(monthsWorked);
     return Number((
       balance.Broughtforward + 
-      balance.Annual - 
+      monthlyEarned - 
       balance.AnnualUsed - 
       balance.Forfeited - 
       balance.Annual_leave_adjustments
     ).toFixed(1));
+  }
+
+  // Calculate current balance for other leave types (yearly allocation - used)
+  calculateOtherLeaveBalance(yearlyAllocation: number, used: number): number {
+    return Number((yearlyAllocation - used).toFixed(1));
+  }
+
+  // Calculate current balance based on leave type
+  calculateCurrentBalance(balance: EmployeeBalance, leaveType: string = 'annual', monthsWorked: number = 12): number {
+    switch (leaveType.toLowerCase()) {
+      case 'annual':
+        return this.calculateAnnualLeaveBalance(balance, monthsWorked);
+      case 'sick':
+        return this.calculateOtherLeaveBalance(36, balance.SickUsed);
+      case 'maternity':
+        return this.calculateOtherLeaveBalance(90, balance.MaternityUsed);
+      case 'parental':
+        return this.calculateOtherLeaveBalance(20, balance.ParentalUsed);
+      case 'family':
+        return this.calculateOtherLeaveBalance(3, balance.FamilyUsed);
+      case 'adoption':
+        return this.calculateOtherLeaveBalance(20, balance.AdoptionUsed);
+      case 'study':
+        return this.calculateOtherLeaveBalance(6, balance.StudyUsed);
+      case 'wellness':
+      case 'mentalhealth':
+        return this.calculateOtherLeaveBalance(2, balance.MentalhealthUsed);
+      default:
+        // Default to annual leave calculation
+        return this.calculateAnnualLeaveBalance(balance, monthsWorked);
+    }
   }
 
   // Update balance when leave is approved
@@ -80,7 +113,7 @@ class BalanceService {
     console.log(`Fetching balance for ${employeeEmail} for year ${year}`);
     
     // Mock data for now
-    return {
+    const mockBalance = {
       BalanceID: 1,
       EmployeeName: "John Smith",
       EmployeeEmail: employeeEmail,
@@ -98,36 +131,55 @@ class BalanceService {
       AdoptionUsed: 0,
       StudyUsed: 0,
       MentalhealthUsed: 0,
-      Current_leave_balance: 17,
+      Current_leave_balance: 0, // Will be calculated
       Manager: "sarah.johnson@company.com"
     };
+
+    // Calculate current annual leave balance
+    mockBalance.Current_leave_balance = this.calculateAnnualLeaveBalance(mockBalance, 12);
+
+    return mockBalance;
   }
 
   // Validate if employee has sufficient balance
-  validateLeaveBalance(balance: EmployeeBalance, leaveType: string, requestedDays: number): boolean {
-    const currentBalance = this.calculateCurrentBalance(balance);
+  validateLeaveBalance(balance: EmployeeBalance, leaveType: string, requestedDays: number, monthsWorked: number = 12): boolean {
+    const currentBalance = this.calculateCurrentBalance(balance, leaveType, monthsWorked);
     
     switch (leaveType.toLowerCase()) {
       case 'annual':
         return currentBalance >= requestedDays;
       case 'sick':
-        return (36 - balance.SickUsed) >= requestedDays;
+        return this.calculateOtherLeaveBalance(36, balance.SickUsed) >= requestedDays;
       case 'family':
-        return (3 - balance.FamilyUsed) >= requestedDays;
+        return this.calculateOtherLeaveBalance(3, balance.FamilyUsed) >= requestedDays;
       case 'study':
-        return (6 - balance.StudyUsed) >= requestedDays;
+        return this.calculateOtherLeaveBalance(6, balance.StudyUsed) >= requestedDays;
       case 'wellness':
       case 'mentalhealth':
-        return (2 - balance.MentalhealthUsed) >= requestedDays;
+        return this.calculateOtherLeaveBalance(2, balance.MentalhealthUsed) >= requestedDays;
       case 'maternity':
-        return (90 - balance.MaternityUsed) >= requestedDays;
+        return this.calculateOtherLeaveBalance(90, balance.MaternityUsed) >= requestedDays;
       case 'parental':
-        return (20 - balance.ParentalUsed) >= requestedDays;
+        return this.calculateOtherLeaveBalance(20, balance.ParentalUsed) >= requestedDays;
       case 'adoption':
-        return (20 - balance.AdoptionUsed) >= requestedDays;
+        return this.calculateOtherLeaveBalance(20, balance.AdoptionUsed) >= requestedDays;
       default:
         return false;
     }
+  }
+
+  // Get all leave balances for an employee
+  getAllLeaveBalances(balance: EmployeeBalance, monthsWorked: number = 12) {
+    return {
+      annual: this.calculateAnnualLeaveBalance(balance, monthsWorked),
+      sick: this.calculateOtherLeaveBalance(36, balance.SickUsed),
+      maternity: this.calculateOtherLeaveBalance(90, balance.MaternityUsed),
+      parental: this.calculateOtherLeaveBalance(20, balance.ParentalUsed),
+      family: this.calculateOtherLeaveBalance(3, balance.FamilyUsed),
+      adoption: this.calculateOtherLeaveBalance(20, balance.AdoptionUsed),
+      study: this.calculateOtherLeaveBalance(6, balance.StudyUsed),
+      wellness: this.calculateOtherLeaveBalance(2, balance.MentalhealthUsed)
+    };
   }
 }
 
