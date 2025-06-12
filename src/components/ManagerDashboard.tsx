@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, XCircle, AlertCircle, Clock, Users, Calendar, Mail } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Clock, Users, Calendar, Mail, Ban } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { emailService } from "@/services/emailService";
+import { balanceService } from "@/services/balanceService";
 
 interface ManagerDashboardProps {
   currentUser: any;
@@ -15,7 +17,7 @@ interface ManagerDashboardProps {
 export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: ManagerDashboardProps) => {
   const { toast } = useToast();
   
-  // Sample team data
+  // Sample team data with only Annual, Wellness, and Study leave
   const teamMembers = [
     {
       id: 1,
@@ -24,8 +26,8 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
       department: "Marketing",
       balances: {
         annual: { used: 5, total: 20 },
-        sick: { used: 2, total: 36 },
-        family: { used: 0, total: 3 }
+        wellness: { used: 0, total: 2 },
+        study: { used: 0, total: 6 }
       }
     },
     {
@@ -35,8 +37,8 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
       department: "Marketing",
       balances: {
         annual: { used: 12, total: 20 },
-        sick: { used: 4, total: 36 },
-        family: { used: 1, total: 3 }
+        wellness: { used: 1, total: 2 },
+        study: { used: 2, total: 6 }
       }
     },
     {
@@ -46,8 +48,8 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
       department: "Marketing",
       balances: {
         annual: { used: 8, total: 20 },
-        sick: { used: 1, total: 36 },
-        family: { used: 0, total: 3 }
+        wellness: { used: 0, total: 2 },
+        study: { used: 0, total: 6 }
       }
     }
   ];
@@ -89,6 +91,65 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
       days: 2,
       submittedDate: "2024-06-20",
       description: "Attending advanced marketing workshop"
+    }
+  ]);
+
+  // Sample historic leave requests for current year
+  const [historicRequests, setHistoricRequests] = useState([
+    {
+      id: 101,
+      employeeName: "John Smith",
+      employeeEmail: "john.smith@company.com",
+      title: "Summer Vacation",
+      type: "Annual",
+      startDate: "2024-03-15",
+      endDate: "2024-03-19",
+      days: 5,
+      submittedDate: "2024-02-20",
+      approvedDate: "2024-02-22",
+      description: "Family vacation",
+      status: "approved"
+    },
+    {
+      id: 102,
+      employeeName: "Emily Davis",
+      employeeEmail: "emily.davis@company.com",
+      title: "Mental Health Day",
+      type: "Wellness",
+      startDate: "2024-04-10",
+      endDate: "2024-04-10",
+      days: 1,
+      submittedDate: "2024-04-08",
+      approvedDate: "2024-04-09",
+      description: "Personal wellness day",
+      status: "approved"
+    },
+    {
+      id: 103,
+      employeeName: "Michael Brown",
+      employeeEmail: "michael.brown@company.com",
+      title: "Conference Attendance",
+      type: "Study",
+      startDate: "2024-05-20",
+      endDate: "2024-05-21",
+      days: 2,
+      submittedDate: "2024-05-01",
+      description: "Marketing conference",
+      status: "rejected"
+    },
+    {
+      id: 104,
+      employeeName: "John Smith",
+      employeeEmail: "john.smith@company.com",
+      title: "Sick Leave",
+      type: "Sick",
+      startDate: "2024-06-05",
+      endDate: "2024-06-06",
+      days: 2,
+      submittedDate: "2024-06-05",
+      approvedDate: "2024-06-05",
+      description: "Flu symptoms",
+      status: "approved"
     }
   ]);
 
@@ -214,13 +275,85 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
     }
   };
 
+  const handleCancelApprovedLeave = async (requestId: number, employeeName: string, employeeEmail: string) => {
+    const request = historicRequests.find(r => r.id === requestId);
+    if (!request || request.status !== 'approved') return;
+
+    try {
+      // Update status to cancelled
+      setHistoricRequests(prev => prev.map(r => 
+        r.id === requestId ? { ...r, status: 'cancelled' } : r
+      ));
+      
+      // Add back leave days to balance
+      console.log('Adding back leave days:', {
+        employeeEmail,
+        leaveType: request.type,
+        daysToAddBack: request.days,
+        cancelledBy: currentUser.name
+      });
+      
+      // Send notification to employee
+      await emailService.notifyEmployeeOfRejection({
+        Requester: employeeEmail,
+        Title: request.title,
+        LeaveType: request.type,
+        StartDate: request.startDate,
+        EndDate: request.endDate,
+        workingDays: request.days
+      }, currentUser.name, "Leave has been cancelled by manager");
+      
+      // Send notification to admin
+      console.log(`Email sent to admin:
+        Subject: Leave Cancellation - ${request.title}
+        
+        A previously approved leave has been cancelled:
+        
+        Employee: ${employeeName}
+        Leave Type: ${request.type}
+        Dates: ${request.startDate} to ${request.endDate}
+        Working Days: ${request.days}
+        Cancelled by: ${currentUser.name}
+        
+        Leave balance has been automatically restored.`);
+      
+      toast({
+        title: "Leave Cancelled",
+        description: `${employeeName}'s leave has been cancelled and balance restored. Notifications sent.`,
+      });
+      
+    } catch (error) {
+      console.error('Error cancelling leave:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel leave. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const variants = {
+      approved: "default",
+      pending: "secondary", 
+      rejected: "destructive",
+      cancelled: "outline"
+    };
+    
+    return (
+      <Badge variant={variants[status as keyof typeof variants] || "secondary"}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </Badge>
+    );
+  };
+
   if (activeView === 'balance') {
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Team Leave Balances</h2>
-            <p className="text-gray-600">Monitor your team's leave usage and availability</p>
+            <p className="text-gray-600">Monitor your team's Annual, Wellness, and Study leave usage</p>
           </div>
         </div>
 
@@ -257,26 +390,26 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
                   
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-600">Sick Leave</span>
+                      <span className="text-sm font-medium text-gray-600">Wellness Leave</span>
                       <span className="text-sm text-gray-500">
-                        {member.balances.sick.total - member.balances.sick.used} / {member.balances.sick.total} days
+                        {member.balances.wellness.total - member.balances.wellness.used} / {member.balances.wellness.total} days
                       </span>
                     </div>
                     <Progress 
-                      value={(member.balances.sick.used / member.balances.sick.total) * 100} 
+                      value={(member.balances.wellness.used / member.balances.wellness.total) * 100} 
                       className="h-2"
                     />
                   </div>
                   
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-600">Family Leave</span>
+                      <span className="text-sm font-medium text-gray-600">Study Leave</span>
                       <span className="text-sm text-gray-500">
-                        {member.balances.family.total - member.balances.family.used} / {member.balances.family.total} days
+                        {member.balances.study.total - member.balances.study.used} / {member.balances.study.total} days
                       </span>
                     </div>
                     <Progress 
-                      value={(member.balances.family.used / member.balances.family.total) * 100} 
+                      value={(member.balances.study.used / member.balances.study.total) * 100} 
                       className="h-2"
                     />
                   </div>
@@ -302,14 +435,16 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
               
               <div className="text-center p-4 bg-green-50 rounded-lg">
                 <div className="text-2xl font-bold text-green-600">
-                  {Math.round(teamMembers.reduce((acc, member) => acc + ((member.balances.annual.total - member.balances.annual.used) / member.balances.annual.total), 0) / teamMembers.length * 100)}%
+                  {teamMembers.reduce((acc, member) => acc + (member.balances.wellness.total - member.balances.wellness.used), 0)}
                 </div>
-                <div className="text-sm text-green-700">Average Available</div>
+                <div className="text-sm text-green-700">Total Wellness Days Available</div>
               </div>
               
-              <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                <div className="text-2xl font-bold text-yellow-600">{pendingRequests.length}</div>
-                <div className="text-sm text-yellow-700">Pending Approvals</div>
+              <div className="text-center p-4 bg-purple-50 rounded-lg">
+                <div className="text-2xl font-bold text-purple-600">
+                  {teamMembers.reduce((acc, member) => acc + (member.balances.study.total - member.balances.study.used), 0)}
+                </div>
+                <div className="text-sm text-purple-700">Total Study Days Available</div>
               </div>
             </div>
           </CardContent>
@@ -364,8 +499,8 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
                 <Calendar className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">This Month</p>
-                <p className="text-2xl font-bold text-gray-900">12</p>
+                <p className="text-sm text-gray-600">This Year</p>
+                <p className="text-2xl font-bold text-gray-900">{historicRequests.length}</p>
               </div>
             </div>
           </CardContent>
@@ -453,6 +588,65 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
               ))}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Historic Leave Requests */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Calendar className="h-5 w-5 text-blue-500" />
+            <span>Leave History - {new Date().getFullYear()}</span>
+          </CardTitle>
+          <CardDescription>All leave requests for the current year</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {historicRequests.map((request) => (
+              <div key={request.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <Avatar>
+                      <AvatarFallback className="bg-blue-100 text-blue-600">
+                        {request.employeeName.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h4 className="font-medium text-gray-900">{request.title}</h4>
+                      <p className="text-sm text-gray-600">{request.employeeName} • {request.description}</p>
+                      <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
+                        <span>{request.startDate} to {request.endDate}</span>
+                        <span>{request.days} day{request.days > 1 ? 's' : ''}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {request.type} Leave
+                        </Badge>
+                        {getStatusBadge(request.status)}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    {request.status === 'approved' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleCancelApprovedLeave(request.id, request.employeeName, request.employeeEmail)}
+                        className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                      >
+                        <Ban className="h-4 w-4 mr-1" />
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="mt-3 text-xs text-gray-400">
+                  Submitted: {request.submittedDate}
+                  {request.approvedDate && ` • Approved: ${request.approvedDate}`}
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>
