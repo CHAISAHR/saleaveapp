@@ -333,18 +333,18 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
   };
 
   const getStatusBadge = (status: string) => {
-    const variants = {
-      approved: "default",
-      pending: "secondary", 
-      rejected: "destructive",
-      cancelled: "outline"
-    };
-    
-    return (
-      <Badge variant={variants[status as keyof typeof variants] || "secondary"}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
-    );
+    switch (status) {
+      case 'approved':
+        return <Badge variant="default">Approved</Badge>;
+      case 'pending':
+        return <Badge variant="secondary">Pending</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive">Rejected</Badge>;
+      case 'cancelled':
+        return <Badge variant="outline">Cancelled</Badge>;
+      default:
+        return <Badge variant="secondary">Unknown</Badge>;
+    }
   };
 
   if (activeView === 'balance') {
