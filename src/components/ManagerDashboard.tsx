@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, XCircle, AlertCircle, Clock, Users, Calendar, Mail, Ban } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { CheckCircle, XCircle, AlertCircle, Clock, Users, Calendar, Mail, Ban, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { emailService } from "@/services/emailService";
 import { balanceService } from "@/services/balanceService";
@@ -17,17 +18,35 @@ interface ManagerDashboardProps {
 export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: ManagerDashboardProps) => {
   const { toast } = useToast();
   
-  // Sample team data with only Annual, Wellness, and Study leave
+  // Sample team data with balances from leave_balances table structure
   const teamMembers = [
     {
       id: 1,
       name: "John Smith",
       email: "john.smith@company.com",
       department: "Marketing",
-      balances: {
-        annual: { used: 5, total: 20 },
-        wellness: { used: 0, total: 2 },
-        study: { used: 0, total: 6 }
+      leaveBalance: {
+        BalanceID: 1,
+        EmployeeName: "John Smith",
+        EmployeeEmail: "john.smith@company.com",
+        Department: "Marketing",
+        Year: 2025,
+        Broughtforward: 5,
+        Annual: 20,
+        AnnualUsed: 8,
+        Forfeited: 0,
+        Annual_leave_adjustments: 0,
+        SickBroughtforward: 2,
+        Sick: 36,
+        SickUsed: 2,
+        MaternityUsed: 0,
+        ParentalUsed: 0,
+        FamilyUsed: 1,
+        AdoptionUsed: 0,
+        StudyUsed: 0,
+        MentalhealthUsed: 0,
+        Current_leave_balance: 17,
+        Manager: "sarah.johnson@company.com"
       }
     },
     {
@@ -35,10 +54,28 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
       name: "Emily Davis",
       email: "emily.davis@company.com",
       department: "Marketing",
-      balances: {
-        annual: { used: 12, total: 20 },
-        wellness: { used: 1, total: 2 },
-        study: { used: 2, total: 6 }
+      leaveBalance: {
+        BalanceID: 2,
+        EmployeeName: "Emily Davis",
+        EmployeeEmail: "emily.davis@company.com",
+        Department: "Marketing",
+        Year: 2025,
+        Broughtforward: 3,
+        Annual: 20,
+        AnnualUsed: 12,
+        Forfeited: 0,
+        Annual_leave_adjustments: 0,
+        SickBroughtforward: 5,
+        Sick: 36,
+        SickUsed: 4,
+        MaternityUsed: 0,
+        ParentalUsed: 0,
+        FamilyUsed: 1,
+        AdoptionUsed: 0,
+        StudyUsed: 2,
+        MentalhealthUsed: 0,
+        Current_leave_balance: 11,
+        Manager: "sarah.johnson@company.com"
       }
     },
     {
@@ -46,10 +83,28 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
       name: "Michael Brown",
       email: "michael.brown@company.com",
       department: "Marketing",
-      balances: {
-        annual: { used: 8, total: 20 },
-        wellness: { used: 0, total: 2 },
-        study: { used: 0, total: 6 }
+      leaveBalance: {
+        BalanceID: 3,
+        EmployeeName: "Michael Brown",
+        EmployeeEmail: "michael.brown@company.com",
+        Department: "Marketing",
+        Year: 2025,
+        Broughtforward: 8,
+        Annual: 20,
+        AnnualUsed: 8,
+        Forfeited: 0,
+        Annual_leave_adjustments: 0,
+        SickBroughtforward: 0,
+        Sick: 36,
+        SickUsed: 0,
+        MaternityUsed: 0,
+        ParentalUsed: 0,
+        FamilyUsed: 0,
+        AdoptionUsed: 0,
+        StudyUsed: 0,
+        MentalhealthUsed: 0,
+        Current_leave_balance: 20,
+        Manager: "sarah.johnson@company.com"
       }
     }
   ];
@@ -108,7 +163,10 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
       submittedDate: "2024-02-20",
       approvedDate: "2024-02-22",
       description: "Family vacation",
-      status: "approved"
+      status: "approved",
+      created: "2024-02-20T10:00:00Z",
+      modified: "2024-02-22T14:30:00Z",
+      modifiedBy: "sarah.johnson@company.com"
     },
     {
       id: 102,
@@ -122,7 +180,10 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
       submittedDate: "2024-04-08",
       approvedDate: "2024-04-09",
       description: "Personal wellness day",
-      status: "approved"
+      status: "approved",
+      created: "2024-04-08T09:00:00Z",
+      modified: "2024-04-09T11:15:00Z",
+      modifiedBy: "sarah.johnson@company.com"
     },
     {
       id: 103,
@@ -135,7 +196,10 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
       days: 2,
       submittedDate: "2024-05-01",
       description: "Marketing conference",
-      status: "rejected"
+      status: "rejected",
+      created: "2024-05-01T10:00:00Z",
+      modified: "2024-05-02T16:00:00Z",
+      modifiedBy: "sarah.johnson@company.com"
     },
     {
       id: 104,
@@ -149,9 +213,37 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
       submittedDate: "2024-06-05",
       approvedDate: "2024-06-05",
       description: "Flu symptoms",
-      status: "approved"
+      status: "approved",
+      created: "2024-06-05T08:00:00Z",
+      modified: "2024-06-05T08:30:00Z",
+      modifiedBy: "sarah.johnson@company.com"
     }
   ]);
+
+  const calculateLeaveBalance = (balance: any, leaveType: string) => {
+    switch (leaveType.toLowerCase()) {
+      case 'annual':
+        // Broughtforward + monthly earned (20/12 per month * 12) - AnnualUsed - Forfeited - Annual_leave_adjustments
+        return balance.Broughtforward + 20 - balance.AnnualUsed - balance.Forfeited - balance.Annual_leave_adjustments;
+      case 'sick':
+        return 36 - balance.SickUsed;
+      case 'family':
+        return 3 - balance.FamilyUsed;
+      case 'study':
+        return 6 - balance.StudyUsed;
+      case 'wellness':
+      case 'mentalhealth':
+        return 2 - balance.MentalhealthUsed;
+      case 'maternity':
+        return 90 - balance.MaternityUsed;
+      case 'parental':
+        return 20 - balance.ParentalUsed;
+      case 'adoption':
+        return 20 - balance.AdoptionUsed;
+      default:
+        return 0;
+    }
+  };
 
   const handleApprove = async (requestId: number, employeeName: string, employeeEmail: string) => {
     const request = pendingRequests.find(r => r.id === requestId);
@@ -353,98 +445,137 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Team Leave Balances</h2>
-            <p className="text-gray-600">Monitor your team's Annual, Wellness, and Study leave usage</p>
+            <p className="text-gray-600">Monitor your team's leave usage from leave_balances data</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-6">
-          {teamMembers.map((member) => (
-            <Card key={member.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-center space-x-4">
-                  <Avatar>
-                    <AvatarFallback className="bg-blue-100 text-blue-600">
-                      {member.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <CardTitle className="text-lg">{member.name}</CardTitle>
-                    <CardDescription>{member.email}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-600">Annual Leave</span>
-                      <span className="text-sm text-gray-500">
-                        {member.balances.annual.total - member.balances.annual.used} / {member.balances.annual.total} days
-                      </span>
+          {teamMembers.map((member) => {
+            const annualBalance = calculateLeaveBalance(member.leaveBalance, 'annual');
+            const sickBalance = calculateLeaveBalance(member.leaveBalance, 'sick');
+            const studyBalance = calculateLeaveBalance(member.leaveBalance, 'study');
+            const wellnessBalance = calculateLeaveBalance(member.leaveBalance, 'wellness');
+            
+            return (
+              <Card key={member.id} className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center space-x-4">
+                    <Avatar>
+                      <AvatarFallback className="bg-blue-100 text-blue-600">
+                        {member.name.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <CardTitle className="text-lg">{member.name}</CardTitle>
+                      <CardDescription>{member.email}</CardDescription>
                     </div>
-                    <Progress 
-                      value={(member.balances.annual.used / member.balances.annual.total) * 100} 
-                      className="h-2"
-                    />
                   </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-600">Wellness Leave</span>
-                      <span className="text-sm text-gray-500">
-                        {member.balances.wellness.total - member.balances.wellness.used} / {member.balances.wellness.total} days
-                      </span>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-600">Annual Leave</span>
+                        <span className="text-sm text-gray-500">
+                          {annualBalance} / 20 days
+                        </span>
+                      </div>
+                      <Progress 
+                        value={((20 - annualBalance) / 20) * 100} 
+                        className="h-2"
+                      />
+                      <div className="text-xs text-gray-400">
+                        Used: {member.leaveBalance.AnnualUsed} | BF: {member.leaveBalance.Broughtforward}
+                      </div>
                     </div>
-                    <Progress 
-                      value={(member.balances.wellness.used / member.balances.wellness.total) * 100} 
-                      className="h-2"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-600">Study Leave</span>
-                      <span className="text-sm text-gray-500">
-                        {member.balances.study.total - member.balances.study.used} / {member.balances.study.total} days
-                      </span>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-600">Sick Leave</span>
+                        <span className="text-sm text-gray-500">
+                          {sickBalance} / 36 days
+                        </span>
+                      </div>
+                      <Progress 
+                        value={((36 - sickBalance) / 36) * 100} 
+                        className="h-2"
+                      />
+                      <div className="text-xs text-gray-400">
+                        Used: {member.leaveBalance.SickUsed}
+                      </div>
                     </div>
-                    <Progress 
-                      value={(member.balances.study.used / member.balances.study.total) * 100} 
-                      className="h-2"
-                    />
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-600">Study Leave</span>
+                        <span className="text-sm text-gray-500">
+                          {studyBalance} / 6 days
+                        </span>
+                      </div>
+                      <Progress 
+                        value={((6 - studyBalance) / 6) * 100} 
+                        className="h-2"
+                      />
+                      <div className="text-xs text-gray-400">
+                        Used: {member.leaveBalance.StudyUsed}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-600">Wellness Leave</span>
+                        <span className="text-sm text-gray-500">
+                          {wellnessBalance} / 2 days
+                        </span>
+                      </div>
+                      <Progress 
+                        value={((2 - wellnessBalance) / 2) * 100} 
+                        className="h-2"
+                      />
+                      <div className="text-xs text-gray-400">
+                        Used: {member.leaveBalance.MentalhealthUsed}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle>Team Summary</CardTitle>
-            <CardDescription>Overview of team leave usage</CardDescription>
+            <CardDescription>Overview of team leave usage from leave_balances</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-center p-4 bg-blue-50 rounded-lg">
                 <div className="text-2xl font-bold text-blue-600">
-                  {teamMembers.reduce((acc, member) => acc + (member.balances.annual.total - member.balances.annual.used), 0)}
+                  {teamMembers.reduce((acc, member) => acc + calculateLeaveBalance(member.leaveBalance, 'annual'), 0)}
                 </div>
                 <div className="text-sm text-blue-700">Total Annual Days Available</div>
               </div>
               
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">
-                  {teamMembers.reduce((acc, member) => acc + (member.balances.wellness.total - member.balances.wellness.used), 0)}
+              <div className="text-center p-4 bg-red-50 rounded-lg">
+                <div className="text-2xl font-bold text-red-600">
+                  {teamMembers.reduce((acc, member) => acc + calculateLeaveBalance(member.leaveBalance, 'sick'), 0)}
                 </div>
-                <div className="text-sm text-green-700">Total Wellness Days Available</div>
+                <div className="text-sm text-red-700">Total Sick Days Available</div>
               </div>
               
               <div className="text-center p-4 bg-purple-50 rounded-lg">
                 <div className="text-2xl font-bold text-purple-600">
-                  {teamMembers.reduce((acc, member) => acc + (member.balances.study.total - member.balances.study.used), 0)}
+                  {teamMembers.reduce((acc, member) => acc + calculateLeaveBalance(member.leaveBalance, 'study'), 0)}
                 </div>
                 <div className="text-sm text-purple-700">Total Study Days Available</div>
+              </div>
+              
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">
+                  {teamMembers.reduce((acc, member) => acc + calculateLeaveBalance(member.leaveBalance, 'wellness'), 0)}
+                </div>
+                <div className="text-sm text-green-700">Total Wellness Days Available</div>
               </div>
             </div>
           </CardContent>
@@ -591,7 +722,7 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
         </CardContent>
       </Card>
 
-      {/* Historic Leave Requests */}
+      {/* Historic Leave Requests - Now in Table Format */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -601,51 +732,73 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
           <CardDescription>All leave requests for the current year</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {historicRequests.map((request) => (
-              <div key={request.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <Avatar>
-                      <AvatarFallback className="bg-blue-100 text-blue-600">
-                        {request.employeeName.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h4 className="font-medium text-gray-900">{request.title}</h4>
-                      <p className="text-sm text-gray-600">{request.employeeName} • {request.description}</p>
-                      <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
-                        <span>{request.startDate} to {request.endDate}</span>
-                        <span>{request.days} day{request.days > 1 ? 's' : ''}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {request.type} Leave
-                        </Badge>
-                        {getStatusBadge(request.status)}
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Detail</TableHead>
+                  <TableHead>Start Date</TableHead>
+                  <TableHead>End Date</TableHead>
+                  <TableHead>Leave Type</TableHead>
+                  <TableHead>Requester</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Working Days</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Modified</TableHead>
+                  <TableHead>Modified By</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {historicRequests.map((request) => (
+                  <TableRow key={request.id}>
+                    <TableCell className="font-medium">{request.title}</TableCell>
+                    <TableCell>
+                      <div className="max-w-[200px] truncate" title={request.description}>
+                        {request.description}
                       </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    {request.status === 'approved' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleCancelApprovedLeave(request.id, request.employeeName, request.employeeEmail)}
-                        className="text-orange-600 border-orange-200 hover:bg-orange-50"
-                      >
-                        <Ban className="h-4 w-4 mr-1" />
-                        Cancel
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="mt-3 text-xs text-gray-400">
-                  Submitted: {request.submittedDate}
-                  {request.approvedDate && ` • Approved: ${request.approvedDate}`}
-                </div>
-              </div>
-            ))}
+                    </TableCell>
+                    <TableCell>{new Date(request.startDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(request.endDate).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs">
+                        {request.type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{request.employeeName}</TableCell>
+                    <TableCell>{getStatusBadge(request.status)}</TableCell>
+                    <TableCell>{request.days}</TableCell>
+                    <TableCell>
+                      <div className="text-xs">
+                        {new Date(request.created).toLocaleDateString()}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-xs">
+                        {new Date(request.modified).toLocaleDateString()}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-xs">{request.modifiedBy}</div>
+                    </TableCell>
+                    <TableCell>
+                      {request.status === 'approved' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleCancelApprovedLeave(request.id, request.employeeName, request.employeeEmail)}
+                          className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                        >
+                          <Ban className="h-4 w-4 mr-1" />
+                          Cancel
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
       </Card>

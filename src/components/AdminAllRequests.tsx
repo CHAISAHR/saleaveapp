@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, XCircle, AlertCircle, Edit, Save, X } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Edit, Save, X, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface LeaveRequest {
@@ -64,6 +63,47 @@ export const AdminAllRequests = () => {
     }
   ]);
 
+  const downloadCSV = () => {
+    const headers = [
+      'LeaveID', 'Title', 'Detail', 'StartDate', 'EndDate', 'LeaveType', 
+      'Requester', 'Approver', 'Status', 'WorkingDays', 'Created', 'Modified', 'ModifiedBy'
+    ];
+    
+    const csvContent = [
+      headers.join(','),
+      ...requests.map(request => [
+        request.LeaveID,
+        `"${request.Title}"`,
+        `"${request.Detail}"`,
+        request.StartDate,
+        request.EndDate,
+        request.LeaveType,
+        request.Requester,
+        request.Approver || '',
+        request.Status,
+        request.workingDays,
+        request.Created,
+        request.Modified,
+        request.ModifiedBy || ''
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `leave_requests_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "CSV Downloaded",
+      description: "Leave requests data has been exported successfully.",
+    });
+  };
+
   const handleEdit = (request: LeaveRequest) => {
     setEditingId(request.LeaveID);
     setEditingRequest({ ...request });
@@ -115,9 +155,15 @@ export const AdminAllRequests = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">All Leave Requests</h2>
-        <p className="text-gray-600">View and manage all employee leave requests</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">All Leave Requests</h2>
+          <p className="text-gray-600">View and manage all employee leave requests</p>
+        </div>
+        <Button onClick={downloadCSV} variant="outline">
+          <Download className="h-4 w-4 mr-2" />
+          Download CSV
+        </Button>
       </div>
 
       <Card>
@@ -139,6 +185,7 @@ export const AdminAllRequests = () => {
                   <TableHead>Requester</TableHead>
                   <TableHead>Approver</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Working Days</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Modified</TableHead>
                   <TableHead>Modified By</TableHead>
@@ -211,6 +258,7 @@ export const AdminAllRequests = () => {
                             <SelectItem value="Study">Study</SelectItem>
                             <SelectItem value="Maternity">Maternity</SelectItem>
                             <SelectItem value="Parental">Parental</SelectItem>
+                            <SelectItem value="Wellness">Wellness</SelectItem>
                           </SelectContent>
                         </Select>
                       ) : (
@@ -239,6 +287,7 @@ export const AdminAllRequests = () => {
                         getStatusBadge(request.Status)
                       )}
                     </TableCell>
+                    <TableCell>{request.workingDays}</TableCell>
                     <TableCell>
                       <div className="text-xs">
                         {new Date(request.Created).toLocaleDateString()}

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit, Save, Plus } from "lucide-react";
+import { Edit, Save, Plus, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface EmployeeBalance {
@@ -124,6 +123,74 @@ export const AdminAllBalances = () => {
     }
   ]);
 
+  const downloadCSV = () => {
+    const headers = [
+      'BalanceID', 'EmployeeName', 'EmployeeEmail', 'Department', 'Status', 'Year',
+      'Broughtforward', 'Annual', 'AnnualUsed', 'Forfeited', 'Annual_leave_adjustments',
+      'SickBroughtforward', 'Sick', 'SickUsed', 'Maternity', 'MaternityUsed',
+      'Parental', 'ParentalUsed', 'Family', 'FamilyUsed', 'Adoption', 'AdoptionUsed',
+      'Study', 'StudyUsed', 'Mentalhealth', 'MentalhealthUsed', 'PowerAppsId',
+      'Current_leave_balance', 'Leave_balance_previous_month', 'Contract_termination_date',
+      'termination_balance', 'Comment', 'Annual_leave_adjustment_comments', 'Manager', 'Modified'
+    ];
+    
+    const csvContent = [
+      headers.join(','),
+      ...balances.map(balance => [
+        balance.BalanceID,
+        `"${balance.EmployeeName}"`,
+        balance.EmployeeEmail,
+        balance.Department,
+        balance.Status,
+        balance.Year,
+        balance.Broughtforward,
+        balance.Annual,
+        balance.AnnualUsed,
+        balance.Forfeited,
+        balance.Annual_leave_adjustments,
+        balance.SickBroughtforward,
+        balance.Sick,
+        balance.SickUsed,
+        balance.Maternity,
+        balance.MaternityUsed,
+        balance.Parental,
+        balance.ParentalUsed,
+        balance.Family,
+        balance.FamilyUsed,
+        balance.Adoption,
+        balance.AdoptionUsed,
+        balance.Study,
+        balance.StudyUsed,
+        balance.Mentalhealth,
+        balance.MentalhealthUsed,
+        balance.PowerAppsId || '',
+        balance.Current_leave_balance,
+        balance.Leave_balance_previous_month,
+        balance.Contract_termination_date || '',
+        balance.termination_balance || '',
+        `"${balance.Comment || ''}"`,
+        `"${balance.Annual_leave_adjustment_comments || ''}"`,
+        balance.Manager,
+        balance.Modified
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `employee_balances_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "CSV Downloaded",
+      description: "Employee balances data has been exported successfully.",
+    });
+  };
+
   const handleEdit = (balance: EmployeeBalance) => {
     setSelectedBalance({ ...balance });
     setShowEditDialog(true);
@@ -187,10 +254,16 @@ export const AdminAllBalances = () => {
           <h2 className="text-2xl font-bold text-gray-900">All Employee Balances</h2>
           <p className="text-gray-600">View and edit leave balances for all employees</p>
         </div>
-        <Button variant="outline">
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Employee
-        </Button>
+        <div className="flex space-x-2">
+          <Button onClick={downloadCSV} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Download CSV
+          </Button>
+          <Button variant="outline">
+            <Plus className="h-4 w-4 mr-2" />
+            Add New Employee
+          </Button>
+        </div>
       </div>
 
       <Card>
