@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ interface EmployeeBalance {
   StudyUsed: number;
   Mentalhealth: number;
   MentalhealthUsed: number;
+  PowerAppsId?: string;
   Current_leave_balance: number;
   Leave_balance_previous_month: number;
   Contract_termination_date?: string;
@@ -81,6 +83,7 @@ export const AdminAllBalances = () => {
       StudyUsed: 0,
       Mentalhealth: 2,
       MentalhealthUsed: 0,
+      PowerAppsId: "PA001",
       Current_leave_balance: 17,
       Leave_balance_previous_month: 15.5,
       Manager: "sarah.johnson@company.com",
@@ -113,6 +116,7 @@ export const AdminAllBalances = () => {
       StudyUsed: 2,
       Mentalhealth: 2,
       MentalhealthUsed: 0,
+      PowerAppsId: "PA002",
       Current_leave_balance: 11,
       Leave_balance_previous_month: 13.5,
       Manager: "sarah.johnson@company.com",
@@ -164,7 +168,8 @@ export const AdminAllBalances = () => {
       'Broughtforward', 'Annual', 'AnnualUsed', 'Forfeited', 'Annual_leave_adjustments',
       'SickBroughtforward', 'Sick', 'SickUsed', 'Maternity', 'MaternityUsed',
       'Parental', 'ParentalUsed', 'Family', 'FamilyUsed', 'Adoption', 'AdoptionUsed',
-      'Study', 'StudyUsed', 'Mentalhealth', 'MentalhealthUsed', 'termination_balance'
+      'Study', 'StudyUsed', 'Mentalhealth', 'MentalhealthUsed', 'termination_balance',
+      'Current_leave_balance', 'Leave_balance_previous_month', 'Year'
     ];
 
     const finalValue = numericFields.includes(field as string) ? parseFloat(value) || 0 : value;
@@ -200,41 +205,91 @@ export const AdminAllBalances = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Employee</TableHead>
+                  <TableHead>Balance ID</TableHead>
+                  <TableHead>Employee Name</TableHead>
+                  <TableHead>Employee Email</TableHead>
                   <TableHead>Department</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Year</TableHead>
                   <TableHead>Brought Forward</TableHead>
                   <TableHead>Annual</TableHead>
                   <TableHead>Annual Used</TableHead>
-                  <TableHead>Current Balance</TableHead>
+                  <TableHead>Forfeited</TableHead>
+                  <TableHead>Annual Adjustments</TableHead>
+                  <TableHead>Sick BF</TableHead>
+                  <TableHead>Sick</TableHead>
                   <TableHead>Sick Used</TableHead>
+                  <TableHead>Maternity</TableHead>
+                  <TableHead>Maternity Used</TableHead>
+                  <TableHead>Parental</TableHead>
+                  <TableHead>Parental Used</TableHead>
+                  <TableHead>Family</TableHead>
                   <TableHead>Family Used</TableHead>
+                  <TableHead>Adoption</TableHead>
+                  <TableHead>Adoption Used</TableHead>
+                  <TableHead>Study</TableHead>
                   <TableHead>Study Used</TableHead>
-                  <TableHead>Manager</TableHead>
+                  <TableHead>Mental Health</TableHead>
+                  <TableHead>Mental Health Used</TableHead>
+                  <TableHead>PowerApps ID</TableHead>
+                  <TableHead>Current Balance</TableHead>
+                  <TableHead>Previous Month</TableHead>
+                  <TableHead>Contract Term Date</TableHead>
+                  <TableHead>Term Balance</TableHead>
+                  <TableHead>Comment</TableHead>
+                  <TableHead>Adjustment Comments</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {balances.map((balance) => (
                   <TableRow key={balance.BalanceID}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{balance.EmployeeName}</div>
-                        <div className="text-xs text-gray-500">{balance.EmployeeEmail}</div>
-                      </div>
-                    </TableCell>
+                    <TableCell className="font-medium">{balance.BalanceID}</TableCell>
+                    <TableCell>{balance.EmployeeName}</TableCell>
+                    <TableCell>{balance.EmployeeEmail}</TableCell>
                     <TableCell>{balance.Department}</TableCell>
                     <TableCell>{balance.Status}</TableCell>
+                    <TableCell>{balance.Year}</TableCell>
                     <TableCell>{balance.Broughtforward}</TableCell>
                     <TableCell>{balance.Annual}</TableCell>
                     <TableCell>{balance.AnnualUsed}</TableCell>
+                    <TableCell>{balance.Forfeited}</TableCell>
+                    <TableCell>{balance.Annual_leave_adjustments}</TableCell>
+                    <TableCell>{balance.SickBroughtforward}</TableCell>
+                    <TableCell>{balance.Sick}</TableCell>
+                    <TableCell>{balance.SickUsed}</TableCell>
+                    <TableCell>{balance.Maternity}</TableCell>
+                    <TableCell>{balance.MaternityUsed}</TableCell>
+                    <TableCell>{balance.Parental}</TableCell>
+                    <TableCell>{balance.ParentalUsed}</TableCell>
+                    <TableCell>{balance.Family}</TableCell>
+                    <TableCell>{balance.FamilyUsed}</TableCell>
+                    <TableCell>{balance.Adoption}</TableCell>
+                    <TableCell>{balance.AdoptionUsed}</TableCell>
+                    <TableCell>{balance.Study}</TableCell>
+                    <TableCell>{balance.StudyUsed}</TableCell>
+                    <TableCell>{balance.Mentalhealth}</TableCell>
+                    <TableCell>{balance.MentalhealthUsed}</TableCell>
+                    <TableCell>{balance.PowerAppsId || '-'}</TableCell>
                     <TableCell className="font-medium text-blue-600">
                       {balance.Current_leave_balance}
                     </TableCell>
-                    <TableCell>{balance.SickUsed}</TableCell>
-                    <TableCell>{balance.FamilyUsed}</TableCell>
-                    <TableCell>{balance.StudyUsed}</TableCell>
-                    <TableCell>{balance.Manager}</TableCell>
+                    <TableCell>{balance.Leave_balance_previous_month}</TableCell>
+                    <TableCell>
+                      {balance.Contract_termination_date ? 
+                        new Date(balance.Contract_termination_date).toLocaleDateString() : '-'}
+                    </TableCell>
+                    <TableCell>{balance.termination_balance || '-'}</TableCell>
+                    <TableCell>
+                      <div className="max-w-[100px] truncate" title={balance.Comment}>
+                        {balance.Comment || '-'}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="max-w-[100px] truncate" title={balance.Annual_leave_adjustment_comments}>
+                        {balance.Annual_leave_adjustment_comments || '-'}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <Button
                         size="sm"

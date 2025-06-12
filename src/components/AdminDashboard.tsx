@@ -17,9 +17,10 @@ import { AdminBalanceManager } from "./AdminBalanceManager";
 interface AdminDashboardProps {
   currentUser: any;
   activeView?: 'dashboard' | 'system' | 'admin' | 'balances';
+  onViewChange?: (view: 'dashboard' | 'system' | 'admin' | 'balances') => void;
 }
 
-export const AdminDashboard = ({ currentUser, activeView = 'dashboard' }: AdminDashboardProps) => {
+export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewChange }: AdminDashboardProps) => {
   const { toast } = useToast();
   const [showHolidayForm, setShowHolidayForm] = useState(false);
   const [holidays, setHolidays] = useState([
@@ -90,6 +91,28 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard' }: AdminD
       title: "Holiday Removed",
       description: `${holidayName} has been removed from the calendar.`,
     });
+  };
+
+  const handleQuickAction = (action: string) => {
+    if (onViewChange) {
+      switch (action) {
+        case 'holidays':
+          onViewChange('admin');
+          break;
+        case 'users':
+          // Navigate to user management - placeholder for now
+          toast({
+            title: "User Management",
+            description: "User management feature coming soon.",
+          });
+          break;
+        case 'database':
+          onViewChange('system');
+          break;
+        default:
+          break;
+      }
+    }
   };
 
   if (activeView === 'balances') {
@@ -408,15 +431,27 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard' }: AdminD
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
+            <Button 
+              variant="outline" 
+              className="h-20 flex flex-col items-center justify-center space-y-2"
+              onClick={() => handleQuickAction('holidays')}
+            >
               <CalendarIcon className="h-6 w-6" />
               <span>Manage Holidays</span>
             </Button>
-            <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
+            <Button 
+              variant="outline" 
+              className="h-20 flex flex-col items-center justify-center space-y-2"
+              onClick={() => handleQuickAction('users')}
+            >
               <Users className="h-6 w-6" />
               <span>User Management</span>
             </Button>
-            <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
+            <Button 
+              variant="outline" 
+              className="h-20 flex flex-col items-center justify-center space-y-2"
+              onClick={() => handleQuickAction('database')}
+            >
               <Database className="h-6 w-6" />
               <span>Database Tools</span>
             </Button>

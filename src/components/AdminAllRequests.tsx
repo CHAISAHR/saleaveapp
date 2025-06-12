@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, XCircle, AlertCircle, Edit, Save, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -22,6 +23,7 @@ interface LeaveRequest {
   workingDays: number;
   Created: string;
   Modified: string;
+  ModifiedBy?: string;
 }
 
 export const AdminAllRequests = () => {
@@ -43,7 +45,8 @@ export const AdminAllRequests = () => {
       Status: "approved",
       workingDays: 5,
       Created: "2024-06-15T10:00:00Z",
-      Modified: "2024-06-16T14:30:00Z"
+      Modified: "2024-06-16T14:30:00Z",
+      ModifiedBy: "sarah.johnson@company.com"
     },
     {
       LeaveID: 2,
@@ -56,7 +59,8 @@ export const AdminAllRequests = () => {
       Status: "pending",
       workingDays: 1,
       Created: "2024-06-18T09:15:00Z",
-      Modified: "2024-06-18T09:15:00Z"
+      Modified: "2024-06-18T09:15:00Z",
+      ModifiedBy: "emily.davis@company.com"
     }
   ]);
 
@@ -68,11 +72,17 @@ export const AdminAllRequests = () => {
   const handleSave = () => {
     if (!editingRequest) return;
 
+    const updatedRequest = {
+      ...editingRequest,
+      Modified: new Date().toISOString(),
+      ModifiedBy: "admin@company.com" // In real app, this would be current user
+    };
+
     setRequests(prev => prev.map(r => 
-      r.LeaveID === editingRequest.LeaveID ? editingRequest : r
+      r.LeaveID === updatedRequest.LeaveID ? updatedRequest : r
     ));
 
-    console.log('Updated request:', editingRequest);
+    console.log('Updated request:', updatedRequest);
 
     toast({
       title: "Request Updated",
@@ -116,124 +126,153 @@ export const AdminAllRequests = () => {
           <CardDescription>All leave requests across the organization</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Requester</TableHead>
-                <TableHead>Leave Type</TableHead>
-                <TableHead>Start Date</TableHead>
-                <TableHead>End Date</TableHead>
-                <TableHead>Days</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Approver</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {requests.map((request) => (
-                <TableRow key={request.LeaveID}>
-                  <TableCell>
-                    {editingId === request.LeaveID ? (
-                      <Input
-                        value={editingRequest?.Title || ''}
-                        onChange={(e) => setEditingRequest(prev => prev ? {...prev, Title: e.target.value} : null)}
-                        className="w-full"
-                      />
-                    ) : (
-                      <div>
-                        <div className="font-medium">{request.Title}</div>
-                        <div className="text-xs text-gray-500">{request.Detail}</div>
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>{request.Requester}</TableCell>
-                  <TableCell>
-                    {editingId === request.LeaveID ? (
-                      <Select
-                        value={editingRequest?.LeaveType || ''}
-                        onValueChange={(value) => setEditingRequest(prev => prev ? {...prev, LeaveType: value} : null)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Annual">Annual</SelectItem>
-                          <SelectItem value="Sick">Sick</SelectItem>
-                          <SelectItem value="Family">Family</SelectItem>
-                          <SelectItem value="Study">Study</SelectItem>
-                          <SelectItem value="Maternity">Maternity</SelectItem>
-                          <SelectItem value="Parental">Parental</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      request.LeaveType
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {editingId === request.LeaveID ? (
-                      <Input
-                        type="date"
-                        value={editingRequest?.StartDate || ''}
-                        onChange={(e) => setEditingRequest(prev => prev ? {...prev, StartDate: e.target.value} : null)}
-                      />
-                    ) : (
-                      new Date(request.StartDate).toLocaleDateString()
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {editingId === request.LeaveID ? (
-                      <Input
-                        type="date"
-                        value={editingRequest?.EndDate || ''}
-                        onChange={(e) => setEditingRequest(prev => prev ? {...prev, EndDate: e.target.value} : null)}
-                      />
-                    ) : (
-                      new Date(request.EndDate).toLocaleDateString()
-                    )}
-                  </TableCell>
-                  <TableCell>{request.workingDays}</TableCell>
-                  <TableCell>
-                    {editingId === request.LeaveID ? (
-                      <Select
-                        value={editingRequest?.Status || ''}
-                        onValueChange={(value) => setEditingRequest(prev => prev ? {...prev, Status: value as any} : null)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="approved">Approved</SelectItem>
-                          <SelectItem value="rejected">Rejected</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      getStatusBadge(request.Status)
-                    )}
-                  </TableCell>
-                  <TableCell>{request.Approver || '-'}</TableCell>
-                  <TableCell>
-                    {editingId === request.LeaveID ? (
-                      <div className="flex space-x-2">
-                        <Button size="sm" onClick={handleSave}>
-                          <Save className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={handleCancel}>
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button size="sm" variant="outline" onClick={() => handleEdit(request)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Leave ID</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Detail</TableHead>
+                  <TableHead>Start Date</TableHead>
+                  <TableHead>End Date</TableHead>
+                  <TableHead>Leave Type</TableHead>
+                  <TableHead>Requester</TableHead>
+                  <TableHead>Approver</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Modified</TableHead>
+                  <TableHead>Modified By</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {requests.map((request) => (
+                  <TableRow key={request.LeaveID}>
+                    <TableCell className="font-medium">{request.LeaveID}</TableCell>
+                    <TableCell>
+                      {editingId === request.LeaveID ? (
+                        <Input
+                          value={editingRequest?.Title || ''}
+                          onChange={(e) => setEditingRequest(prev => prev ? {...prev, Title: e.target.value} : null)}
+                          className="w-full"
+                        />
+                      ) : (
+                        request.Title
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {editingId === request.LeaveID ? (
+                        <Textarea
+                          value={editingRequest?.Detail || ''}
+                          onChange={(e) => setEditingRequest(prev => prev ? {...prev, Detail: e.target.value} : null)}
+                          className="w-full min-w-[200px]"
+                        />
+                      ) : (
+                        <div className="max-w-[200px] truncate" title={request.Detail}>
+                          {request.Detail}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {editingId === request.LeaveID ? (
+                        <Input
+                          type="date"
+                          value={editingRequest?.StartDate || ''}
+                          onChange={(e) => setEditingRequest(prev => prev ? {...prev, StartDate: e.target.value} : null)}
+                        />
+                      ) : (
+                        new Date(request.StartDate).toLocaleDateString()
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {editingId === request.LeaveID ? (
+                        <Input
+                          type="date"
+                          value={editingRequest?.EndDate || ''}
+                          onChange={(e) => setEditingRequest(prev => prev ? {...prev, EndDate: e.target.value} : null)}
+                        />
+                      ) : (
+                        new Date(request.EndDate).toLocaleDateString()
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {editingId === request.LeaveID ? (
+                        <Select
+                          value={editingRequest?.LeaveType || ''}
+                          onValueChange={(value) => setEditingRequest(prev => prev ? {...prev, LeaveType: value} : null)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Annual">Annual</SelectItem>
+                            <SelectItem value="Sick">Sick</SelectItem>
+                            <SelectItem value="Family">Family</SelectItem>
+                            <SelectItem value="Study">Study</SelectItem>
+                            <SelectItem value="Maternity">Maternity</SelectItem>
+                            <SelectItem value="Parental">Parental</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        request.LeaveType
+                      )}
+                    </TableCell>
+                    <TableCell>{request.Requester}</TableCell>
+                    <TableCell>{request.Approver || '-'}</TableCell>
+                    <TableCell>
+                      {editingId === request.LeaveID ? (
+                        <Select
+                          value={editingRequest?.Status || ''}
+                          onValueChange={(value) => setEditingRequest(prev => prev ? {...prev, Status: value as any} : null)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="approved">Approved</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        getStatusBadge(request.Status)
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-xs">
+                        {new Date(request.Created).toLocaleDateString()}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-xs">
+                        {new Date(request.Modified).toLocaleDateString()}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-xs">{request.ModifiedBy || '-'}</div>
+                    </TableCell>
+                    <TableCell>
+                      {editingId === request.LeaveID ? (
+                        <div className="flex space-x-2">
+                          <Button size="sm" onClick={handleSave}>
+                            <Save className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={handleCancel}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(request)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
