@@ -119,6 +119,7 @@ export const AdminAllBalances = () => {
       PowerAppsId: "PA002",
       Current_leave_balance: 11,
       Leave_balance_previous_month: 13.5,
+      Contract_termination_date: "2024-12-01",
       Manager: "sarah.johnson@company.com",
       Modified: "2024-12-11T10:00:00Z"
     }
@@ -132,6 +133,10 @@ export const AdminAllBalances = () => {
   const calculateTerminationBalance = (balance: EmployeeBalance) => {
     if (!balance.Contract_termination_date) return null;
     return balanceService.calculateTerminationBalance(balance, balance.Contract_termination_date);
+  };
+
+  const getEmployeeStatus = (balance: EmployeeBalance) => {
+    return balanceService.getEmployeeStatus(balance.Contract_termination_date);
   };
 
   const downloadCSV = () => {
@@ -152,7 +157,7 @@ export const AdminAllBalances = () => {
         `"${balance.EmployeeName}"`,
         balance.EmployeeEmail,
         balance.Department,
-        balance.Status,
+        getEmployeeStatus(balance),
         balance.Year,
         balance.Broughtforward,
         balance.Annual,
@@ -216,8 +221,12 @@ export const AdminAllBalances = () => {
     // Calculate termination balance if termination date is set
     const newTerminationBalance = calculateTerminationBalance(selectedBalance);
 
+    // Update status based on termination date
+    const newStatus = getEmployeeStatus(selectedBalance);
+
     const updatedBalance = {
       ...selectedBalance,
+      Status: newStatus,
       Current_leave_balance: newCurrentBalance,
       termination_balance: newTerminationBalance,
       Modified: new Date().toISOString()
@@ -331,7 +340,15 @@ export const AdminAllBalances = () => {
                     <TableCell>{balance.EmployeeName}</TableCell>
                     <TableCell>{balance.EmployeeEmail}</TableCell>
                     <TableCell>{balance.Department}</TableCell>
-                    <TableCell>{balance.Status}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        getEmployeeStatus(balance) === 'Inactive' 
+                          ? 'bg-red-100 text-red-800' 
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                        {getEmployeeStatus(balance)}
+                      </span>
+                    </TableCell>
                     <TableCell>{balance.Year}</TableCell>
                     <TableCell>{balance.Broughtforward}</TableCell>
                     <TableCell>{balance.Annual}</TableCell>
@@ -427,10 +444,11 @@ export const AdminAllBalances = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Status</Label>
+                  <Label>Status (Auto-calculated)</Label>
                   <Input
-                    value={selectedBalance.Status}
-                    onChange={(e) => handleFieldChange('Status', e.target.value)}
+                    value={getEmployeeStatus(selectedBalance)}
+                    disabled
+                    className="bg-gray-100"
                   />
                 </div>
               </div>
@@ -576,9 +594,16 @@ export const AdminAllBalances = () => {
                       Termination Balance: {calculateTerminationBalance(selectedBalance)} days
                     </p>
                   )}
+                  <p>
+                    Employee Status: {getEmployeeStatus(selectedBalance)}
+                  </p>
                 </div>
                 <p className="text-xs text-blue-600 mt-2">
                   Formula: Brought Forward + Monthly Accumulation (20/12 * Current Month) - Annual Used - Forfeited - Adjustments
+                  {selectedBalance.Contract_termination_date && balanceService.hasTerminationDatePassed(selectedBalance.Contract_termination_date) && (
+                    <br />
+                    <span className="text-orange-600">Note: Termination date has passed - using termination balance instead of current accumulation</span>
+                  )}
                 </p>
               </div>
 

@@ -1,3 +1,4 @@
+
 // Balance management service for automatic updates and calculations
 export interface EmployeeBalance {
   BalanceID: number;
@@ -37,8 +38,24 @@ export interface LeaveRequest {
 }
 
 class BalanceService {
+  // Check if employee's termination date has passed
+  hasTerminationDatePassed(terminationDate?: string): boolean {
+    if (!terminationDate) return false;
+    
+    const termDate = new Date(terminationDate);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // End of today
+    
+    return termDate < today;
+  }
+
   // Calculate monthly accumulation for annual leave (20/12 per month up to current month)
-  calculateMonthlyAccumulation(currentMonth: number = new Date().getMonth() + 1): number {
+  calculateMonthlyAccumulation(currentMonth: number = new Date().getMonth() + 1, terminationDate?: string): number {
+    // If termination date has passed, use accumulation up to termination date only
+    if (terminationDate && this.hasTerminationDatePassed(terminationDate)) {
+      return this.calculateProRatedAccumulation(terminationDate);
+    }
+    
     return Number(((20/12) * currentMonth).toFixed(1));
   }
 
@@ -80,7 +97,12 @@ class BalanceService {
   // Calculate current annual leave balance using the specified formula
   // Formula: Broughtforward + Monthly Accumulation (20/12 * Month()) - AnnualUsed - Forfeited - Annual_leave_adjustments
   calculateAnnualLeaveBalance(balance: EmployeeBalance, currentMonth: number = new Date().getMonth() + 1): number {
-    const monthlyAccumulation = this.calculateMonthlyAccumulation(currentMonth);
+    // If termination date has passed, use termination balance instead
+    if (balance.Contract_termination_date && this.hasTerminationDatePassed(balance.Contract_termination_date)) {
+      return this.calculateTerminationBalance(balance, balance.Contract_termination_date);
+    }
+    
+    const monthlyAccumulation = this.calculateMonthlyAccumulation(currentMonth, balance.Contract_termination_date);
     return Number((
       balance.Broughtforward + 
       monthlyAccumulation - 
@@ -131,6 +153,14 @@ class BalanceService {
       default:
         return this.calculateAnnualLeaveBalance(balance, currentMonth);
     }
+  }
+
+  // Get employee status based on termination date
+  getEmployeeStatus(terminationDate?: string): string {
+    if (terminationDate && this.hasTerminationDatePassed(terminationDate)) {
+      return 'Inactive';
+    }
+    return 'Active';
   }
 
   // Check if staff can edit leave request
