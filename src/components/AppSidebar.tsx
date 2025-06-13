@@ -90,9 +90,11 @@ export const AppSidebar = ({
     <Sidebar>
       <SidebarHeader className="p-4">
         <div className="flex items-center space-x-3">
-          <div className="bg-blue-600 text-white p-2 rounded-lg">
-            <Calendar className="h-6 w-6" />
-          </div>
+          <img 
+            src="/lovable-uploads/599a5fd8-277e-4ead-842c-b7ab666502f0.png" 
+            alt="Company Logo" 
+            className="h-8 w-8"
+          />
           <div>
             <h1 className="text-lg font-semibold text-gray-900">LeaveApp_SA</h1>
           </div>

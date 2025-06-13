@@ -87,8 +87,12 @@ const Index = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="bg-blue-600 text-white p-3 rounded-lg mx-auto w-fit mb-4">
-              <Calendar className="h-8 w-8" />
+            <div className="flex justify-center mb-4">
+              <img 
+                src="/lovable-uploads/599a5fd8-277e-4ead-842c-b7ab666502f0.png" 
+                alt="Company Logo" 
+                className="h-12 w-12"
+              />
             </div>
             <CardTitle className="text-2xl">LeaveApp_SA</CardTitle>
             <CardDescription>HR Management System - South Africa</CardDescription>
