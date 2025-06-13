@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Edit, Save, Plus, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { balanceService } from "@/services/balanceService";
 
 interface EmployeeBalance {
   BalanceID: number;
@@ -123,6 +124,16 @@ export const AdminAllBalances = () => {
     }
   ]);
 
+  const calculateCurrentBalance = (balance: EmployeeBalance) => {
+    const currentMonth = new Date().getMonth() + 1;
+    return balanceService.calculateAnnualLeaveBalance(balance, currentMonth);
+  };
+
+  const calculateTerminationBalance = (balance: EmployeeBalance) => {
+    if (!balance.Contract_termination_date) return null;
+    return balanceService.calculateTerminationBalance(balance, balance.Contract_termination_date);
+  };
+
   const downloadCSV = () => {
     const headers = [
       'BalanceID', 'EmployeeName', 'EmployeeEmail', 'Department', 'Status', 'Year',
@@ -164,10 +175,10 @@ export const AdminAllBalances = () => {
         balance.Mentalhealth,
         balance.MentalhealthUsed,
         balance.PowerAppsId || '',
-        balance.Current_leave_balance,
+        calculateCurrentBalance(balance),
         balance.Leave_balance_previous_month,
         balance.Contract_termination_date || '',
-        balance.termination_balance || '',
+        calculateTerminationBalance(balance) || '',
         `"${balance.Comment || ''}"`,
         `"${balance.Annual_leave_adjustment_comments || ''}"`,
         balance.Manager,
@@ -199,17 +210,16 @@ export const AdminAllBalances = () => {
   const handleSave = () => {
     if (!selectedBalance) return;
 
-    // Calculate new current balance
-    const newCurrentBalance = 
-      selectedBalance.Broughtforward + 
-      selectedBalance.Annual - 
-      selectedBalance.AnnualUsed - 
-      selectedBalance.Forfeited - 
-      selectedBalance.Annual_leave_adjustments;
+    // Calculate new current balance using the updated formula
+    const newCurrentBalance = calculateCurrentBalance(selectedBalance);
+    
+    // Calculate termination balance if termination date is set
+    const newTerminationBalance = calculateTerminationBalance(selectedBalance);
 
     const updatedBalance = {
       ...selectedBalance,
-      Current_leave_balance: Number(newCurrentBalance.toFixed(1)),
+      Current_leave_balance: newCurrentBalance,
+      termination_balance: newTerminationBalance,
       Modified: new Date().toISOString()
     };
 
@@ -308,7 +318,7 @@ export const AdminAllBalances = () => {
                   <TableHead>Current Balance</TableHead>
                   <TableHead>Previous Month</TableHead>
                   <TableHead>Contract Term Date</TableHead>
-                  <TableHead>Term Balance</TableHead>
+                  <TableHead>Termination Balance</TableHead>
                   <TableHead>Comment</TableHead>
                   <TableHead>Adjustment Comments</TableHead>
                   <TableHead>Actions</TableHead>
@@ -345,14 +355,16 @@ export const AdminAllBalances = () => {
                     <TableCell>{balance.MentalhealthUsed}</TableCell>
                     <TableCell>{balance.PowerAppsId || '-'}</TableCell>
                     <TableCell className="font-medium text-blue-600">
-                      {balance.Current_leave_balance}
+                      {calculateCurrentBalance(balance)}
                     </TableCell>
                     <TableCell>{balance.Leave_balance_previous_month}</TableCell>
                     <TableCell>
                       {balance.Contract_termination_date ? 
                         new Date(balance.Contract_termination_date).toLocaleDateString() : '-'}
                     </TableCell>
-                    <TableCell>{balance.termination_balance || '-'}</TableCell>
+                    <TableCell className="font-medium text-orange-600">
+                      {calculateTerminationBalance(balance) || '-'}
+                    </TableCell>
                     <TableCell>
                       <div className="max-w-[100px] truncate" title={balance.Comment}>
                         {balance.Comment || '-'}
@@ -534,15 +546,6 @@ export const AdminAllBalances = () => {
                       onChange={(e) => handleFieldChange('Contract_termination_date', e.target.value)}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Termination Balance</Label>
-                    <Input
-                      type="number"
-                      step="0.5"
-                      value={selectedBalance.termination_balance || 0}
-                      onChange={(e) => handleFieldChange('termination_balance', e.target.value)}
-                    />
-                  </div>
                 </div>
                 <div className="space-y-2 mt-4">
                   <Label>Comments</Label>
@@ -563,15 +566,19 @@ export const AdminAllBalances = () => {
               </div>
 
               <div className="p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-2">Calculated Balance</h4>
-                <p className="text-blue-700">
-                  Current Balance: {(
-                    selectedBalance.Broughtforward + 
-                    selectedBalance.Annual - 
-                    selectedBalance.AnnualUsed - 
-                    selectedBalance.Forfeited - 
-                    selectedBalance.Annual_leave_adjustments
-                  ).toFixed(1)} days
+                <h4 className="font-medium text-blue-900 mb-2">Calculated Balances</h4>
+                <div className="grid grid-cols-2 gap-4 text-blue-700">
+                  <p>
+                    Current Annual Leave Balance: {calculateCurrentBalance(selectedBalance)} days
+                  </p>
+                  {selectedBalance.Contract_termination_date && (
+                    <p>
+                      Termination Balance: {calculateTerminationBalance(selectedBalance)} days
+                    </p>
+                  )}
+                </div>
+                <p className="text-xs text-blue-600 mt-2">
+                  Formula: Brought Forward + Monthly Accumulation (20/12 * Current Month) - Annual Used - Forfeited - Adjustments
                 </p>
               </div>
 

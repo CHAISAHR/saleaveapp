@@ -1,4 +1,3 @@
-
 // Balance management service for automatic updates and calculations
 export interface EmployeeBalance {
   BalanceID: number;
@@ -20,6 +19,8 @@ export interface EmployeeBalance {
   MentalhealthUsed: number;
   Current_leave_balance: number;
   Manager: string;
+  Contract_termination_date?: string;
+  termination_balance?: number;
 }
 
 export interface LeaveRequest {
@@ -36,18 +37,33 @@ export interface LeaveRequest {
 }
 
 class BalanceService {
-  // Calculate monthly accrual for annual leave (20/12 = 1.6667 days per month)
-  calculateMonthlyAccrual(monthsWorked: number): number {
-    return Number((monthsWorked * (20/12)).toFixed(1));
+  // Calculate monthly accumulation for annual leave (20/12 per month up to current month)
+  calculateMonthlyAccumulation(currentMonth: number = new Date().getMonth() + 1): number {
+    return Number(((20/12) * currentMonth).toFixed(1));
   }
 
-  // Calculate current annual leave balance
-  // Formula: Broughtforward + Monthly Earned (20/12 per month) - AnnualUsed - Forfeited - Annual_leave_adjustments
-  calculateAnnualLeaveBalance(balance: EmployeeBalance, monthsWorked: number = 12): number {
-    const monthlyEarned = this.calculateMonthlyAccrual(monthsWorked);
+  // Calculate current annual leave balance using the specified formula
+  // Formula: Broughtforward + Monthly Accumulation (20/12 * Month()) - AnnualUsed - Forfeited - Annual_leave_adjustments
+  calculateAnnualLeaveBalance(balance: EmployeeBalance, currentMonth: number = new Date().getMonth() + 1): number {
+    const monthlyAccumulation = this.calculateMonthlyAccumulation(currentMonth);
     return Number((
       balance.Broughtforward + 
-      monthlyEarned - 
+      monthlyAccumulation - 
+      balance.AnnualUsed - 
+      balance.Forfeited - 
+      balance.Annual_leave_adjustments
+    ).toFixed(1));
+  }
+
+  // Calculate annual leave balance at termination date
+  calculateTerminationBalance(balance: EmployeeBalance, terminationDate: string): number {
+    const termDate = new Date(terminationDate);
+    const terminationMonth = termDate.getMonth() + 1;
+    const monthlyAccumulation = this.calculateMonthlyAccumulation(terminationMonth);
+    
+    return Number((
+      balance.Broughtforward + 
+      monthlyAccumulation - 
       balance.AnnualUsed - 
       balance.Forfeited - 
       balance.Annual_leave_adjustments
@@ -60,10 +76,10 @@ class BalanceService {
   }
 
   // Calculate current balance based on leave type
-  calculateCurrentBalance(balance: EmployeeBalance, leaveType: string = 'annual', monthsWorked: number = 12): number {
+  calculateCurrentBalance(balance: EmployeeBalance, leaveType: string = 'annual', currentMonth: number = new Date().getMonth() + 1): number {
     switch (leaveType.toLowerCase()) {
       case 'annual':
-        return this.calculateAnnualLeaveBalance(balance, monthsWorked);
+        return this.calculateAnnualLeaveBalance(balance, currentMonth);
       case 'sick':
         return this.calculateOtherLeaveBalance(36, balance.SickUsed);
       case 'maternity':
@@ -80,16 +96,42 @@ class BalanceService {
       case 'mentalhealth':
         return this.calculateOtherLeaveBalance(2, balance.MentalhealthUsed);
       default:
-        // Default to annual leave calculation
-        return this.calculateAnnualLeaveBalance(balance, monthsWorked);
+        return this.calculateAnnualLeaveBalance(balance, currentMonth);
     }
+  }
+
+  // Check if staff can edit leave request
+  canStaffEditLeave(leaveRequest: LeaveRequest): boolean {
+    // Staff can only edit if status is pending and start date hasn't occurred
+    if (leaveRequest.Status !== 'pending') {
+      return false;
+    }
+    
+    const startDate = new Date(leaveRequest.StartDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day
+    
+    return startDate >= today;
+  }
+
+  // Update balance when leave is cancelled (restore the days)
+  async updateBalanceOnCancellation(leaveRequest: LeaveRequest): Promise<void> {
+    console.log('Restoring balance for cancelled leave:', leaveRequest);
+    
+    const updateData = {
+      employeeEmail: leaveRequest.Requester,
+      leaveType: leaveRequest.LeaveType.toLowerCase(),
+      daysToRestore: leaveRequest.workingDays,
+      year: new Date().getFullYear()
+    };
+
+    console.log('Balance restoration data:', updateData);
   }
 
   // Update balance when leave is approved
   async updateBalanceOnApproval(leaveRequest: LeaveRequest): Promise<void> {
     console.log('Updating balance for approved leave:', leaveRequest);
     
-    // In a real application, this would make an API call to update the database
     const updateData = {
       employeeEmail: leaveRequest.Requester,
       leaveType: leaveRequest.LeaveType.toLowerCase(),
@@ -97,22 +139,13 @@ class BalanceService {
       year: new Date().getFullYear()
     };
 
-    // Simulate API call to update balance
     console.log('Balance update data:', updateData);
-    
-    // This would be the actual database update logic
-    // await fetch('/api/balances/update', {
-    //   method: 'POST',
-    //   body: JSON.stringify(updateData)
-    // });
   }
 
   // Get employee balance
   async getEmployeeBalance(employeeEmail: string, year: number = new Date().getFullYear()): Promise<EmployeeBalance | null> {
-    // In a real application, this would fetch from the database
     console.log(`Fetching balance for ${employeeEmail} for year ${year}`);
     
-    // Mock data for now
     const mockBalance = {
       BalanceID: 1,
       EmployeeName: "John Smith",
@@ -131,19 +164,18 @@ class BalanceService {
       AdoptionUsed: 0,
       StudyUsed: 0,
       MentalhealthUsed: 0,
-      Current_leave_balance: 0, // Will be calculated
+      Current_leave_balance: 0,
       Manager: "sarah.johnson@company.com"
     };
 
-    // Calculate current annual leave balance
-    mockBalance.Current_leave_balance = this.calculateAnnualLeaveBalance(mockBalance, 12);
+    mockBalance.Current_leave_balance = this.calculateAnnualLeaveBalance(mockBalance);
 
     return mockBalance;
   }
 
   // Validate if employee has sufficient balance
-  validateLeaveBalance(balance: EmployeeBalance, leaveType: string, requestedDays: number, monthsWorked: number = 12): boolean {
-    const currentBalance = this.calculateCurrentBalance(balance, leaveType, monthsWorked);
+  validateLeaveBalance(balance: EmployeeBalance, leaveType: string, requestedDays: number, currentMonth: number = new Date().getMonth() + 1): boolean {
+    const currentBalance = this.calculateCurrentBalance(balance, leaveType, currentMonth);
     
     switch (leaveType.toLowerCase()) {
       case 'annual':
@@ -169,9 +201,9 @@ class BalanceService {
   }
 
   // Get all leave balances for an employee
-  getAllLeaveBalances(balance: EmployeeBalance, monthsWorked: number = 12) {
+  getAllLeaveBalances(balance: EmployeeBalance, currentMonth: number = new Date().getMonth() + 1) {
     return {
-      annual: this.calculateAnnualLeaveBalance(balance, monthsWorked),
+      annual: this.calculateAnnualLeaveBalance(balance, currentMonth),
       sick: this.calculateOtherLeaveBalance(36, balance.SickUsed),
       maternity: this.calculateOtherLeaveBalance(90, balance.MaternityUsed),
       parental: this.calculateOtherLeaveBalance(20, balance.ParentalUsed),

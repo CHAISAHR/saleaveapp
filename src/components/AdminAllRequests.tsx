@@ -6,8 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, XCircle, AlertCircle, Edit, Save, X, Download } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Edit, Save, X, Download, Ban } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { balanceService } from "@/services/balanceService";
 
 interface LeaveRequest {
   LeaveID: number;
@@ -63,6 +64,31 @@ export const AdminAllRequests = () => {
     }
   ]);
 
+  const handleCancelLeave = async (request: LeaveRequest) => {
+    if (request.Status === 'approved') {
+      // Restore balance for previously approved leave
+      await balanceService.updateBalanceOnCancellation(request);
+    }
+
+    const updatedRequest = {
+      ...request,
+      Status: 'cancelled' as const,
+      Modified: new Date().toISOString(),
+      ModifiedBy: "admin@company.com"
+    };
+
+    setRequests(prev => prev.map(r => 
+      r.LeaveID === updatedRequest.LeaveID ? updatedRequest : r
+    ));
+
+    console.log('Leave cancelled:', updatedRequest);
+
+    toast({
+      title: "Leave Cancelled",
+      description: `Leave request for ${request.Requester} has been cancelled.`,
+    });
+  };
+
   const downloadCSV = () => {
     const headers = [
       'LeaveID', 'Title', 'Detail', 'StartDate', 'EndDate', 'LeaveType', 
@@ -115,7 +141,7 @@ export const AdminAllRequests = () => {
     const updatedRequest = {
       ...editingRequest,
       Modified: new Date().toISOString(),
-      ModifiedBy: "admin@company.com" // In real app, this would be current user
+      ModifiedBy: "admin@company.com"
     };
 
     setRequests(prev => prev.map(r => 
@@ -312,9 +338,21 @@ export const AdminAllRequests = () => {
                           </Button>
                         </div>
                       ) : (
-                        <Button size="sm" variant="outline" onClick={() => handleEdit(request)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <div className="flex space-x-2">
+                          <Button size="sm" variant="outline" onClick={() => handleEdit(request)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          {(request.Status === 'approved' || request.Status === 'pending') && (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              onClick={() => handleCancelLeave(request)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Ban className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       )}
                     </TableCell>
                   </TableRow>
