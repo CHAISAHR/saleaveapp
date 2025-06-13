@@ -42,6 +42,41 @@ class BalanceService {
     return Number(((20/12) * currentMonth).toFixed(1));
   }
 
+  // Calculate pro-rated monthly accumulation based on exact termination date
+  calculateProRatedAccumulation(terminationDate: string): number {
+    const termDate = new Date(terminationDate);
+    const year = termDate.getFullYear();
+    const month = termDate.getMonth() + 1;
+    const day = termDate.getDate();
+    
+    // Get the last day of the termination month
+    const lastDayOfMonth = new Date(year, month, 0).getDate();
+    
+    // Calculate completed months (full accumulation)
+    const completedMonths = month - 1;
+    const completedMonthsAccumulation = (20/12) * completedMonths;
+    
+    // Calculate pro-rated accumulation for the termination month
+    const daysWorkedInMonth = day;
+    const monthlyRate = 20/12;
+    const dailyRate = monthlyRate / lastDayOfMonth;
+    const partialMonthAccumulation = dailyRate * daysWorkedInMonth;
+    
+    const totalAccumulation = completedMonthsAccumulation + partialMonthAccumulation;
+    
+    console.log(`Pro-rated calculation for ${terminationDate}:`, {
+      completedMonths,
+      completedMonthsAccumulation: completedMonthsAccumulation.toFixed(2),
+      daysWorkedInMonth,
+      lastDayOfMonth,
+      dailyRate: dailyRate.toFixed(4),
+      partialMonthAccumulation: partialMonthAccumulation.toFixed(2),
+      totalAccumulation: totalAccumulation.toFixed(2)
+    });
+    
+    return Number(totalAccumulation.toFixed(1));
+  }
+
   // Calculate current annual leave balance using the specified formula
   // Formula: Broughtforward + Monthly Accumulation (20/12 * Month()) - AnnualUsed - Forfeited - Annual_leave_adjustments
   calculateAnnualLeaveBalance(balance: EmployeeBalance, currentMonth: number = new Date().getMonth() + 1): number {
@@ -55,15 +90,13 @@ class BalanceService {
     ).toFixed(1));
   }
 
-  // Calculate annual leave balance at termination date
+  // Calculate annual leave balance at termination date with pro-rating
   calculateTerminationBalance(balance: EmployeeBalance, terminationDate: string): number {
-    const termDate = new Date(terminationDate);
-    const terminationMonth = termDate.getMonth() + 1;
-    const monthlyAccumulation = this.calculateMonthlyAccumulation(terminationMonth);
+    const proRatedAccumulation = this.calculateProRatedAccumulation(terminationDate);
     
     return Number((
       balance.Broughtforward + 
-      monthlyAccumulation - 
+      proRatedAccumulation - 
       balance.AnnualUsed - 
       balance.Forfeited - 
       balance.Annual_leave_adjustments
