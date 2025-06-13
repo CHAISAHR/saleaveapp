@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Edit, Save, Plus, Download } from "lucide-react";
@@ -601,8 +601,10 @@ export const AdminAllBalances = () => {
                 <p className="text-xs text-blue-600 mt-2">
                   Formula: Brought Forward + Monthly Accumulation (20/12 * Current Month) - Annual Used - Forfeited - Adjustments
                   {selectedBalance.Contract_termination_date && balanceService.hasTerminationDatePassed(selectedBalance.Contract_termination_date) && (
-                    <br />
-                    <span className="text-orange-600">Note: Termination date has passed - using termination balance instead of current accumulation</span>
+                    <>
+                      <br />
+                      <span className="text-orange-600">Note: Termination date has passed - using termination balance instead of current accumulation</span>
+                    </>
                   )}
                 </p>
               </div>
