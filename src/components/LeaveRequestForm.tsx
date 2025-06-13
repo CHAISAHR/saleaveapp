@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CalendarIcon, Info, AlertTriangle } from "lucide-react";
+import { CalendarIcon, Info, AlertTriangle, Upload, X, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
@@ -31,6 +30,8 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     endDate: undefined as Date | undefined,
     isHalfDay: false,
   });
+
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
   const leaveTypes = [
     { 
@@ -165,6 +166,66 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     return false;
   };
 
+  // Check if document attachment is required for sick leave
+  const requiresDocumentAttachment = () => {
+    if (formData.leaveType === 'sick') {
+      const workingDays = calculateWorkingDays();
+      return workingDays >= 2;
+    }
+    return false;
+  };
+
+  // Handle file upload
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      const validFiles = newFiles.filter(file => {
+        const isValidType = file.type === 'application/pdf' || 
+                           file.type.startsWith('image/') ||
+                           file.type === 'application/msword' ||
+                           file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB limit
+        
+        if (!isValidType) {
+          toast({
+            title: "Invalid file type",
+            description: `${file.name} is not a supported file type. Please upload PDF, Word documents, or images.`,
+            variant: "destructive",
+          });
+          return false;
+        }
+        
+        if (!isValidSize) {
+          toast({
+            title: "File too large",
+            description: `${file.name} exceeds the 5MB limit.`,
+            variant: "destructive",
+          });
+          return false;
+        }
+        
+        return true;
+      });
+      
+      setAttachedFiles(prev => [...prev, ...validFiles]);
+    }
+  };
+
+  // Remove attached file
+  const removeFile = (index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Format file size
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
   const sendEmailNotifications = async (requestData: any) => {
     try {
       // Send email to manager
@@ -189,6 +250,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         - Description: ${requestData.description}
         ${requestData.requiresHRApproval ? '\n⚠️ REQUIRES HR APPROVAL: Insufficient leave balance' : ''}
         ${requestData.requiresMedicalCert ? '\n📄 REQUIRES: Medical certificate to be forwarded to HR' : ''}
+        ${requestData.attachedFiles && requestData.attachedFiles.length > 0 ? `\n📎 ATTACHED DOCUMENTS: ${requestData.attachedFiles.map((f: File) => f.name).join(', ')}` : ''}
         
         Please log into the leave management system to review and approve this request.
         
@@ -236,6 +298,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         - Status: Pending Approval
         ${requestData.requiresHRApproval ? '\n⚠️ Note: This request requires HR approval due to insufficient balance' : ''}
         ${requestData.requiresMedicalCert ? '\n📄 Action Required: Please forward medical certificate to HR' : ''}
+        ${requestData.attachedFiles && requestData.attachedFiles.length > 0 ? `\n📎 Documents Attached: ${requestData.attachedFiles.map((f: File) => f.name).join(', ')}` : ''}
         
         You will receive an email notification once your manager reviews your request.
         
@@ -253,7 +316,8 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         Status: 'pending',
         workingDays: requestData.workingDays,
         Created: new Date().toISOString(),
-        requiresHRApproval: requestData.requiresHRApproval
+        requiresHRApproval: requestData.requiresHRApproval,
+        attachedFiles: requestData.attachedFiles ? requestData.attachedFiles.map((f: File) => ({ name: f.name, size: f.size, type: f.type })) : []
       };
       
       console.log('Leave record to be created:', leaveRecord);
@@ -275,6 +339,16 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       return;
     }
 
+    // Check if document attachment is required for sick leave
+    if (requiresDocumentAttachment() && attachedFiles.length === 0) {
+      toast({
+        title: "Document Required",
+        description: "Please attach supporting documents for sick leave of 2 or more days.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const workingDays = calculateWorkingDays();
     const requiresHRApproval = isBalanceInsufficient();
     const requiresMedicalCert = requiresMedicalCertificate();
@@ -286,7 +360,8 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       submittedDate: new Date().toISOString(),
       status: 'pending',
       requiresHRApproval,
-      requiresMedicalCert
+      requiresMedicalCert,
+      attachedFiles: attachedFiles.length > 0 ? attachedFiles : undefined
     };
 
     console.log("Leave request submitted:", requestData);
@@ -304,11 +379,25 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       toastMessage += " Please forward medical certificate to HR.";
     }
 
+    if (attachedFiles.length > 0) {
+      toastMessage += ` ${attachedFiles.length} document${attachedFiles.length > 1 ? 's' : ''} attached.`;
+    }
+
     toast({
       title: "Request Submitted",
       description: toastMessage,
     });
 
+    // Reset form
+    setFormData({
+      title: "",
+      description: "",
+      leaveType: "",
+      startDate: undefined,
+      endDate: undefined,
+      isHalfDay: false,
+    });
+    setAttachedFiles([]);
     onClose();
   };
 
@@ -415,6 +504,61 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
             </Label>
           </div>
 
+          {/* Document Upload Section for Sick Leave */}
+          {requiresDocumentAttachment() && (
+            <div className="space-y-3">
+              <Label htmlFor="documents">Supporting Documents *</Label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                <div className="text-center">
+                  <Upload className="mx-auto h-8 w-8 text-gray-400" />
+                  <div className="mt-2">
+                    <Label htmlFor="file-upload" className="cursor-pointer">
+                      <span className="text-sm font-medium text-blue-600 hover:text-blue-500">
+                        Click to upload files
+                      </span>
+                      <Input
+                        id="file-upload"
+                        type="file"
+                        multiple
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        className="hidden"
+                        onChange={handleFileUpload}
+                      />
+                    </Label>
+                    <p className="text-xs text-gray-500 mt-1">
+                      PDF, Word documents, or images (max 5MB each)
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Display attached files */}
+              {attachedFiles.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Attached Files:</Label>
+                  {attachedFiles.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                      <div className="flex items-center space-x-2">
+                        <FileText className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-700">{file.name}</span>
+                        <span className="text-xs text-gray-500">({formatFileSize(file.size)})</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                        className="h-6 w-6 p-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Validation Alerts */}
           {selectedLeaveType && formData.startDate && formData.endDate && (
             <div className="space-y-3">
@@ -434,6 +578,16 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                   <Info className="h-4 w-4 text-blue-600" />
                   <AlertDescription className="text-blue-800">
                     <strong>Medical Certificate Required:</strong> For sick leave exceeding 1 day, please forward a medical certificate to HR.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Document Attachment Alert */}
+              {requiresDocumentAttachment() && (
+                <Alert className="border-purple-200 bg-purple-50">
+                  <Upload className="h-4 w-4 text-purple-600" />
+                  <AlertDescription className="text-purple-800">
+                    <strong>Document Required:</strong> Please attach supporting documents (medical certificate, doctor's note, etc.) for sick leave of 2 or more days.
                   </AlertDescription>
                 </Alert>
               )}
