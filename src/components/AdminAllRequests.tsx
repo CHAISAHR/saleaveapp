@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -135,14 +136,32 @@ export const AdminAllRequests = () => {
     setEditingRequest({ ...request });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editingRequest) return;
+
+    const originalRequest = requests.find(r => r.LeaveID === editingRequest.LeaveID);
+    if (!originalRequest) return;
+
+    // Check if status changed from pending to approved
+    const statusChangedToApproved = originalRequest.Status === 'pending' && editingRequest.Status === 'approved';
+    
+    // Check if status changed from approved to something else
+    const statusChangedFromApproved = originalRequest.Status === 'approved' && editingRequest.Status !== 'approved';
 
     const updatedRequest = {
       ...editingRequest,
       Modified: new Date().toISOString(),
       ModifiedBy: "admin@company.com"
     };
+
+    // Update balance based on status change
+    if (statusChangedToApproved) {
+      await balanceService.updateBalanceOnApproval(editingRequest);
+      console.log('Balance updated for approved leave:', editingRequest);
+    } else if (statusChangedFromApproved) {
+      await balanceService.updateBalanceOnCancellation(originalRequest);
+      console.log('Balance restored for status change from approved:', originalRequest);
+    }
 
     setRequests(prev => prev.map(r => 
       r.LeaveID === updatedRequest.LeaveID ? updatedRequest : r
@@ -152,7 +171,9 @@ export const AdminAllRequests = () => {
 
     toast({
       title: "Request Updated",
-      description: "Leave request has been successfully updated.",
+      description: statusChangedToApproved 
+        ? "Leave request approved and balance updated successfully." 
+        : "Leave request has been successfully updated.",
     });
 
     setEditingId(null);
