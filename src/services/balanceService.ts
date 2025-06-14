@@ -8,6 +8,7 @@ export interface EmployeeBalance {
   Year: number;
   Broughtforward: number;
   Annual: number;
+  AccumulatedLeave: number; // Monthly accumulation (1.667 per month)
   AnnualUsed: number;
   Forfeited: number;
   Annual_leave_adjustments: number;
@@ -75,14 +76,14 @@ class BalanceService {
     return termDate < today;
   }
 
-  // Calculate monthly accumulation for annual leave (20/12 per month up to current month)
+  // Calculate monthly accumulation for annual leave (1.667 per month up to current month)
   calculateMonthlyAccumulation(currentMonth: number = new Date().getMonth() + 1, terminationDate?: string): number {
     // If termination date has passed, use accumulation up to termination date only
     if (terminationDate && this.hasTerminationDatePassed(terminationDate)) {
       return this.calculateProRatedAccumulation(terminationDate);
     }
     
-    return Number(((20/12) * currentMonth).toFixed(1));
+    return Number((1.667 * currentMonth).toFixed(1));
   }
 
   // Calculate pro-rated monthly accumulation based on exact termination date
@@ -97,11 +98,11 @@ class BalanceService {
     
     // Calculate completed months (full accumulation)
     const completedMonths = month - 1;
-    const completedMonthsAccumulation = (20/12) * completedMonths;
+    const completedMonthsAccumulation = 1.667 * completedMonths;
     
     // Calculate pro-rated accumulation for the termination month
     const daysWorkedInMonth = day;
-    const monthlyRate = 20/12;
+    const monthlyRate = 1.667;
     const dailyRate = monthlyRate / lastDayOfMonth;
     const partialMonthAccumulation = dailyRate * daysWorkedInMonth;
     
@@ -120,16 +121,15 @@ class BalanceService {
     return Number(totalAccumulation.toFixed(1));
   }
 
-  // Calculate current annual leave balance using the specified formula
-  calculateAnnualLeaveBalance(balance: EmployeeBalance, currentMonth: number = new Date().getMonth() + 1): number {
+  // Calculate current annual leave balance using AccumulatedLeave
+  calculateAnnualLeaveBalance(balance: EmployeeBalance): number {
     if (balance.Contract_termination_date && this.hasTerminationDatePassed(balance.Contract_termination_date)) {
       return this.calculateTerminationBalance(balance, balance.Contract_termination_date);
     }
     
-    const monthlyAccumulation = this.calculateMonthlyAccumulation(currentMonth, balance.Contract_termination_date);
     return Number((
       balance.Broughtforward + 
-      monthlyAccumulation - 
+      balance.AccumulatedLeave - 
       balance.AnnualUsed - 
       balance.Forfeited - 
       balance.Annual_leave_adjustments
@@ -155,10 +155,10 @@ class BalanceService {
   }
 
   // Calculate current balance based on leave type
-  calculateCurrentBalance(balance: EmployeeBalance, leaveType: string = 'annual', currentMonth: number = new Date().getMonth() + 1): number {
+  calculateCurrentBalance(balance: EmployeeBalance, leaveType: string = 'annual'): number {
     switch (leaveType.toLowerCase()) {
       case 'annual':
-        return this.calculateAnnualLeaveBalance(balance, currentMonth);
+        return this.calculateAnnualLeaveBalance(balance);
       case 'sick':
         return this.calculateOtherLeaveBalance(36, balance.SickUsed);
       case 'maternity':
@@ -175,7 +175,7 @@ class BalanceService {
       case 'mentalhealth':
         return this.calculateOtherLeaveBalance(2, balance.MentalhealthUsed);
       default:
-        return this.calculateAnnualLeaveBalance(balance, currentMonth);
+        return this.calculateAnnualLeaveBalance(balance);
     }
   }
 
@@ -254,8 +254,8 @@ class BalanceService {
   }
 
   // Validate if employee has sufficient balance
-  validateLeaveBalance(balance: EmployeeBalance, leaveType: string, requestedDays: number, currentMonth: number = new Date().getMonth() + 1): boolean {
-    const currentBalance = this.calculateCurrentBalance(balance, leaveType, currentMonth);
+  validateLeaveBalance(balance: EmployeeBalance, leaveType: string, requestedDays: number): boolean {
+    const currentBalance = this.calculateCurrentBalance(balance, leaveType);
     
     switch (leaveType.toLowerCase()) {
       case 'annual':
@@ -281,9 +281,9 @@ class BalanceService {
   }
 
   // Get all leave balances for an employee
-  getAllLeaveBalances(balance: EmployeeBalance, currentMonth: number = new Date().getMonth() + 1) {
+  getAllLeaveBalances(balance: EmployeeBalance) {
     return {
-      annual: this.calculateAnnualLeaveBalance(balance, currentMonth),
+      annual: this.calculateAnnualLeaveBalance(balance),
       sick: this.calculateOtherLeaveBalance(36, balance.SickUsed),
       maternity: this.calculateOtherLeaveBalance(90, balance.MaternityUsed),
       parental: this.calculateOtherLeaveBalance(20, balance.ParentalUsed),

@@ -61,7 +61,8 @@ CREATE TABLE leave_balances (
     Status VARCHAR(50) DEFAULT 'Active',
     Year INT NOT NULL,
     Broughtforward DECIMAL(4,1) DEFAULT 0,
-    Annual DECIMAL(4,1) DEFAULT 0, -- Accumulated annual leave (1.6667 per month)
+    Annual DECIMAL(4,1) DEFAULT 0, -- Legacy field for compatibility
+    AccumulatedLeave DECIMAL(4,1) DEFAULT 0, -- Monthly accumulation (1.667 per month)
     AnnualUsed DECIMAL(4,1) DEFAULT 0,
     Forfeited DECIMAL(4,1) DEFAULT 0,
     Annual_leave_adjustments DECIMAL(4,1) DEFAULT 0,
@@ -82,7 +83,7 @@ CREATE TABLE leave_balances (
     MentalhealthUsed DECIMAL(4,1) DEFAULT 0,
     __PowerAppsId__ VARCHAR(255) NULL,
     Current_leave_balance DECIMAL(4,1) GENERATED ALWAYS AS (
-        Broughtforward + Annual - AnnualUsed - Forfeited - Annual_leave_adjustments
+        Broughtforward + AccumulatedLeave - AnnualUsed - Forfeited - Annual_leave_adjustments
     ) STORED,
     Leave_balance_previous_month DECIMAL(4,1) DEFAULT 0,
     Contract_termination_date DATE NULL,
@@ -174,4 +175,3 @@ FROM leave_taken lt
 LEFT JOIN leave_balances lb ON lt.Requester = lb.EmployeeEmail 
     AND lb.Year = YEAR(CURRENT_DATE)
 WHERE lt.Status = 'pending';
-

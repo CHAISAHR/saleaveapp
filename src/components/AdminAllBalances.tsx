@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ interface EmployeeBalance {
   Year: number;
   Broughtforward: number;
   Annual: number;
+  AccumulatedLeave: number;
   AnnualUsed: number;
   Forfeited: number;
   Annual_leave_adjustments: number;
@@ -65,6 +67,7 @@ export const AdminAllBalances = () => {
       Year: 2025,
       Broughtforward: 5,
       Annual: 20,
+      AccumulatedLeave: 20.0, // 12 months * 1.667
       AnnualUsed: 8,
       Forfeited: 0,
       Annual_leave_adjustments: 0,
@@ -98,6 +101,7 @@ export const AdminAllBalances = () => {
       Year: 2025,
       Broughtforward: 3,
       Annual: 20,
+      AccumulatedLeave: 13.3, // 8 months * 1.667 (terminated)
       AnnualUsed: 12,
       Forfeited: 0,
       Annual_leave_adjustments: 0,
@@ -126,8 +130,7 @@ export const AdminAllBalances = () => {
   ]);
 
   const calculateCurrentBalance = (balance: EmployeeBalance) => {
-    const currentMonth = new Date().getMonth() + 1;
-    return balanceService.calculateAnnualLeaveBalance(balance, currentMonth);
+    return balanceService.calculateAnnualLeaveBalance(balance);
   };
 
   const calculateTerminationBalance = (balance: EmployeeBalance) => {
@@ -142,7 +145,7 @@ export const AdminAllBalances = () => {
   const downloadCSV = () => {
     const headers = [
       'BalanceID', 'EmployeeName', 'EmployeeEmail', 'Department', 'Status', 'Year',
-      'Broughtforward', 'Annual', 'AnnualUsed', 'Forfeited', 'Annual_leave_adjustments',
+      'Broughtforward', 'Annual', 'AccumulatedLeave', 'AnnualUsed', 'Forfeited', 'Annual_leave_adjustments',
       'SickBroughtforward', 'Sick', 'SickUsed', 'Maternity', 'MaternityUsed',
       'Parental', 'ParentalUsed', 'Family', 'FamilyUsed', 'Adoption', 'AdoptionUsed',
       'Study', 'StudyUsed', 'Mentalhealth', 'MentalhealthUsed', 'PowerAppsId',
@@ -161,6 +164,7 @@ export const AdminAllBalances = () => {
         balance.Year,
         balance.Broughtforward,
         balance.Annual,
+        balance.AccumulatedLeave,
         balance.AnnualUsed,
         balance.Forfeited,
         balance.Annual_leave_adjustments,
@@ -251,7 +255,7 @@ export const AdminAllBalances = () => {
     if (!selectedBalance) return;
     
     const numericFields = [
-      'Broughtforward', 'Annual', 'AnnualUsed', 'Forfeited', 'Annual_leave_adjustments',
+      'Broughtforward', 'Annual', 'AccumulatedLeave', 'AnnualUsed', 'Forfeited', 'Annual_leave_adjustments',
       'SickBroughtforward', 'Sick', 'SickUsed', 'Maternity', 'MaternityUsed',
       'Parental', 'ParentalUsed', 'Family', 'FamilyUsed', 'Adoption', 'AdoptionUsed',
       'Study', 'StudyUsed', 'Mentalhealth', 'MentalhealthUsed', 'termination_balance',
@@ -289,7 +293,7 @@ export const AdminAllBalances = () => {
         <CardHeader>
           <CardTitle>Employee Leave Balances (2025)</CardTitle>
           <CardDescription>
-            Complete leave balance information for all employees
+            Complete leave balance information for all employees. Annual leave formula: Brought Forward + Accumulated Leave - Annual Used - Forfeited - Adjustments
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -305,6 +309,7 @@ export const AdminAllBalances = () => {
                   <TableHead>Year</TableHead>
                   <TableHead>Brought Forward</TableHead>
                   <TableHead>Annual</TableHead>
+                  <TableHead>Accumulated Leave</TableHead>
                   <TableHead>Annual Used</TableHead>
                   <TableHead>Forfeited</TableHead>
                   <TableHead>Annual Adjustments</TableHead>
@@ -352,6 +357,7 @@ export const AdminAllBalances = () => {
                     <TableCell>{balance.Year}</TableCell>
                     <TableCell>{balance.Broughtforward}</TableCell>
                     <TableCell>{balance.Annual}</TableCell>
+                    <TableCell className="font-medium text-purple-600">{balance.AccumulatedLeave}</TableCell>
                     <TableCell>{balance.AnnualUsed}</TableCell>
                     <TableCell>{balance.Forfeited}</TableCell>
                     <TableCell>{balance.Annual_leave_adjustments}</TableCell>
@@ -461,25 +467,34 @@ export const AdminAllBalances = () => {
                     <Label>Brought Forward</Label>
                     <Input
                       type="number"
-                      step="0.5"
+                      step="0.1"
                       value={selectedBalance.Broughtforward}
                       onChange={(e) => handleFieldChange('Broughtforward', e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Annual Allocated</Label>
+                    <Label>Annual Allocated (Legacy)</Label>
                     <Input
                       type="number"
-                      step="0.5"
+                      step="0.1"
                       value={selectedBalance.Annual}
                       onChange={(e) => handleFieldChange('Annual', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Accumulated Leave (1.667/month)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={selectedBalance.AccumulatedLeave}
+                      onChange={(e) => handleFieldChange('AccumulatedLeave', e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Annual Used</Label>
                     <Input
                       type="number"
-                      step="0.5"
+                      step="0.1"
                       value={selectedBalance.AnnualUsed}
                       onChange={(e) => handleFieldChange('AnnualUsed', e.target.value)}
                     />
@@ -488,7 +503,7 @@ export const AdminAllBalances = () => {
                     <Label>Forfeited</Label>
                     <Input
                       type="number"
-                      step="0.5"
+                      step="0.1"
                       value={selectedBalance.Forfeited}
                       onChange={(e) => handleFieldChange('Forfeited', e.target.value)}
                     />
@@ -497,7 +512,7 @@ export const AdminAllBalances = () => {
                     <Label>Annual Adjustments</Label>
                     <Input
                       type="number"
-                      step="0.5"
+                      step="0.1"
                       value={selectedBalance.Annual_leave_adjustments}
                       onChange={(e) => handleFieldChange('Annual_leave_adjustments', e.target.value)}
                     />
@@ -599,7 +614,7 @@ export const AdminAllBalances = () => {
                   </p>
                 </div>
                 <p className="text-xs text-blue-600 mt-2">
-                  Formula: Brought Forward + Monthly Accumulation (20/12 * Current Month) - Annual Used - Forfeited - Adjustments
+                  Formula: Brought Forward + Accumulated Leave - Annual Used - Forfeited - Adjustments
                   {selectedBalance.Contract_termination_date && balanceService.hasTerminationDatePassed(selectedBalance.Contract_termination_date) && (
                     <>
                       <br />
