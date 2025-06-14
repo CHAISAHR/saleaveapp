@@ -173,7 +173,7 @@ export const EmployeeDashboard = ({
             return <Card key={balance.type} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-gray-600">
-                    {balance.type}
+                    {balance.type} leave
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
