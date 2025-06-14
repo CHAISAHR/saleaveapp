@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,37 +20,68 @@ interface AdminDashboardProps {
   onViewChange?: (view: 'dashboard' | 'system' | 'admin' | 'balances') => void;
 }
 
+interface Holiday {
+  id: number;
+  name: string;
+  date: string;
+  type: string;
+  description: string;
+  office_status: string;
+}
+
 export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewChange }: AdminDashboardProps) => {
   const { toast } = useToast();
   const [showHolidayForm, setShowHolidayForm] = useState(false);
-  const [holidays, setHolidays] = useState([
-    {
-      id: 1,
-      name: "New Year's Day",
-      date: "2024-01-01",
-      type: "public",
-      description: "National public holiday",
-      officeStatus: "closed"
-    },
-    {
-      id: 2,
-      name: "Company Summer Picnic",
-      date: "2024-08-15",
-      type: "company",
-      description: "Annual company event",
-      officeStatus: "optional"
-    }
-  ]);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const [newHoliday, setNewHoliday] = useState({
     name: "",
     date: undefined as Date | undefined,
     type: "public",
     description: "",
-    officeStatus: "closed"
+    office_status: "closed"
   });
 
-  const handleAddHoliday = () => {
+  // Get authorization headers
+  const getAuthHeaders = () => {
+    const authToken = localStorage.getItem('auth_token');
+    return {
+      'Authorization': `Bearer ${authToken}`,
+      'Content-Type': 'application/json'
+    };
+  };
+
+  // Fetch holidays from backend
+  const fetchHolidays = async () => {
+    try {
+      setLoading(true);
+      
+      const response = await fetch('http://localhost:3001/api/holiday', {
+        headers: getAuthHeaders()
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setHolidays(data.holidays || []);
+      } else {
+        console.error('Failed to fetch holidays');
+      }
+    } catch (error) {
+      console.error('Error fetching holidays:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load holidays on component mount
+  useEffect(() => {
+    if (activeView === 'admin') {
+      fetchHolidays();
+    }
+  }, [activeView]);
+
+  const handleAddHoliday = async () => {
     if (!newHoliday.name || !newHoliday.date) {
       toast({
         title: "Missing Information",
@@ -60,36 +91,62 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
       return;
     }
 
-    const holiday = {
-      id: holidays.length + 1,
-      name: newHoliday.name,
-      date: format(newHoliday.date, 'yyyy-MM-dd'),
-      type: newHoliday.type,
-      description: newHoliday.description,
-      officeStatus: newHoliday.officeStatus
-    };
+    try {
+      setLoading(true);
+      
+      const response = await fetch('http://localhost:3001/api/holiday', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          name: newHoliday.name,
+          date: format(newHoliday.date, 'yyyy-MM-dd'),
+          type: newHoliday.type,
+          description: newHoliday.description,
+          office_status: newHoliday.office_status,
+          is_recurring: false
+        })
+      });
 
-    setHolidays(prev => [...prev, holiday]);
-    setNewHoliday({
-      name: "",
-      date: undefined,
-      type: "public",
-      description: "",
-      officeStatus: "closed"
-    });
-    setShowHolidayForm(false);
+      if (response.ok) {
+        // Refresh holidays list
+        await fetchHolidays();
+        
+        // Reset form
+        setNewHoliday({
+          name: "",
+          date: undefined,
+          type: "public",
+          description: "",
+          office_status: "closed"
+        });
+        setShowHolidayForm(false);
 
-    toast({
-      title: "Holiday Added",
-      description: `${holiday.name} has been added to the holiday calendar.`,
-    });
+        toast({
+          title: "Holiday Added",
+          description: `${newHoliday.name} has been added to the holiday calendar.`,
+        });
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add holiday');
+      }
+    } catch (error) {
+      console.error('Error adding holiday:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to add holiday",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDeleteHoliday = (holidayId: number, holidayName: string) => {
-    setHolidays(prev => prev.filter(h => h.id !== holidayId));
+    // For now, just show a message that this feature is not implemented
     toast({
-      title: "Holiday Removed",
-      description: `${holidayName} has been removed from the calendar.`,
+      title: "Feature Not Available",
+      description: "Holiday deletion will be implemented in a future update.",
+      variant: "destructive",
     });
   };
 
@@ -221,7 +278,7 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
           </div>
           <Dialog open={showHolidayForm} onOpenChange={setShowHolidayForm}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700">
+              <Button className="bg-blue-600 hover:bg-blue-700" disabled={loading}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Holiday
               </Button>
@@ -283,7 +340,7 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
 
                   <div className="space-y-2">
                     <Label htmlFor="status">Office Status</Label>
-                    <Select value={newHoliday.officeStatus} onValueChange={(value) => setNewHoliday(prev => ({ ...prev, officeStatus: value }))}>
+                    <Select value={newHoliday.office_status} onValueChange={(value) => setNewHoliday(prev => ({ ...prev, office_status: value }))}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -310,8 +367,8 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
                   <Button variant="outline" onClick={() => setShowHolidayForm(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={handleAddHoliday}>
-                    Add Holiday
+                  <Button onClick={handleAddHoliday} disabled={loading}>
+                    {loading ? "Adding..." : "Add Holiday"}
                   </Button>
                 </div>
               </div>
@@ -325,34 +382,38 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
             <CardDescription>Manage current holiday entries</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {holidays.map((holiday) => (
-                <div key={holiday.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                  <div>
-                    <h4 className="font-medium text-gray-900">{holiday.name}</h4>
-                    <p className="text-sm text-gray-600">{holiday.description}</p>
-                    <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
-                      <span>{new Date(holiday.date).toLocaleDateString()}</span>
-                      <Badge variant={holiday.type === 'public' ? 'default' : 'secondary'}>
-                        {holiday.type === 'public' ? 'Public' : 'Company'}
-                      </Badge>
-                      <span className={holiday.officeStatus === 'closed' ? 'text-red-600' : 'text-blue-600'}>
-                        {holiday.officeStatus === 'closed' ? 'Office Closed' : 'Optional'}
-                      </span>
+            {loading ? (
+              <div className="text-center py-4">Loading holidays...</div>
+            ) : (
+              <div className="space-y-4">
+                {holidays.map((holiday) => (
+                  <div key={holiday.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                    <div>
+                      <h4 className="font-medium text-gray-900">{holiday.name}</h4>
+                      <p className="text-sm text-gray-600">{holiday.description}</p>
+                      <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
+                        <span>{new Date(holiday.date).toLocaleDateString()}</span>
+                        <Badge variant={holiday.type === 'public' ? 'default' : 'secondary'}>
+                          {holiday.type === 'public' ? 'Public' : 'Company'}
+                        </Badge>
+                        <span className={holiday.office_status === 'closed' ? 'text-red-600' : 'text-blue-600'}>
+                          {holiday.office_status === 'closed' ? 'Office Closed' : 'Optional'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDeleteHoliday(holiday.id, holiday.name)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDeleteHoliday(holiday.id, holiday.name)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

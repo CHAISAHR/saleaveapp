@@ -28,7 +28,7 @@ interface User {
 
 export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
   const { toast } = useToast();
-  const { token } = useAuth();
+  const { user } = useAuth();
   const [showUserForm, setShowUserForm] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
@@ -45,13 +45,13 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
 
   // Check if we have a valid token
   const hasValidToken = () => {
-    const authToken = token || localStorage.getItem('auth_token');
+    const authToken = localStorage.getItem('auth_token');
     return authToken && authToken !== 'null' && authToken !== '';
   };
 
   // Get authorization headers
   const getAuthHeaders = () => {
-    const authToken = token || localStorage.getItem('auth_token');
+    const authToken = localStorage.getItem('auth_token');
     return {
       'Authorization': `Bearer ${authToken}`,
       'Content-Type': 'application/json'
