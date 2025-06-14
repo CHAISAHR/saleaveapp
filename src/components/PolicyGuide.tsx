@@ -252,7 +252,7 @@ export const PolicyGuide = () => {
                 <div className="space-y-2 text-sm">
                   <h4 className="font-medium text-gray-900">Documentation</h4>
                   <ul className="text-gray-600 space-y-1">
-                    <li>• Medical certificates for sick leave {'>'}3 days</li>
+                    <li>• Medical certificates for sick leave {'>'}1 day</li>
                     <li>• Birth certificates for parental leave</li>
                     <li>• Course enrollment for study leave</li>
                   </ul>
