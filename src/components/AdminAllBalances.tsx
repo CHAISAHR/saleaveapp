@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -310,7 +311,7 @@ export const AdminAllBalances = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Employee Leave Balances ({currentYear})</CardTitle>
+          <CardTitle>Employee Leave Balances</CardTitle>
           <CardDescription>
             Complete leave balance information for all employees. Annual leave formula: Brought Forward + Accumulated Leave - Annual Used - Forfeited - Adjustments
           </CardDescription>
