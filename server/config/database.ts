@@ -1,5 +1,6 @@
 
-import mysql from 'mysql2/promise';
+import pkg from 'pg';
+const { Pool } = pkg;
 
 export interface DatabaseConfig {
   host: string;
@@ -7,40 +8,50 @@ export interface DatabaseConfig {
   password: string;
   database: string;
   port: number;
+  ssl?: boolean;
 }
 
 const dbConfig: DatabaseConfig = {
   host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
+  user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'leave_management',
-  port: parseInt(process.env.DB_PORT || '3306'),
+  port: parseInt(process.env.DB_PORT || '5432'),
+  ssl: process.env.NODE_ENV === 'production' ? true : false,
 };
 
-let connection: mysql.Connection;
+let pool: pkg.Pool;
 
-export const connectDatabase = async (): Promise<mysql.Connection> => {
+export const connectDatabase = async (): Promise<pkg.Pool> => {
   try {
-    connection = await mysql.createConnection(dbConfig);
-    console.log('Connected to MySQL database');
-    return connection;
+    pool = new Pool({
+      ...dbConfig,
+      ssl: dbConfig.ssl ? { rejectUnauthorized: false } : false,
+    });
+    
+    // Test the connection
+    const client = await pool.connect();
+    console.log('Connected to PostgreSQL database');
+    client.release();
+    
+    return pool;
   } catch (error) {
     console.error('Database connection failed:', error);
     throw error;
   }
 };
 
-export const getConnection = (): mysql.Connection => {
-  if (!connection) {
+export const getConnection = (): pkg.Pool => {
+  if (!pool) {
     throw new Error('Database not connected');
   }
-  return connection;
+  return pool;
 };
 
 export const executeQuery = async (query: string, params?: any[]): Promise<any> => {
   try {
-    const [results] = await connection.execute(query, params);
-    return results;
+    const result = await pool.query(query, params);
+    return result.rows;
   } catch (error) {
     console.error('Query execution failed:', error);
     throw error;
