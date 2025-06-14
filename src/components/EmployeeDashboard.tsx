@@ -24,49 +24,57 @@ export const EmployeeDashboard = ({
     total: 20,
     accrued: 12.5,
     unit: 'days',
-    broughtForward: 5
+    broughtForward: 5,
+    balance: 9.5 // Calculated balance: broughtForward + accrued - used
   }, {
     type: 'Sick',
     used: 3,
     total: 36,
     accrued: 36,
-    unit: 'days'
+    unit: 'days',
+    balance: 33
   }, {
     type: 'Maternity',
     used: 0,
     total: 90,
     accrued: 90,
-    unit: 'days'
+    unit: 'days',
+    balance: 90
   }, {
     type: 'Parental',
     used: 0,
     total: 20,
     accrued: 20,
-    unit: 'days'
+    unit: 'days',
+    balance: 20
   }, {
     type: 'Family',
     used: 1,
     total: 3,
     accrued: 3,
-    unit: 'days'
+    unit: 'days',
+    balance: 2
   }, {
     type: 'Adoption',
     used: 0,
     total: 20,
     accrued: 20,
-    unit: 'days'
+    unit: 'days',
+    balance: 20
   }, {
     type: 'Study',
     used: 2,
     total: 6,
     accrued: 6,
-    unit: 'days'
+    unit: 'days',
+    balance: 4
   }, {
     type: 'Wellness',
     used: 0,
     total: 2,
     accrued: 2,
-    unit: 'days'
+    unit: 'days',
+    balance: 2
   }];
 
   // Sample leave requests
@@ -101,6 +109,7 @@ export const EmployeeDashboard = ({
     submittedDate: "2024-06-10",
     description: "Professional development conference"
   }];
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'approved':
@@ -113,6 +122,7 @@ export const EmployeeDashboard = ({
         return <Clock className="h-4 w-4 text-gray-500" />;
     }
   };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
@@ -133,6 +143,7 @@ export const EmployeeDashboard = ({
           </Badge>;
     }
   };
+
   if (activeView === 'balance') {
     // Get annual leave data for forfeit calculation
     const annualLeave = leaveBalances.find(b => b.type === 'Annual');
@@ -141,7 +152,7 @@ export const EmployeeDashboard = ({
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Leave Balance</h2>
-            <p className="text-gray-600">Track your available and used leave days</p>
+            <p className="text-gray-600">Track your available leave days</p>
           </div>
           <Button onClick={onNewRequest} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="h-4 w-4 mr-2" />
@@ -159,9 +170,9 @@ export const EmployeeDashboard = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {leaveBalances.map(balance => {
-          const percentage = balance.used / balance.total * 100;
-          const remaining = balance.total - balance.used;
-          return <Card key={balance.type} className="hover:shadow-md transition-shadow">
+            const percentage = balance.used / balance.total * 100;
+            
+            return <Card key={balance.type} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-gray-600">
                     {balance.type} Leave
@@ -170,15 +181,15 @@ export const EmployeeDashboard = ({
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-2xl font-bold text-lime-700">{remaining}</span>
-                      <span className="text-sm text-gray-500">of {balance.total} days</span>
+                      <span className="text-3xl font-bold text-lime-700">{balance.balance}</span>
+                      <span className="text-sm text-gray-500">days</span>
                     </div>
                     
                     <Progress value={percentage} className="h-2" />
                     
                     <div className="flex justify-between text-xs text-gray-500">
                       <span>Used: {balance.used}</span>
-                      <span>Remaining: {remaining}</span>
+                      <span>Available: {balance.balance}</span>
                     </div>
                     
                     {balance.type === 'Annual' && <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
@@ -187,7 +198,7 @@ export const EmployeeDashboard = ({
                   </div>
                 </CardContent>
               </Card>;
-        })}
+          })}
         </div>
 
         <Card>
