@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,6 +57,9 @@ export const AdminAllBalances = () => {
   const [selectedBalance, setSelectedBalance] = useState<EmployeeBalance | null>(null);
   const [showRolloverDialog, setShowRolloverDialog] = useState(false);
   const [currentYear] = useState(new Date().getFullYear());
+
+  // Check if current month is December
+  const isDecember = new Date().getMonth() === 11; // December is month 11 (0-indexed)
 
   // Mock data - in real app this would come from API
   const [balances, setBalances] = useState<EmployeeBalance[]>([
@@ -293,7 +295,9 @@ export const AdminAllBalances = () => {
           <Button 
             onClick={() => setShowRolloverDialog(true)}
             variant="default"
-            className="bg-orange-600 hover:bg-orange-700"
+            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 disabled:hover:bg-gray-400 disabled:cursor-not-allowed"
+            disabled={!isDecember}
+            title={!isDecember ? "Year rollover is only available in December" : "Start year rollover process"}
           >
             <RotateCcw className="h-4 w-4 mr-2" />
             Year Rollover
