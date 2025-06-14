@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,56 +15,69 @@ interface AdminPanelProps {
   currentUser: any;
 }
 
+interface User {
+  id: number;
+  employee_id: string;
+  name: string;
+  email: string;
+  department: string;
+  role: 'employee' | 'manager' | 'admin';
+  hire_date: string;
+  is_active: boolean;
+}
+
 export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
   const { toast } = useToast();
   const [showUserForm, setShowUserForm] = useState(false);
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: "John Smith",
-      email: "john.smith@company.com",
-      department: "Marketing",
-      role: "employee",
-      manager: "sarah.johnson@company.com"
-    },
-    {
-      id: 2,
-      name: "Emily Davis",
-      email: "emily.davis@company.com",
-      department: "Marketing",
-      role: "employee",
-      manager: "sarah.johnson@company.com"
-    },
-    {
-      id: 3,
-      name: "Sarah Johnson",
-      email: "sarah.johnson@company.com",
-      department: "Marketing",
-      role: "manager",
-      manager: "admin@company.com"
-    },
-    {
-      id: 4,
-      name: "Admin User",
-      email: "admin@company.com",
-      department: "IT",
-      role: "admin",
-      manager: null
-    }
-  ]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const [newUser, setNewUser] = useState({
     name: "",
     email: "",
+    employee_id: "",
     department: "",
     role: "employee",
-    manager: ""
+    password: ""
   });
 
-  const managers = users.filter(user => user.role === 'manager' || user.role === 'admin');
+  // Fetch users from backend
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('http://localhost:3001/api/user', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-  const handleAddUser = () => {
-    if (!newUser.name || !newUser.email || !newUser.department) {
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data.users || []);
+      } else {
+        throw new Error('Failed to fetch users');
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load users",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load users on component mount
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const handleAddUser = async () => {
+    if (!newUser.name || !newUser.email || !newUser.employee_id || !newUser.department || !newUser.password) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -73,61 +86,112 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
       return;
     }
 
-    const user = {
-      id: users.length + 1,
-      name: newUser.name,
-      email: newUser.email,
-      department: newUser.department,
-      role: newUser.role,
-      manager: newUser.manager || null
-    };
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('http://localhost:3001/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: newUser.name,
+          email: newUser.email,
+          employee_id: newUser.employee_id,
+          department: newUser.department,
+          password: newUser.password
+        })
+      });
 
-    setUsers(prev => [...prev, user]);
-    setNewUser({
-      name: "",
-      email: "",
-      department: "",
-      role: "employee",
-      manager: ""
-    });
-    setShowUserForm(false);
+      if (response.ok) {
+        const data = await response.json();
+        
+        // If user role is not employee, update it
+        if (newUser.role !== 'employee') {
+          await handleUpdateUserRole(data.userId, newUser.role);
+        }
 
-    toast({
-      title: "User Added",
-      description: `${user.name} has been added to the system.`,
-    });
+        // Refresh users list
+        await fetchUsers();
+
+        // Reset form
+        setNewUser({
+          name: "",
+          email: "",
+          employee_id: "",
+          department: "",
+          role: "employee",
+          password: ""
+        });
+        setShowUserForm(false);
+
+        toast({
+          title: "User Added",
+          description: `${newUser.name} has been added to the system.`,
+        });
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add user');
+      }
+    } catch (error) {
+      console.error('Error adding user:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to add user",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleUpdateUserRole = (userId: number, newRole: string) => {
-    setUsers(prev => prev.map(user => 
-      user.id === userId ? { ...user, role: newRole } : user
-    ));
+  const handleUpdateUserRole = async (userId: number, newRole: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`http://localhost:3001/api/user/${userId}/role`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ role: newRole })
+      });
 
-    const user = users.find(u => u.id === userId);
-    toast({
-      title: "Role Updated",
-      description: `${user?.name}'s role has been updated to ${newRole}.`,
-    });
+      if (response.ok) {
+        // Update local state
+        setUsers(prev => prev.map(user => 
+          user.id === userId ? { ...user, role: newRole as 'employee' | 'manager' | 'admin' } : user
+        ));
+
+        const user = users.find(u => u.id === userId);
+        toast({
+          title: "Role Updated",
+          description: `${user?.name}'s role has been updated to ${newRole}.`,
+        });
+      } else {
+        throw new Error('Failed to update user role');
+      }
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update user role",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDeleteUser = (userId: number, userName: string) => {
-    setUsers(prev => prev.filter(u => u.id !== userId));
+    // For now, just show a message that this feature is not implemented
     toast({
-      title: "User Removed",
-      description: `${userName} has been removed from the system.`,
+      title: "Feature Not Available",
+      description: "User deletion will be implemented in a future update.",
+      variant: "destructive",
     });
   };
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'bg-red-100 text-red-800';
-      case 'manager':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const managers = users.filter(user => user.role === 'manager' || user.role === 'admin');
 
   return (
     <div className="space-y-6">
@@ -138,7 +202,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
         </div>
         <Dialog open={showUserForm} onOpenChange={setShowUserForm}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="bg-blue-600 hover:bg-blue-700" disabled={loading}>
               <Plus className="h-4 w-4 mr-2" />
               Add User
             </Button>
@@ -172,6 +236,27 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="employee_id">Employee ID *</Label>
+                <Input
+                  id="employee_id"
+                  placeholder="e.g., EMP001"
+                  value={newUser.employee_id}
+                  onChange={(e) => setNewUser(prev => ({ ...prev, employee_id: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter password"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser(prev => ({ ...prev, password: e.target.value }))}
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="department">Department *</Label>
@@ -198,30 +283,12 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                 </div>
               </div>
 
-              {newUser.role === 'employee' && (
-                <div className="space-y-2">
-                  <Label htmlFor="manager">Manager</Label>
-                  <Select value={newUser.manager} onValueChange={(value) => setNewUser(prev => ({ ...prev, manager: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a manager" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {managers.map((manager) => (
-                        <SelectItem key={manager.id} value={manager.email}>
-                          {manager.name} ({manager.email})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setShowUserForm(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleAddUser}>
-                  Add User
+                <Button onClick={handleAddUser} disabled={loading}>
+                  {loading ? "Adding..." : "Add User"}
                 </Button>
               </div>
             </div>
@@ -283,55 +350,61 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
           <CardDescription>Manage user accounts and roles</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Manager</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.department}</TableCell>
-                  <TableCell>
-                    <Select
-                      value={user.role}
-                      onValueChange={(value) => handleUpdateUserRole(user.id, value)}
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="employee">Employee</SelectItem>
-                        <SelectItem value="manager">Manager</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell className="text-sm text-gray-600">
-                    {user.manager || 'None'}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDeleteUser(user.id, user.name)}
-                      disabled={user.email === currentUser.email}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+          {loading ? (
+            <div className="text-center py-4">Loading users...</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Employee ID</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Department</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Hire Date</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {users.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">{user.employee_id}</TableCell>
+                    <TableCell className="font-medium">{user.name}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.department}</TableCell>
+                    <TableCell>
+                      <Select
+                        value={user.role}
+                        onValueChange={(value) => handleUpdateUserRole(user.id, value)}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="employee">Employee</SelectItem>
+                          <SelectItem value="manager">Manager</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-600">
+                      {new Date(user.hire_date).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDeleteUser(user.id, user.name)}
+                        disabled={user.email === currentUser.email}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
