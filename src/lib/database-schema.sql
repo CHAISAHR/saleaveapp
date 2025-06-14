@@ -7,6 +7,7 @@ CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     employee_id VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NULL, -- For manual authentication
     name VARCHAR(255) NOT NULL,
     department VARCHAR(100) NOT NULL,
     role ENUM('employee', 'manager', 'admin') DEFAULT 'employee',

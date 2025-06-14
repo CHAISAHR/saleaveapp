@@ -37,7 +37,33 @@ export interface LeaveRequest {
   workingDays: number;
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
 class BalanceService {
+  private getAuthToken(): string | null {
+    return localStorage.getItem('authToken');
+  }
+
+  private async apiRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
+    const token = this.getAuthToken();
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    };
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
   // Check if employee's termination date has passed
   hasTerminationDatePassed(terminationDate?: string): boolean {
     if (!terminationDate) return false;
@@ -95,9 +121,7 @@ class BalanceService {
   }
 
   // Calculate current annual leave balance using the specified formula
-  // Formula: Broughtforward + Monthly Accumulation (20/12 * Month()) - AnnualUsed - Forfeited - Annual_leave_adjustments
   calculateAnnualLeaveBalance(balance: EmployeeBalance, currentMonth: number = new Date().getMonth() + 1): number {
-    // If termination date has passed, use termination balance instead
     if (balance.Contract_termination_date && this.hasTerminationDatePassed(balance.Contract_termination_date)) {
       return this.calculateTerminationBalance(balance, balance.Contract_termination_date);
     }
@@ -165,75 +189,68 @@ class BalanceService {
 
   // Check if staff can edit leave request
   canStaffEditLeave(leaveRequest: LeaveRequest): boolean {
-    // Staff can only edit if status is pending and start date hasn't occurred
     if (leaveRequest.Status !== 'pending') {
       return false;
     }
     
     const startDate = new Date(leaveRequest.StartDate);
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to start of day
+    today.setHours(0, 0, 0, 0);
     
     return startDate >= today;
   }
 
   // Update balance when leave is cancelled (restore the days)
   async updateBalanceOnCancellation(leaveRequest: LeaveRequest): Promise<void> {
-    console.log('Restoring balance for cancelled leave:', leaveRequest);
-    
-    const updateData = {
-      employeeEmail: leaveRequest.Requester,
-      leaveType: leaveRequest.LeaveType.toLowerCase(),
-      daysToRestore: leaveRequest.workingDays,
-      year: new Date().getFullYear()
-    };
-
-    console.log('Balance restoration data:', updateData);
+    try {
+      await this.apiRequest('/balance/update', {
+        method: 'PUT',
+        body: JSON.stringify({
+          employeeEmail: leaveRequest.Requester,
+          leaveType: leaveRequest.LeaveType.toLowerCase(),
+          daysUsed: leaveRequest.workingDays,
+          action: 'cancel',
+          year: new Date().getFullYear()
+        })
+      });
+      
+      console.log('Balance restored for cancelled leave:', leaveRequest);
+    } catch (error) {
+      console.error('Failed to restore balance:', error);
+      throw error;
+    }
   }
 
   // Update balance when leave is approved
   async updateBalanceOnApproval(leaveRequest: LeaveRequest): Promise<void> {
-    console.log('Updating balance for approved leave:', leaveRequest);
-    
-    const updateData = {
-      employeeEmail: leaveRequest.Requester,
-      leaveType: leaveRequest.LeaveType.toLowerCase(),
-      daysUsed: leaveRequest.workingDays,
-      year: new Date().getFullYear()
-    };
-
-    console.log('Balance update data:', updateData);
+    try {
+      await this.apiRequest('/balance/update', {
+        method: 'PUT',
+        body: JSON.stringify({
+          employeeEmail: leaveRequest.Requester,
+          leaveType: leaveRequest.LeaveType.toLowerCase(),
+          daysUsed: leaveRequest.workingDays,
+          action: 'approve',
+          year: new Date().getFullYear()
+        })
+      });
+      
+      console.log('Balance updated for approved leave:', leaveRequest);
+    } catch (error) {
+      console.error('Failed to update balance:', error);
+      throw error;
+    }
   }
 
   // Get employee balance
   async getEmployeeBalance(employeeEmail: string, year: number = new Date().getFullYear()): Promise<EmployeeBalance | null> {
-    console.log(`Fetching balance for ${employeeEmail} for year ${year}`);
-    
-    const mockBalance = {
-      BalanceID: 1,
-      EmployeeName: "John Smith",
-      EmployeeEmail: employeeEmail,
-      Department: "Marketing",
-      Year: year,
-      Broughtforward: 5,
-      Annual: 20,
-      AnnualUsed: 8,
-      Forfeited: 0,
-      Annual_leave_adjustments: 0,
-      SickUsed: 2,
-      MaternityUsed: 0,
-      ParentalUsed: 0,
-      FamilyUsed: 1,
-      AdoptionUsed: 0,
-      StudyUsed: 0,
-      MentalhealthUsed: 0,
-      Current_leave_balance: 0,
-      Manager: "sarah.johnson@company.com"
-    };
-
-    mockBalance.Current_leave_balance = this.calculateAnnualLeaveBalance(mockBalance);
-
-    return mockBalance;
+    try {
+      const response = await this.apiRequest(`/balance/${employeeEmail}?year=${year}`);
+      return response.balance;
+    } catch (error) {
+      console.error('Failed to get employee balance:', error);
+      return null;
+    }
   }
 
   // Validate if employee has sufficient balance
