@@ -452,7 +452,6 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
         <div className="grid grid-cols-1 gap-6">
           {teamMembers.map((member) => {
             const annualBalance = calculateLeaveBalance(member.leaveBalance, 'annual');
-            const sickBalance = calculateLeaveBalance(member.leaveBalance, 'sick');
             const studyBalance = calculateLeaveBalance(member.leaveBalance, 'study');
             const wellnessBalance = calculateLeaveBalance(member.leaveBalance, 'wellness');
             
@@ -472,12 +471,12 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-600">Annual Leave</span>
                         <span className="text-sm text-gray-500">
-                          {annualBalance} / 20 days
+                          {annualBalance} days
                         </span>
                       </div>
                       <Progress 
@@ -491,25 +490,9 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
                     
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-600">Sick Leave</span>
-                        <span className="text-sm text-gray-500">
-                          {sickBalance} / 36 days
-                        </span>
-                      </div>
-                      <Progress 
-                        value={((36 - sickBalance) / 36) * 100} 
-                        className="h-2"
-                      />
-                      <div className="text-xs text-gray-400">
-                        Used: {member.leaveBalance.SickUsed}
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-600">Study Leave</span>
                         <span className="text-sm text-gray-500">
-                          {studyBalance} / 6 days
+                          {studyBalance} days
                         </span>
                       </div>
                       <Progress 
@@ -525,7 +508,7 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-600">Wellness Leave</span>
                         <span className="text-sm text-gray-500">
-                          {wellnessBalance} / 2 days
+                          {wellnessBalance} days
                         </span>
                       </div>
                       <Progress 
@@ -549,19 +532,12 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
             <CardDescription>Overview of team leave usage from leave_balances</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center p-4 bg-blue-50 rounded-lg">
                 <div className="text-2xl font-bold text-blue-600">
                   {teamMembers.reduce((acc, member) => acc + calculateLeaveBalance(member.leaveBalance, 'annual'), 0)}
                 </div>
                 <div className="text-sm text-blue-700">Total Annual Days Available</div>
-              </div>
-              
-              <div className="text-center p-4 bg-red-50 rounded-lg">
-                <div className="text-2xl font-bold text-red-600">
-                  {teamMembers.reduce((acc, member) => acc + calculateLeaveBalance(member.leaveBalance, 'sick'), 0)}
-                </div>
-                <div className="text-sm text-red-700">Total Sick Days Available</div>
               </div>
               
               <div className="text-center p-4 bg-purple-50 rounded-lg">
