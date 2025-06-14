@@ -18,7 +18,7 @@ export const PolicyGuide = () => {
     accrual: "Full allocation at year start",
     carryOver: "No expiry",
     eligibility: "All employees from day one",
-    requirements: "Medical certificate required for >3 consecutive days",
+    requirements: "Medical certificate required for >1 day",
     icon: FileText,
     color: "red"
   }, {
