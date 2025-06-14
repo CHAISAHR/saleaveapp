@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Users, Calendar as CalendarIcon, Database, Settings, Plus, Edit, Trash2 } from "lucide-react";
+import { Users, Calendar as CalendarIcon, Database, Settings, Plus, Edit, Trash2, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { AdminBalanceManager } from "./AdminBalanceManager";
@@ -34,6 +34,7 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
   const [showHolidayForm, setShowHolidayForm] = useState(false);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [loading, setLoading] = useState(false);
+  const [backendError, setBackendError] = useState(false);
 
   const [newHoliday, setNewHoliday] = useState({
     name: "",
@@ -43,9 +44,18 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
     office_status: "closed"
   });
 
+  // Check if we have a valid token
+  const hasValidToken = () => {
+    const authToken = localStorage.getItem('auth_token');
+    return authToken && authToken !== 'null' && authToken !== '';
+  };
+
   // Get authorization headers
   const getAuthHeaders = () => {
     const authToken = localStorage.getItem('auth_token');
+    if (!authToken || authToken === 'null' || authToken === '') {
+      throw new Error('No valid authentication token');
+    }
     return {
       'Authorization': `Bearer ${authToken}`,
       'Content-Type': 'application/json'
@@ -54,8 +64,18 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
 
   // Fetch holidays from backend
   const fetchHolidays = async () => {
+    if (!hasValidToken()) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to access holiday management.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setLoading(true);
+      setBackendError(false);
       
       const response = await fetch('http://localhost:3001/api/holiday', {
         headers: getAuthHeaders()
@@ -64,11 +84,38 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
       if (response.ok) {
         const data = await response.json();
         setHolidays(data.holidays || []);
+      } else if (response.status === 401) {
+        toast({
+          title: "Session Expired",
+          description: "Please log in again to continue.",
+          variant: "destructive",
+        });
       } else {
-        console.error('Failed to fetch holidays');
+        throw new Error('Failed to fetch holidays');
       }
     } catch (error) {
       console.error('Error fetching holidays:', error);
+      setBackendError(true);
+      
+      if (error instanceof Error && error.message === 'Failed to fetch') {
+        toast({
+          title: "Backend Connection Error",
+          description: "Cannot connect to the backend server. Please ensure the server is running on localhost:3001.",
+          variant: "destructive",
+        });
+      } else if (error instanceof Error && error.message === 'No valid authentication token') {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to access holiday management.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to load holidays",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -86,6 +133,15 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!hasValidToken()) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to add holidays.",
         variant: "destructive",
       });
       return;
@@ -131,11 +187,26 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
       }
     } catch (error) {
       console.error('Error adding holiday:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add holiday",
-        variant: "destructive",
-      });
+      
+      if (error instanceof Error && error.message === 'Failed to fetch') {
+        toast({
+          title: "Backend Connection Error",
+          description: "Cannot connect to the backend server. Please ensure the server is running on localhost:3001.",
+          variant: "destructive",
+        });
+      } else if (error instanceof Error && error.message === 'No valid authentication token') {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to add holidays.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to add holiday",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -278,7 +349,10 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
           </div>
           <Dialog open={showHolidayForm} onOpenChange={setShowHolidayForm}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700" disabled={loading}>
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700" 
+                disabled={loading || !hasValidToken()}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Holiday
               </Button>
@@ -414,6 +488,46 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
                 ))}
               </div>
             )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show backend connection error if applicable
+  if (activeView === 'admin' && backendError) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Holiday Management</h2>
+            <p className="text-gray-600">Manage company holidays and office closure dates</p>
+          </div>
+        </div>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-3 text-red-600">
+              <AlertCircle className="h-6 w-6" />
+              <div>
+                <h3 className="font-semibold">Backend Connection Error</h3>
+                <p className="text-sm text-gray-600">
+                  Cannot connect to the backend server. Please ensure:
+                </p>
+                <ul className="list-disc list-inside text-sm text-gray-600 mt-2">
+                  <li>The backend server is running on localhost:3001</li>
+                  <li>You have a valid authentication token</li>
+                  <li>The database is properly configured</li>
+                </ul>
+                <Button 
+                  onClick={fetchHolidays} 
+                  className="mt-4"
+                  disabled={loading}
+                >
+                  {loading ? "Retrying..." : "Retry Connection"}
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
