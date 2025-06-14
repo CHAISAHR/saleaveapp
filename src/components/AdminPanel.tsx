@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, Plus, Edit, Trash2 } from "lucide-react";
+import { Users, Plus, Edit, Trash2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AdminPanelProps {
   currentUser: any;
@@ -28,9 +28,11 @@ interface User {
 
 export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
   const { toast } = useToast();
+  const { token } = useAuth();
   const [showUserForm, setShowUserForm] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
+  const [backendError, setBackendError] = useState(false);
 
   const [newUser, setNewUser] = useState({
     name: "",
@@ -41,31 +43,69 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
     password: ""
   });
 
+  // Check if we have a valid token
+  const hasValidToken = () => {
+    const authToken = token || localStorage.getItem('auth_token');
+    return authToken && authToken !== 'null' && authToken !== '';
+  };
+
+  // Get authorization headers
+  const getAuthHeaders = () => {
+    const authToken = token || localStorage.getItem('auth_token');
+    return {
+      'Authorization': `Bearer ${authToken}`,
+      'Content-Type': 'application/json'
+    };
+  };
+
   // Fetch users from backend
   const fetchUsers = async () => {
+    if (!hasValidToken()) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to access user management.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setLoading(true);
-      const token = localStorage.getItem('auth_token');
+      setBackendError(false);
+      
       const response = await fetch('http://localhost:3001/api/user', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+        headers: getAuthHeaders()
       });
 
       if (response.ok) {
         const data = await response.json();
         setUsers(data.users || []);
+      } else if (response.status === 401) {
+        toast({
+          title: "Session Expired",
+          description: "Please log in again to continue.",
+          variant: "destructive",
+        });
       } else {
         throw new Error('Failed to fetch users');
       }
     } catch (error) {
       console.error('Error fetching users:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load users",
-        variant: "destructive",
-      });
+      setBackendError(true);
+      
+      if (error instanceof Error && error.message === 'Failed to fetch') {
+        toast({
+          title: "Backend Connection Error",
+          description: "Cannot connect to the backend server. Please ensure the server is running on localhost:3001.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to load users",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -74,7 +114,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
   // Load users on component mount
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [token]);
 
   const handleAddUser = async () => {
     if (!newUser.name || !newUser.email || !newUser.employee_id || !newUser.department || !newUser.password) {
@@ -86,15 +126,21 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
       return;
     }
 
+    if (!hasValidToken()) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to add users.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setLoading(true);
-      const token = localStorage.getItem('auth_token');
+      
       const response = await fetch('http://localhost:3001/api/auth/register', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           name: newUser.name,
           email: newUser.email,
@@ -136,11 +182,20 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
       }
     } catch (error) {
       console.error('Error adding user:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add user",
-        variant: "destructive",
-      });
+      
+      if (error instanceof Error && error.message === 'Failed to fetch') {
+        toast({
+          title: "Backend Connection Error",
+          description: "Cannot connect to the backend server. Please ensure the server is running on localhost:3001.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to add user",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -148,13 +203,9 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
 
   const handleUpdateUserRole = async (userId: number, newRole: string) => {
     try {
-      const token = localStorage.getItem('auth_token');
       const response = await fetch(`http://localhost:3001/api/user/${userId}/role`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ role: newRole })
       });
 
@@ -191,6 +242,46 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
     });
   };
 
+  // Show backend connection error if applicable
+  if (backendError) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
+            <p className="text-gray-600">Manage users, roles, and reporting relationships</p>
+          </div>
+        </div>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-3 text-red-600">
+              <AlertCircle className="h-6 w-6" />
+              <div>
+                <h3 className="font-semibold">Backend Connection Error</h3>
+                <p className="text-sm text-gray-600">
+                  Cannot connect to the backend server. Please ensure:
+                </p>
+                <ul className="list-disc list-inside text-sm text-gray-600 mt-2">
+                  <li>The backend server is running on localhost:3001</li>
+                  <li>You have a valid authentication token</li>
+                  <li>The database is properly configured</li>
+                </ul>
+                <Button 
+                  onClick={fetchUsers} 
+                  className="mt-4"
+                  disabled={loading}
+                >
+                  {loading ? "Retrying..." : "Retry Connection"}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const managers = users.filter(user => user.role === 'manager' || user.role === 'admin');
 
   return (
@@ -202,7 +293,10 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
         </div>
         <Dialog open={showUserForm} onOpenChange={setShowUserForm}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700" disabled={loading}>
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700" 
+              disabled={loading || !hasValidToken()}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add User
             </Button>
