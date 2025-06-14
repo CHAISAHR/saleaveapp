@@ -168,33 +168,18 @@ export const EmployeeDashboard = ({
           />
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           {leaveBalances.map(balance => {
-            const percentage = balance.used / balance.total * 100;
-            
             return <Card key={balance.type} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-gray-600">
-                    {balance.type} Leave
+                    {balance.type}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-3xl font-bold text-lime-700">{balance.balance}</span>
-                      <span className="text-sm text-gray-500">days</span>
-                    </div>
-                    
-                    <Progress value={percentage} className="h-2" />
-                    
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>Used: {balance.used}</span>
-                      <span>Available: {balance.balance}</span>
-                    </div>
-                    
-                    {balance.type === 'Annual' && <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
-                        Accrues 1.66 days/month
-                      </div>}
+                <CardContent className="pt-0">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-lime-700 mb-1">{balance.balance}</div>
+                    <div className="text-sm text-gray-500">days available</div>
                   </div>
                 </CardContent>
               </Card>;
