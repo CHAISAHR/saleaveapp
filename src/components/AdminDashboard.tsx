@@ -495,7 +495,7 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
   }
 
   // Show backend connection error if applicable
-  if (activeView === 'admin' && backendError) {
+  if (backendError && activeView === 'admin') {
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
