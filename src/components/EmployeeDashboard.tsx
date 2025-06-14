@@ -1,10 +1,9 @@
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Plus, Calendar, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
-import { ForfeitRibbon } from "@/components/ForfeitRibbon";
+import { Plus } from "lucide-react";
+import { LeaveBalanceGrid } from "@/components/LeaveBalanceGrid";
+import { LeaveStatsCards } from "@/components/LeaveStatsCards";
+import { LeaveRequestsList } from "@/components/LeaveRequestsList";
 
 interface EmployeeDashboardProps {
   onNewRequest: () => void;
@@ -110,45 +109,9 @@ export const EmployeeDashboard = ({
     description: "Professional development conference"
   }];
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'rejected':
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      case 'pending':
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
-      default:
-        return <Clock className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return <Badge variant="default" className="bg-lime-600">
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Badge>;
-      case 'pending':
-        return <Badge variant="secondary">
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Badge>;
-      default:
-        return <Badge variant="outline">
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Badge>;
-    }
-  };
-
   if (activeView === 'balance') {
-    // Get annual leave data for forfeit calculation
-    const annualLeave = leaveBalances.find(b => b.type === 'Annual');
-    
-    return <div className="space-y-6">
+    return (
+      <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Leave Balance</h2>
@@ -160,66 +123,13 @@ export const EmployeeDashboard = ({
           </Button>
         </div>
 
-        {/* Forfeit ribbon */}
-        {annualLeave && (
-          <ForfeitRibbon 
-            broughtForward={annualLeave.broughtForward || 0}
-            annualUsed={annualLeave.used}
-          />
-        )}
-
-        <div className="grid grid-cols-4 gap-4">
-          {leaveBalances.map(balance => {
-            return <Card key={balance.type} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-gray-600 text-center">
-                    {balance.type} leave
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-lime-700 mb-1 font-mono">{balance.balance}</div>
-                    <div className="text-sm text-gray-500">days available</div>
-                  </div>
-                </CardContent>
-              </Card>;
-          })}
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Leave Policy Summary</CardTitle>
-            <CardDescription>Important information about your leave entitlements</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <h4 className="font-semibold text-yellow-800 mb-2">Annual Leave Carry-over</h4>
-              <p className="text-sm text-yellow-700">Annual leave carried forward expires on the 31st July. Plan your vacation time accordingly.</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <h5 className="font-medium text-gray-900 mb-2">Accrual Rates</h5>
-                <ul className="space-y-1 text-gray-600">
-                  <li>• Annual: 1.66 days per month</li>
-                  <li>• Sick: 1 day per month, accumulates to 36 in 3 years.</li>
-                  <li>• Other: Full allocation at year start</li>
-                </ul>
-              </div>
-              <div>
-                <h5 className="font-medium text-gray-900 mb-2">Application Requirements</h5>
-                <ul className="space-y-1 text-gray-600">
-                  <li>• Submit requests 2 working days in advance</li>
-                  <li>• Manager approval required</li>
-                  <li>• Medical certificates for sick leave {'>'}3 days</li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>;
+        <LeaveBalanceGrid leaveBalances={leaveBalances} />
+      </div>
+    );
   }
-  return <div className="space-y-6">
+
+  return (
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">My Leave Requests</h2>
@@ -231,102 +141,8 @@ export const EmployeeDashboard = ({
         </Button>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="bg-blue-100 p-2 rounded-lg">
-                <Calendar className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Total Requests</p>
-                <p className="text-2xl font-bold text-gray-900">{leaveRequests.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="bg-green-100 p-2 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Approved</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {leaveRequests.filter(r => r.status === 'approved').length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="bg-yellow-100 p-2 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {leaveRequests.filter(r => r.status === 'pending').length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="bg-red-100 p-2 rounded-lg">
-                <XCircle className="h-5 w-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Rejected</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {leaveRequests.filter(r => r.status === 'rejected').length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Requests List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Requests</CardTitle>
-          <CardDescription>Your latest leave applications and their status</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {leaveRequests.map(request => <div key={request.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="flex items-center space-x-4">
-                  {getStatusIcon(request.status)}
-                  <div>
-                    <h4 className="font-medium text-gray-900">{request.title}</h4>
-                    <p className="text-sm text-gray-600">{request.description}</p>
-                    <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
-                      <span>{request.startDate} to {request.endDate}</span>
-                      <span>{request.days} day{request.days > 1 ? 's' : ''}</span>
-                      <span>{request.type} Leave</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  {getStatusBadge(request.status)}
-                  <div className="text-right text-xs text-gray-500">
-                    <p>Submitted</p>
-                    <p>{request.submittedDate}</p>
-                  </div>
-                </div>
-              </div>)}
-          </div>
-        </CardContent>
-      </Card>
-    </div>;
+      <LeaveStatsCards leaveRequests={leaveRequests} />
+      <LeaveRequestsList leaveRequests={leaveRequests} />
+    </div>
+  );
 };
