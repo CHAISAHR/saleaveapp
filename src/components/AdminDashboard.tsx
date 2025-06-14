@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -494,7 +495,7 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
     );
   }
 
-  // Show backend connection error if applicable
+  // Show backend connection error if in admin view and there's an error
   if (backendError && activeView === 'admin') {
     return (
       <div className="space-y-6">
