@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,9 +6,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit, Save, Plus, Download } from "lucide-react";
+import { Edit, Save, Plus, Download, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { balanceService } from "@/services/balanceService";
+import { YearRolloverDialog } from "./YearRolloverDialog";
 
 interface EmployeeBalance {
   BalanceID: number;
@@ -55,6 +55,8 @@ export const AdminAllBalances = () => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedBalance, setSelectedBalance] = useState<EmployeeBalance | null>(null);
+  const [showRolloverDialog, setShowRolloverDialog] = useState(false);
+  const [currentYear] = useState(new Date().getFullYear());
 
   // Mock data - in real app this would come from API
   const [balances, setBalances] = useState<EmployeeBalance[]>([
@@ -270,6 +272,15 @@ export const AdminAllBalances = () => {
     } : null);
   };
 
+  const handleRolloverComplete = () => {
+    // Refresh balances data after rollover
+    toast({
+      title: "Data Refreshed",
+      description: "Employee balances have been updated after rollover.",
+    });
+    // In real implementation, this would refetch data from API
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -278,6 +289,14 @@ export const AdminAllBalances = () => {
           <p className="text-gray-600">View and edit leave balances for all employees</p>
         </div>
         <div className="flex space-x-2">
+          <Button 
+            onClick={() => setShowRolloverDialog(true)}
+            variant="default"
+            className="bg-orange-600 hover:bg-orange-700"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Year Rollover
+          </Button>
           <Button onClick={downloadCSV} variant="outline">
             <Download className="h-4 w-4 mr-2" />
             Download CSV
@@ -291,7 +310,7 @@ export const AdminAllBalances = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Employee Leave Balances (2025)</CardTitle>
+          <CardTitle>Employee Leave Balances ({currentYear})</CardTitle>
           <CardDescription>
             Complete leave balance information for all employees. Annual leave formula: Brought Forward + Accumulated Leave - Annual Used - Forfeited - Adjustments
           </CardDescription>
@@ -637,6 +656,13 @@ export const AdminAllBalances = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <YearRolloverDialog
+        open={showRolloverDialog}
+        onOpenChange={setShowRolloverDialog}
+        currentYear={currentYear}
+        onRolloverComplete={handleRolloverComplete}
+      />
     </div>
   );
 };
