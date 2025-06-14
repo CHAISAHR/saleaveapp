@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
   try {
     const users = await executeQuery(
-      'SELECT id, employee_id, email, name, department, role, hire_date, is_active FROM users ORDER BY name'
+      'SELECT id, email, name, department, role, hire_date, is_active, manager_email FROM users ORDER BY name'
     );
 
     res.json({ success: true, users });
@@ -37,4 +37,23 @@ router.put('/:id/role', authenticateToken, requireRole(['admin']), async (req: A
   }
 });
 
+// Update user manager (admin only)
+router.put('/:id/manager', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { manager_email } = req.body;
+
+    await executeQuery(
+      'UPDATE users SET manager_email = ?, updated_at = NOW() WHERE id = ?',
+      [manager_email, id]
+    );
+
+    res.json({ success: true, message: 'User manager updated successfully' });
+  } catch (error) {
+    console.error('Update manager error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update user manager' });
+  }
+});
+
 export default router;
+

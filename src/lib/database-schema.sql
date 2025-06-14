@@ -1,24 +1,23 @@
 
 -- MySQL Database Schema for Leave Management System
--- Updated schema with specific table structures as requested
+-- Updated schema with email-based unique identifiers
 
 -- Users table - stores employee information and roles
 CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    employee_id VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NULL, -- For manual authentication
     name VARCHAR(255) NOT NULL,
     department VARCHAR(100) NOT NULL,
     role ENUM('employee', 'manager', 'admin') DEFAULT 'employee',
     hire_date DATE NOT NULL,
-    manager_id INT,
+    manager_email VARCHAR(255),
     avatar_url VARCHAR(500),
     is_active BOOLEAN DEFAULT TRUE,
     contract_termination_date DATE NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (manager_id) REFERENCES users(id)
+    FOREIGN KEY (manager_email) REFERENCES users(email)
 );
 
 -- Company holidays table - stores public and company holidays
@@ -30,10 +29,10 @@ CREATE TABLE company_holidays (
     description TEXT,
     office_status ENUM('closed', 'optional', 'open') DEFAULT 'closed',
     is_recurring BOOLEAN DEFAULT FALSE,
-    created_by INT NOT NULL,
+    created_by_email VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (created_by) REFERENCES users(id)
+    FOREIGN KEY (created_by_email) REFERENCES users(email)
 );
 
 -- Leave taken table - tracks all submitted leave requests
@@ -122,7 +121,7 @@ CREATE TABLE audit_log (
 
 -- Create indexes for better performance
 CREATE INDEX idx_users_department ON users(department);
-CREATE INDEX idx_users_manager ON users(manager_id);
+CREATE INDEX idx_users_manager ON users(manager_email);
 CREATE INDEX idx_leave_balances_employee_year ON leave_balances(EmployeeEmail, Year);
 CREATE INDEX idx_leave_taken_requester ON leave_taken(Requester);
 CREATE INDEX idx_leave_taken_status ON leave_taken(Status);
@@ -131,20 +130,20 @@ CREATE INDEX idx_company_holidays_date ON company_holidays(date);
 CREATE INDEX idx_email_notifications_recipient ON email_notifications(recipient_email);
 CREATE INDEX idx_audit_log_table_record ON audit_log(table_name, record_id);
 
--- Insert default South African holidays for 2025
-INSERT INTO company_holidays (name, date, type, description, office_status, is_recurring, created_by) VALUES
-('New Year\'s Day', '2025-01-01', 'public', 'New Year\'s Day', 'closed', TRUE, 1),
-('Human Rights Day', '2025-03-21', 'public', 'Human Rights Day', 'closed', TRUE, 1),
-('Good Friday', '2025-04-18', 'public', 'Good Friday', 'closed', FALSE, 1),
-('Family Day', '2025-04-21', 'public', 'Family Day', 'closed', FALSE, 1),
-('Freedom Day', '2025-04-27', 'public', 'Freedom Day', 'closed', TRUE, 1),
-('Workers\' Day', '2025-05-01', 'public', 'Workers\' Day', 'closed', TRUE, 1),
-('Youth Day', '2025-06-16', 'public', 'Youth Day', 'closed', TRUE, 1),
-('National Women\'s Day', '2025-08-09', 'public', 'National Women\'s Day', 'closed', TRUE, 1),
-('Heritage Day', '2025-09-24', 'public', 'Heritage Day', 'closed', TRUE, 1),
-('Day of Reconciliation', '2025-12-16', 'public', 'Day of Reconciliation', 'closed', TRUE, 1),
-('Christmas Day', '2025-12-25', 'public', 'Christmas Day', 'closed', TRUE, 1),
-('Day of Goodwill', '2025-12-26', 'public', 'Day of Goodwill', 'closed', TRUE, 1);
+-- Insert default South African holidays for 2025 (using admin@company.com as default)
+INSERT INTO company_holidays (name, date, type, description, office_status, is_recurring, created_by_email) VALUES
+('New Year\'s Day', '2025-01-01', 'public', 'New Year\'s Day', 'closed', TRUE, 'admin@company.com'),
+('Human Rights Day', '2025-03-21', 'public', 'Human Rights Day', 'closed', TRUE, 'admin@company.com'),
+('Good Friday', '2025-04-18', 'public', 'Good Friday', 'closed', FALSE, 'admin@company.com'),
+('Family Day', '2025-04-21', 'public', 'Family Day', 'closed', FALSE, 'admin@company.com'),
+('Freedom Day', '2025-04-27', 'public', 'Freedom Day', 'closed', TRUE, 'admin@company.com'),
+('Workers\' Day', '2025-05-01', 'public', 'Workers\' Day', 'closed', TRUE, 'admin@company.com'),
+('Youth Day', '2025-06-16', 'public', 'Youth Day', 'closed', TRUE, 'admin@company.com'),
+('National Women\'s Day', '2025-08-09', 'public', 'National Women\'s Day', 'closed', TRUE, 'admin@company.com'),
+('Heritage Day', '2025-09-24', 'public', 'Heritage Day', 'closed', TRUE, 'admin@company.com'),
+('Day of Reconciliation', '2025-12-16', 'public', 'Day of Reconciliation', 'closed', TRUE, 'admin@company.com'),
+('Christmas Day', '2025-12-25', 'public', 'Christmas Day', 'closed', TRUE, 'admin@company.com'),
+('Day of Goodwill', '2025-12-26', 'public', 'Day of Goodwill', 'closed', TRUE, 'admin@company.com');
 
 -- Create views for common queries
 CREATE VIEW employee_current_balances AS
@@ -175,3 +174,4 @@ FROM leave_taken lt
 LEFT JOIN leave_balances lb ON lt.Requester = lb.EmployeeEmail 
     AND lb.Year = YEAR(CURRENT_DATE)
 WHERE lt.Status = 'pending';
+

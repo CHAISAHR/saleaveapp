@@ -10,18 +10,18 @@ const router = express.Router();
 // Register new user
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name, department, employee_id } = req.body;
+    const { email, password, name, department } = req.body;
 
     // Check if user already exists
     const existingUsers = await executeQuery(
-      'SELECT id FROM users WHERE email = ? OR employee_id = ?',
-      [email, employee_id]
+      'SELECT id FROM users WHERE email = ?',
+      [email]
     );
 
     if (existingUsers.length > 0) {
       return res.status(400).json({ 
         success: false, 
-        message: 'User with this email or employee ID already exists' 
+        message: 'User with this email already exists' 
       });
     }
 
@@ -30,9 +30,9 @@ router.post('/register', async (req, res) => {
 
     // Insert new user
     const result = await executeQuery(
-      `INSERT INTO users (employee_id, email, name, department, password_hash, hire_date, is_active) 
-       VALUES (?, ?, ?, ?, ?, CURDATE(), TRUE)`,
-      [employee_id, email, name, department, hashedPassword]
+      `INSERT INTO users (email, name, department, password_hash, hire_date, is_active) 
+       VALUES (?, ?, ?, ?, CURDATE(), TRUE)`,
+      [email, name, department, hashedPassword]
     );
 
     res.status(201).json({
@@ -102,3 +102,4 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 export default router;
+

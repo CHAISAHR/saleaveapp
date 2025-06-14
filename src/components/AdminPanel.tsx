@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,13 +18,13 @@ interface AdminPanelProps {
 
 interface User {
   id: number;
-  employee_id: string;
   name: string;
   email: string;
   department: string;
   role: 'employee' | 'manager' | 'admin';
   hire_date: string;
   is_active: boolean;
+  manager_email?: string;
 }
 
 export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
@@ -37,10 +38,10 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
   const [newUser, setNewUser] = useState({
     name: "",
     email: "",
-    employee_id: "",
     department: "",
     role: "employee",
-    password: ""
+    password: "",
+    manager_email: ""
   });
 
   // Check if we have a valid token
@@ -114,10 +115,10 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
   // Load users on component mount
   useEffect(() => {
     fetchUsers();
-  }, []); // Fixed: removed undefined 'token' from dependency array
+  }, []);
 
   const handleAddUser = async () => {
-    if (!newUser.name || !newUser.email || !newUser.employee_id || !newUser.department || !newUser.password) {
+    if (!newUser.name || !newUser.email || !newUser.department || !newUser.password) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -144,7 +145,6 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
         body: JSON.stringify({
           name: newUser.name,
           email: newUser.email,
-          employee_id: newUser.employee_id,
           department: newUser.department,
           password: newUser.password
         })
@@ -158,6 +158,11 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
           await handleUpdateUserRole(data.userId, newUser.role);
         }
 
+        // If manager is specified, update it
+        if (newUser.manager_email) {
+          await handleUpdateUserManager(data.userId, newUser.manager_email);
+        }
+
         // Refresh users list
         await fetchUsers();
 
@@ -165,10 +170,10 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
         setNewUser({
           name: "",
           email: "",
-          employee_id: "",
           department: "",
           role: "employee",
-          password: ""
+          password: "",
+          manager_email: ""
         });
         setShowUserForm(false);
 
@@ -228,6 +233,39 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
       toast({
         title: "Error",
         description: "Failed to update user role",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateUserManager = async (userId: number, managerEmail: string) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/user/${userId}/manager`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ manager_email: managerEmail })
+      });
+
+      if (response.ok) {
+        // Update local state
+        setUsers(prev => prev.map(user => 
+          user.id === userId ? { ...user, manager_email: managerEmail } : user
+        ));
+
+        const user = users.find(u => u.id === userId);
+        const manager = users.find(u => u.email === managerEmail);
+        toast({
+          title: "Manager Updated",
+          description: `${user?.name}'s manager has been updated to ${manager?.name}.`,
+        });
+      } else {
+        throw new Error('Failed to update user manager');
+      }
+    } catch (error) {
+      console.error('Error updating user manager:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update user manager",
         variant: "destructive",
       });
     }
@@ -331,16 +369,6 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="employee_id">Employee ID *</Label>
-                <Input
-                  id="employee_id"
-                  placeholder="e.g., EMP001"
-                  value={newUser.employee_id}
-                  onChange={(e) => setNewUser(prev => ({ ...prev, employee_id: e.target.value }))}
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="password">Password *</Label>
                 <Input
                   id="password"
@@ -375,6 +403,23 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="manager">Manager (Optional)</Label>
+                <Select value={newUser.manager_email} onValueChange={(value) => setNewUser(prev => ({ ...prev, manager_email: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a manager" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No Manager</SelectItem>
+                    {managers.map((manager) => (
+                      <SelectItem key={manager.id} value={manager.email}>
+                        {manager.name} ({manager.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="flex justify-end space-x-2">
@@ -450,11 +495,11 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Employee ID</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Department</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead>Manager</TableHead>
                   <TableHead>Hire Date</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -462,7 +507,6 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
               <TableBody>
                 {users.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.employee_id}</TableCell>
                     <TableCell className="font-medium">{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>{user.department}</TableCell>
@@ -478,6 +522,24 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                           <SelectItem value="employee">Employee</SelectItem>
                           <SelectItem value="manager">Manager</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={user.manager_email || ""}
+                        onValueChange={(value) => handleUpdateUserManager(user.id, value)}
+                      >
+                        <SelectTrigger className="w-48">
+                          <SelectValue placeholder="No Manager" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">No Manager</SelectItem>
+                          {managers.filter(m => m.email !== user.email).map((manager) => (
+                            <SelectItem key={manager.id} value={manager.email}>
+                              {manager.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -504,3 +566,4 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
     </div>
   );
 };
+
