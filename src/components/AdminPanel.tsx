@@ -114,7 +114,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
   // Load users on component mount
   useEffect(() => {
     fetchUsers();
-  }, [token]);
+  }, []); // Fixed: removed undefined 'token' from dependency array
 
   const handleAddUser = async () => {
     if (!newUser.name || !newUser.email || !newUser.employee_id || !newUser.department || !newUser.password) {
