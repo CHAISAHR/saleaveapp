@@ -89,7 +89,7 @@ const Index = () => {
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <img 
-                src="/lovable-uploads/599a5fd8-277e-4ead-842c-b7ab666502f0.png" 
+                src="/lovable-uploads/chailogo.png" 
                 alt="Company Logo" 
                 className="h-12 w-12"
               />
