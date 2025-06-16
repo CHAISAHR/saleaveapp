@@ -384,7 +384,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                   <Label htmlFor="department">Department *</Label>
                   <Input
                     id="department"
-                    placeholder="e.g., Marketing"
+                    placeholder="e.g., HR"
                     value={newUser.department}
                     onChange={(e) => setNewUser(prev => ({ ...prev, department: e.target.value }))}
                   />

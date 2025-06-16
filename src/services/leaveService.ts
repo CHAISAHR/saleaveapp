@@ -68,7 +68,7 @@ export const leaveService = {
       employee_id: "EMP001",
       email: "sarah.johnson@company.com",
       name: "Sarah Johnson",
-      department: "Marketing",
+      department: "HR",
       role: "employee",
       hire_date: "2023-01-15",
       is_active: true
@@ -83,7 +83,7 @@ export const leaveService = {
         employee_id: "EMP002",
         email: "john.smith@company.com",
         name: "John Smith",
-        department: "Marketing",
+        department: "HR",
         role: "employee",
         hire_date: "2023-03-01",
         manager_id: managerId,

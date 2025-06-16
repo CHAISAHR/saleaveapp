@@ -24,12 +24,12 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
       id: 1,
       name: "John Smith",
       email: "john.smith@company.com",
-      department: "Marketing",
+      department: "HR",
       leaveBalance: {
         BalanceID: 1,
         EmployeeName: "John Smith",
         EmployeeEmail: "john.smith@company.com",
-        Department: "Marketing",
+        Department: "HR",
         Year: 2025,
         Broughtforward: 5,
         Annual: 20,
@@ -53,12 +53,12 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
       id: 2,
       name: "Emily Davis",
       email: "emily.davis@company.com",
-      department: "Marketing",
+      department: "HR",
       leaveBalance: {
         BalanceID: 2,
         EmployeeName: "Emily Davis",
         EmployeeEmail: "emily.davis@company.com",
-        Department: "Marketing",
+        Department: "HR",
         Year: 2025,
         Broughtforward: 3,
         Annual: 20,
@@ -82,12 +82,12 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
       id: 3,
       name: "Michael Brown",
       email: "michael.brown@company.com",
-      department: "Marketing",
+      department: "HR",
       leaveBalance: {
         BalanceID: 3,
         EmployeeName: "Michael Brown",
         EmployeeEmail: "michael.brown@company.com",
-        Department: "Marketing",
+        Department: "HR",
         Year: 2025,
         Broughtforward: 8,
         Annual: 20,
@@ -145,7 +145,7 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
       endDate: "2024-08-16",
       days: 2,
       submittedDate: "2024-06-20",
-      description: "Attending advanced marketing workshop"
+      description: "Attending advanced HR workshop"
     }
   ]);
 
@@ -195,7 +195,7 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
       endDate: "2024-05-21",
       days: 2,
       submittedDate: "2024-05-01",
-      description: "Marketing conference",
+      description: "HR conference",
       status: "rejected",
       created: "2024-05-01T10:00:00Z",
       modified: "2024-05-02T16:00:00Z",

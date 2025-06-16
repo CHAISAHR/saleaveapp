@@ -55,7 +55,7 @@ const Index = () => {
   const currentUser = {
     name: user?.name || "Sarah Johnson",
     email: user?.username || "sarah.johnson@company.com",
-    department: "Marketing",
+    department: "HR",
     avatar: "",
     employeeId: "EMP001",
     role: determineUserRole(user?.username || "sarah.johnson@company.com")
