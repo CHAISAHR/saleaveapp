@@ -66,8 +66,7 @@ export const LeaveBalanceGrid = ({ leaveBalances }: LeaveBalanceGridProps) => {
               <h5 className="font-medium text-gray-900 mb-2">Accrual Rates</h5>
               <ul className="space-y-1 text-gray-600">
                 <li>• Annual: 1.66 days per month</li>
-                <li>• Sick: 1 day per month, accumulates to 36 in 3 years.</li>
-                <li>• Other: Full allocation at year start</li>
+                <li>• Sick: 1 day per month, accumulates to 36 in 3 years.</li>              
               </ul>
             </div>
             <div>
