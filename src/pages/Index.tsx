@@ -141,7 +141,6 @@ const Index = () => {
             {/* Admin login hint */}
             <div className="text-center">
               <p className="text-xs text-gray-500">
-                Admin access: admin@company.com
               </p>
             </div>
           </CardContent>
