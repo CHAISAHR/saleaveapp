@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CalendarIcon, Info, AlertTriangle, Upload, X, FileText } from "lucide-react";
+import { CalendarIcon, Info, AlertTriangle, Upload, X, FileText, Users } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
@@ -29,9 +29,21 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     startDate: undefined as Date | undefined,
     endDate: undefined as Date | undefined,
     isHalfDay: false,
+    useAlternativeManager: false,
+    alternativeManager: "",
+    alternativeManagerReason: "",
   });
 
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+
+  // Mock list of available managers - in real app this would come from API
+  const availableManagers = [
+    { email: "john.smith@company.com", name: "John Smith", department: "Operations" },
+    { email: "sarah.jones@company.com", name: "Sarah Jones", department: "HR" },
+    { email: "mike.wilson@company.com", name: "Mike Wilson", department: "Finance" },
+    { email: "lisa.brown@company.com", name: "Lisa Brown", department: "IT" },
+    { email: "david.taylor@company.com", name: "David Taylor", department: "Marketing" },
+  ];
 
   const leaveTypes = [
     { 
@@ -228,15 +240,23 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
 
   const sendEmailNotifications = async (requestData: any) => {
     try {
-      // Send email to manager
-      const managerEmail = `${currentUser.department.toLowerCase()}.manager@company.com`;
+      // Determine who to send to - alternative manager or default manager
+      const approverEmail = formData.useAlternativeManager && formData.alternativeManager 
+        ? formData.alternativeManager 
+        : `${currentUser.department.toLowerCase()}.manager@company.com`;
+
+      const approverName = formData.useAlternativeManager && formData.alternativeManager
+        ? availableManagers.find(m => m.email === formData.alternativeManager)?.name || formData.alternativeManager
+        : "Manager";
       
-      console.log(`Email sent to manager (${managerEmail}):
+      // Send email to approver (manager or alternative manager)
+      console.log(`Email sent to ${formData.useAlternativeManager ? 'alternative ' : ''}manager (${approverEmail}):
         Subject: New Leave Request - ${requestData.title}
         
-        Dear Manager,
+        Dear ${approverName},
         
         A new leave request has been submitted and requires your approval:
+        ${formData.useAlternativeManager ? `\n⚠️ ALTERNATIVE APPROVAL: You have been designated as the alternative approver for this request.\nReason: ${formData.alternativeManagerReason}\n` : ''}
         
         Employee: ${requestData.submittedBy}
         Email: ${currentUser.email}
@@ -269,7 +289,8 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
           Employee: ${requestData.submittedBy}
           Email: ${currentUser.email}
           Department: ${currentUser.department}
-          Manager: ${managerEmail}
+          ${formData.useAlternativeManager ? `Alternative Manager: ${approverName} (${approverEmail})` : `Manager: ${approverEmail}`}
+          ${formData.useAlternativeManager ? `Alternative Manager Reason: ${formData.alternativeManagerReason}` : ''}
           
           Leave Details:
           - Type: ${selectedLeaveType?.label}
@@ -296,16 +317,18 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         - Dates: ${requestData.startDate} to ${requestData.endDate}
         - Working Days: ${requestData.workingDays}
         - Status: Pending Approval
+        ${formData.useAlternativeManager ? `\n📋 Alternative Approver: ${approverName} (${approverEmail})` : ''}
+        ${formData.useAlternativeManager ? `\nReason for Alternative Approver: ${formData.alternativeManagerReason}` : ''}
         ${requestData.requiresHRApproval ? '\n⚠️ Note: This request requires HR approval due to insufficient balance' : ''}
         ${requestData.requiresMedicalCert ? '\n📄 Action Required: Please forward medical certificate to HR' : ''}
         ${requestData.attachedFiles && requestData.attachedFiles.length > 0 ? `\n📎 Documents Attached: ${requestData.attachedFiles.map((f: File) => f.name).join(', ')}` : ''}
         
-        You will receive an email notification once your manager reviews your request.
+        You will receive an email notification once your ${formData.useAlternativeManager ? 'alternative ' : ''}manager reviews your request.
         
         Best regards,
         Leave Management System`);
       
-      // Log to leave_taken table
+      // Log to leave_taken table with alternative manager information
       const leaveRecord = {
         Title: requestData.title,
         Detail: requestData.description,
@@ -313,6 +336,9 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         EndDate: requestData.endDate,
         LeaveType: selectedLeaveType?.label,
         Requester: currentUser.email,
+        Approver: formData.useAlternativeManager ? null : approverEmail,
+        AlternativeApprover: formData.useAlternativeManager ? formData.alternativeManager : null,
+        ApproverReason: formData.useAlternativeManager ? formData.alternativeManagerReason : null,
         Status: 'pending',
         workingDays: requestData.workingDays,
         Created: new Date().toISOString(),
@@ -337,6 +363,18 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         variant: "destructive",
       });
       return;
+    }
+
+    // Validate alternative manager fields if enabled
+    if (formData.useAlternativeManager) {
+      if (!formData.alternativeManager || !formData.alternativeManagerReason.trim()) {
+        toast({
+          title: "Alternative Manager Required",
+          description: "Please select an alternative manager and provide a reason.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     // Check if document attachment is required for sick leave
@@ -371,6 +409,11 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
 
     let toastMessage = `Your ${selectedLeaveType?.label.toLowerCase()} request for ${workingDays} working day${workingDays > 1 ? 's' : ''} has been submitted for approval.`;
     
+    if (formData.useAlternativeManager) {
+      const altManagerName = availableManagers.find(m => m.email === formData.alternativeManager)?.name || formData.alternativeManager;
+      toastMessage += ` Request sent to alternative manager: ${altManagerName}.`;
+    }
+    
     if (requiresHRApproval) {
       toastMessage += " This request requires HR approval due to insufficient balance.";
     }
@@ -396,6 +439,9 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       startDate: undefined,
       endDate: undefined,
       isHalfDay: false,
+      useAlternativeManager: false,
+      alternativeManager: "",
+      alternativeManagerReason: "",
     });
     setAttachedFiles([]);
     onClose();
@@ -503,6 +549,70 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
               Half Day Request
             </Label>
           </div>
+
+          {/* Alternative Manager Section */}
+          <Card className="border-blue-200 bg-blue-50">
+            <CardHeader className="pb-3">
+              <div className="flex items-center space-x-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                <CardTitle className="text-base text-blue-800">Manager Approval Options</CardTitle>
+              </div>
+              <CardDescription className="text-blue-700">
+                If your regular manager is unavailable, you can assign an alternative manager to approve this request.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <Switch
+                  id="useAlternativeManager"
+                  checked={formData.useAlternativeManager}
+                  onCheckedChange={(checked) => setFormData(prev => ({ 
+                    ...prev, 
+                    useAlternativeManager: checked,
+                    alternativeManager: checked ? prev.alternativeManager : "",
+                    alternativeManagerReason: checked ? prev.alternativeManagerReason : ""
+                  }))}
+                />
+                <Label htmlFor="useAlternativeManager" className="text-sm font-medium text-blue-800">
+                  Use Alternative Manager
+                </Label>
+              </div>
+
+              {formData.useAlternativeManager && (
+                <div className="space-y-4 pl-6 border-l-2 border-blue-300">
+                  <div className="space-y-2">
+                    <Label htmlFor="alternativeManager">Alternative Manager *</Label>
+                    <Select value={formData.alternativeManager} onValueChange={(value) => setFormData(prev => ({ ...prev, alternativeManager: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select alternative manager" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableManagers.map((manager) => (
+                          <SelectItem key={manager.email} value={manager.email}>
+                            <div>
+                              <div className="font-medium">{manager.name}</div>
+                              <div className="text-xs text-gray-500">{manager.department} - {manager.email}</div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="alternativeManagerReason">Reason for Alternative Manager *</Label>
+                    <Textarea
+                      id="alternativeManagerReason"
+                      placeholder="e.g., Regular manager is on vacation, urgent approval needed, etc."
+                      value={formData.alternativeManagerReason}
+                      onChange={(e) => setFormData(prev => ({ ...prev, alternativeManagerReason: e.target.value }))}
+                      rows={2}
+                    />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Document Upload Section for Sick Leave */}
           {requiresDocumentAttachment() && (
