@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -137,9 +136,6 @@ export const AdminBalanceManager = () => {
       <Card>
         <CardHeader>
           <CardTitle>Current Year Balances (2025)</CardTitle>
-          <CardDescription>
-            Annual leave balance = Brought forward + Annual (1.6667/month) - Used - Forfeited - Adjustments
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
