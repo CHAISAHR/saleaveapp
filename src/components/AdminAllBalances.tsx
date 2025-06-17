@@ -316,9 +316,6 @@ export const AdminAllBalances = () => {
       <Card>
         <CardHeader>
           <CardTitle>Employee Leave Balances</CardTitle>
-          <CardDescription>
-            Complete leave balance information for all employees. Annual leave formula: Brought Forward + Accumulated Leave - Annual Used - Forfeited - Adjustments
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
