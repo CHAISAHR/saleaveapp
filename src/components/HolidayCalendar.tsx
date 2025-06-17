@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -354,7 +353,6 @@ export const HolidayCalendar = ({
             <div>
               <h4 className="font-semibold text-gray-900 mb-3">Public Holidays</h4>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li>• All federal public holidays are observed</li>
                 <li>• Office is closed on these days</li>
                 <li>• No leave deduction required</li>
                 <li>• Excluded from leave calculations</li>
