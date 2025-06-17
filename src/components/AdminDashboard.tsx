@@ -14,7 +14,7 @@ import { Users, Calendar as CalendarIcon, Database, Settings, Plus, Edit, Trash2
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { AdminBalanceManager } from "./AdminBalanceManager";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface AdminDashboardProps {
   currentUser: any;
@@ -46,22 +46,13 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
     office_status: "closed"
   });
 
-  // Sample data for visualizations
-  const leaveTypeData = [
-    { name: 'Annual', value: 45, color: '#8884d8' },
-    { name: 'Sick', value: 23, color: '#82ca9d' },
-    { name: 'Study', value: 12, color: '#ffc658' },
-    { name: 'Wellness', value: 8, color: '#ff7300' },
-    { name: 'Family', value: 7, color: '#8dd1e1' },
-  ];
-
-  const monthlyTrendsData = [
-    { month: 'Jan', requests: 12, approved: 10, rejected: 2 },
-    { month: 'Feb', requests: 15, approved: 13, rejected: 2 },
-    { month: 'Mar', requests: 18, approved: 16, rejected: 2 },
-    { month: 'Apr', requests: 22, approved: 19, rejected: 3 },
-    { month: 'May', requests: 25, approved: 23, rejected: 2 },
-    { month: 'Jun', requests: 20, approved: 18, rejected: 2 },
+  // Updated sample data for visualizations
+  const pendingLeavesByDepartment = [
+    { name: 'HR', value: 5, color: '#8884d8' },
+    { name: 'IT', value: 8, color: '#82ca9d' },
+    { name: 'Finance', value: 3, color: '#ffc658' },
+    { name: 'Operations', value: 6, color: '#ff7300' },
+    { name: 'Marketing', value: 4, color: '#8dd1e1' },
   ];
 
   const departmentData = [
@@ -72,12 +63,12 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
     { department: 'Marketing', pending: 4, approved: 10, rejected: 1 },
   ];
 
-  const recentRequestsData = [
-    { id: 1, employee: 'John Smith', type: 'Annual', days: 5, status: 'Pending', submitted: '2024-06-15' },
-    { id: 2, employee: 'Sarah Wilson', type: 'Sick', days: 2, status: 'Approved', submitted: '2024-06-14' },
-    { id: 3, employee: 'Mike Johnson', type: 'Study', days: 3, status: 'Pending', submitted: '2024-06-13' },
-    { id: 4, employee: 'Lisa Chen', type: 'Family', days: 1, status: 'Approved', submitted: '2024-06-12' },
-    { id: 5, employee: 'David Brown', type: 'Wellness', days: 1, status: 'Rejected', submitted: '2024-06-11' },
+  const currentlyOnLeaveData = [
+    { id: 1, employee: 'John Smith', department: 'IT', type: 'Annual', startDate: '2024-06-10', endDate: '2024-06-20', daysRemaining: 3 },
+    { id: 2, employee: 'Sarah Wilson', department: 'HR', type: 'Sick', startDate: '2024-06-15', endDate: '2024-06-17', daysRemaining: 1 },
+    { id: 3, employee: 'Mike Johnson', department: 'Finance', type: 'Study', startDate: '2024-06-12', endDate: '2024-06-19', daysRemaining: 2 },
+    { id: 4, employee: 'Lisa Chen', department: 'Operations', type: 'Family', startDate: '2024-06-16', endDate: '2024-06-16', daysRemaining: 0 },
+    { id: 5, employee: 'David Brown', department: 'Marketing', type: 'Annual', startDate: '2024-06-14', endDate: '2024-06-21', daysRemaining: 4 },
   ];
 
   // Check if we have a valid token
@@ -577,61 +568,35 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
         <p className="text-gray-600">System administration and analytics</p>
       </div>
 
-      {/* Visualization Grid */}
+      {/* 2x2 Visualization Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Leave Types Distribution - Pie Chart */}
+        {/* Pending Leaves by Department - Pie Chart */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <BarChart3 className="h-5 w-5" />
-              <span>Leave Types Distribution</span>
+              <span>Pending Leaves by Department</span>
             </CardTitle>
-            <CardDescription>Breakdown of leave requests by type</CardDescription>
+            <CardDescription>Current pending leave requests breakdown</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={leaveTypeData}
+                    data={pendingLeavesByDepartment}
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
                     dataKey="value"
                     label={({ name, value }) => `${name}: ${value}`}
                   >
-                    {leaveTypeData.map((entry, index) => (
+                    {pendingLeavesByDepartment.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip />
                 </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Monthly Trends - Line Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5" />
-              <span>Monthly Leave Trends</span>
-            </CardTitle>
-            <CardDescription>Request trends over the past 6 months</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={monthlyTrendsData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="requests" stroke="#8884d8" strokeWidth={2} />
-                  <Line type="monotone" dataKey="approved" stroke="#82ca9d" strokeWidth={2} />
-                  <Line type="monotone" dataKey="rejected" stroke="#ff7300" strokeWidth={2} />
-                </LineChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
@@ -663,14 +628,14 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
           </CardContent>
         </Card>
 
-        {/* Recent Requests - Table */}
-        <Card>
+        {/* Staff Currently on Leave - Table */}
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <CalendarIcon className="h-5 w-5" />
-              <span>Recent Leave Requests</span>
+              <span>Staff Currently on Leave</span>
             </CardTitle>
-            <CardDescription>Latest leave requests across all departments</CardDescription>
+            <CardDescription>Employees currently on approved leave today</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -678,35 +643,36 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
                 <TableHeader>
                   <TableRow>
                     <TableHead>Employee</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Days</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Submitted</TableHead>
+                    <TableHead>Department</TableHead>
+                    <TableHead>Leave Type</TableHead>
+                    <TableHead>Start Date</TableHead>
+                    <TableHead>End Date</TableHead>
+                    <TableHead>Days Remaining</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {recentRequestsData.map((request) => (
-                    <TableRow key={request.id}>
-                      <TableCell className="font-medium">{request.employee}</TableCell>
+                  {currentlyOnLeaveData.map((staff) => (
+                    <TableRow key={staff.id}>
+                      <TableCell className="font-medium">{staff.employee}</TableCell>
+                      <TableCell>{staff.department}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className="text-xs">
-                          {request.type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{request.days}</TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={
-                            request.status === 'Approved' ? 'default' : 
-                            request.status === 'Pending' ? 'secondary' : 
-                            'destructive'
-                          }
-                        >
-                          {request.status}
+                          {staff.type}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-xs text-gray-500">
-                        {new Date(request.submitted).toLocaleDateString()}
+                        {new Date(staff.startDate).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-xs text-gray-500">
+                        {new Date(staff.endDate).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={staff.daysRemaining === 0 ? 'destructive' : 'secondary'}
+                          className="text-xs"
+                        >
+                          {staff.daysRemaining} days
+                        </Badge>
                       </TableCell>
                     </TableRow>
                   ))}
