@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,7 @@ import { SignInButton } from "@/components/SignInButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { ManualSignInForm } from "@/components/ManualSignInForm";
 import { ManualSignUpForm } from "@/components/ManualSignUpForm";
+import { PasswordResetForm } from "@/components/PasswordResetForm";
 import { AdminPanel } from "@/components/AdminPanel";
 import { ForfeitRibbon } from "@/components/ForfeitRibbon";
 
@@ -28,12 +28,13 @@ const Index = () => {
     isAuthenticated,
     loading,
     manualLogin,
-    manualSignUp
+    manualSignUp,
+    resetPassword
   } = useAuth();
   const [userRole, setUserRole] = useState<'employee' | 'manager' | 'admin'>('employee');
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [authMode, setAuthMode] = useState<'signin' | 'signup' | 'reset'>('signin');
 
   // Determine user role based on email or stored data
   const determineUserRole = (userEmail: string): 'employee' | 'manager' | 'admin' => {
@@ -51,11 +52,29 @@ const Index = () => {
     return 'employee';
   };
 
+  // Get user's full name from different sources
+  const getUserFullName = () => {
+    if (!user) return "Unknown User";
+    
+    // Try to get from idTokenClaims first (for detailed info)
+    if (user.idTokenClaims?.given_name && user.idTokenClaims?.family_name) {
+      return `${user.idTokenClaims.given_name} ${user.idTokenClaims.family_name}`;
+    }
+    
+    // Fall back to user.name if available
+    if (user.name && user.name.includes(' ')) {
+      return user.name;
+    }
+    
+    // Last resort: use email prefix
+    return user.username?.split('@')[0] || "User";
+  };
+
   // Sample user data with role - in real app this would come from your backend
   const currentUser = {
-    name: user?.name || "Sarah Johnson",
+    name: getUserFullName(),
     email: user?.username || "sarah.johnson@company.com",
-    department: "HR",
+    department: user?.idTokenClaims?.department || "HR",
     avatar: "",
     employeeId: "EMP001",
     role: determineUserRole(user?.username || "sarah.johnson@company.com")
@@ -85,66 +104,78 @@ const Index = () => {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <img 
-                src="/lovable-uploads/chailogo.png" 
-                alt="Company Logo" 
-                className="h-12 w-12"
-              />
-            </div>
-            <CardTitle className="text-2xl">LeaveApp_SA</CardTitle>
-            <CardDescription>HR Management System - South Africa</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Auth mode toggle */}
-            <div className="flex space-x-2">
-              <Button
-                variant={authMode === 'signin' ? 'default' : 'outline'}
-                className="flex-1"
-                onClick={() => setAuthMode('signin')}
-              >
-                Sign In
-              </Button>
-              <Button
-                variant={authMode === 'signup' ? 'default' : 'outline'}
-                className="flex-1"
-                onClick={() => setAuthMode('signup')}
-              >
-                Sign Up
-              </Button>
-            </div>
-
-            {/* Auth forms */}
-            {authMode === 'signin' ? (
-              <ManualSignInForm onSignIn={manualLogin} />
-            ) : (
-              <ManualSignUpForm onSignUp={manualSignUp} />
-            )}
-            
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+        {authMode === 'reset' ? (
+          <PasswordResetForm
+            onBack={() => setAuthMode('signin')}
+            onResetRequest={resetPassword}
+          />
+        ) : (
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <img 
+                  src="/lovable-uploads/chailogo.png" 
+                  alt="Company Logo" 
+                  className="h-12 w-12"
+                />
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
-                </span>
+              <CardTitle className="text-2xl">LeaveApp_SA</CardTitle>
+              <CardDescription>HR Management System - South Africa</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Auth mode toggle */}
+              <div className="flex space-x-2">
+                <Button
+                  variant={authMode === 'signin' ? 'default' : 'outline'}
+                  className="flex-1"
+                  onClick={() => setAuthMode('signin')}
+                >
+                  Sign In
+                </Button>
+                <Button
+                  variant={authMode === 'signup' ? 'default' : 'outline'}
+                  className="flex-1"
+                  onClick={() => setAuthMode('signup')}
+                >
+                  Sign Up
+                </Button>
               </div>
-            </div>
-            
-            <div className="flex justify-center">
-              <SignInButton />
-            </div>
 
-            {/* Admin login hint */}
-            <div className="text-center">
-              <p className="text-xs text-gray-500">
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+              {/* Auth forms */}
+              {authMode === 'signin' ? (
+                <>
+                  <ManualSignInForm onSignIn={manualLogin} />
+                  <div className="text-center">
+                    <Button
+                      variant="link"
+                      className="text-sm"
+                      onClick={() => setAuthMode('reset')}
+                    >
+                      Forgot your password?
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <ManualSignUpForm onSignUp={manualSignUp} />
+              )}
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex justify-center">
+                <SignInButton />
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     );
   }

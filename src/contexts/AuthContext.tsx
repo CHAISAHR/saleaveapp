@@ -8,7 +8,15 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: () => Promise<void>;
   manualLogin: (email: string, password: string) => Promise<void>;
-  manualSignUp: (email: string, password: string, confirmPassword: string) => Promise<void>;
+  manualSignUp: (userData: {
+    email: string;
+    password: string;
+    confirmPassword: string;
+    name: string;
+    surname: string;
+    department: string;
+  }) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
 }
@@ -66,7 +74,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const manualLogin = async (email: string, password: string) => {
     try {
-      // Simulate authentication - in real app, this would call your backend
       console.log('Manual login attempt:', email);
       
       // Create a mock user object similar to MSAL account structure
@@ -89,47 +96,75 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setUser(mockUser);
       localStorage.setItem('manualUser', JSON.stringify(mockUser));
+      localStorage.setItem('auth_token', 'mock-jwt-token'); // Mock token for admin access
     } catch (error) {
       console.error('Manual login error:', error);
     }
   };
 
-  const manualSignUp = async (email: string, password: string, confirmPassword: string) => {
+  const manualSignUp = async (userData: {
+    email: string;
+    password: string;
+    confirmPassword: string;
+    name: string;
+    surname: string;
+    department: string;
+  }) => {
     try {
       // Basic validation
-      if (password !== confirmPassword) {
+      if (userData.password !== userData.confirmPassword) {
         throw new Error('Passwords do not match');
       }
       
-      if (password.length < 6) {
+      if (userData.password.length < 6) {
         throw new Error('Password must be at least 6 characters long');
       }
 
-      // Simulate registration - in real app, this would call your backend
-      console.log('Manual sign up attempt:', email);
+      if (!userData.name || !userData.surname || !userData.department) {
+        throw new Error('Please fill in all required fields');
+      }
+
+      console.log('Manual sign up attempt:', userData);
       
-      // Create a mock user object similar to MSAL account structure
+      // Create a mock user object with full name
+      const fullName = `${userData.name} ${userData.surname}`;
       const mockUser: AccountInfo = {
-        homeAccountId: `manual-${email}`,
+        homeAccountId: `manual-${userData.email}`,
         environment: 'manual',
         tenantId: 'manual-tenant',
-        username: email,
-        localAccountId: `manual-${email}`,
-        name: email.split('@')[0], // Use email prefix as name
+        username: userData.email,
+        localAccountId: `manual-${userData.email}`,
+        name: fullName,
         idTokenClaims: {
           aud: 'manual',
           iss: 'manual',
           iat: Date.now() / 1000,
           exp: (Date.now() / 1000) + 3600,
-          sub: `manual-${email}`,
-          email: email
+          sub: `manual-${userData.email}`,
+          email: userData.email,
+          given_name: userData.name,
+          family_name: userData.surname,
+          department: userData.department
         }
       };
 
       setUser(mockUser);
       localStorage.setItem('manualUser', JSON.stringify(mockUser));
+      localStorage.setItem('auth_token', 'mock-jwt-token'); // Mock token for admin access
     } catch (error) {
       console.error('Manual sign up error:', error);
+      throw error;
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      console.log('Password reset requested for:', email);
+      // In a real app, this would call your backend API
+      // For now, we'll just simulate the request
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    } catch (error) {
+      console.error('Password reset error:', error);
       throw error;
     }
   };
@@ -141,6 +176,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await msalInstance.logoutPopup();
       }
       localStorage.removeItem('manualUser');
+      localStorage.removeItem('auth_token');
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
@@ -153,6 +189,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     manualLogin,
     manualSignUp,
+    resetPassword,
     logout,
     loading,
   };

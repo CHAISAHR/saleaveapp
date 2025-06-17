@@ -7,10 +7,18 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const router = express.Router();
 
-// Register new user
+// Register new user with enhanced details
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name, department } = req.body;
+    const { email, password, name, surname, department } = req.body;
+
+    // Validate required fields
+    if (!email || !password || !name || !surname || !department) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'All fields (email, password, name, surname, department) are required' 
+      });
+    }
 
     // Check if user already exists
     const existingUsers = await executeQuery(
@@ -28,11 +36,14 @@ router.post('/register', async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert new user
+    // Combine name and surname for full name
+    const fullName = `${name} ${surname}`;
+
+    // Insert new user with enhanced details
     const result = await executeQuery(
       `INSERT INTO users (email, name, department, password_hash, hire_date, is_active) 
        VALUES (?, ?, ?, ?, CURDATE(), TRUE)`,
-      [email, name, department, hashedPassword]
+      [email, fullName, department, hashedPassword]
     );
 
     res.status(201).json({
@@ -93,6 +104,42 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Password reset request
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Check if user exists
+    const users = await executeQuery(
+      'SELECT id, email, name FROM users WHERE email = ? AND is_active = TRUE',
+      [email]
+    );
+
+    if (users.length === 0) {
+      // Don't reveal if email exists or not for security
+      return res.json({ 
+        success: true, 
+        message: 'If this email is registered, you will receive a password reset link' 
+      });
+    }
+
+    // In a real application, you would:
+    // 1. Generate a secure reset token
+    // 2. Store it in the database with expiration
+    // 3. Send an email with the reset link
+    
+    console.log(`Password reset requested for user: ${users[0].email}`);
+    
+    res.json({
+      success: true,
+      message: 'If this email is registered, you will receive a password reset link'
+    });
+  } catch (error) {
+    console.error('Password reset error:', error);
+    res.status(500).json({ success: false, message: 'Password reset request failed' });
+  }
+});
+
 // Get current user
 router.get('/me', authenticateToken, async (req: AuthRequest, res) => {
   res.json({
@@ -102,4 +149,3 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 export default router;
-
