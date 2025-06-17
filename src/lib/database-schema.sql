@@ -1,6 +1,5 @@
-
 -- MySQL Database Schema for Leave Management System
--- Updated schema with email-based unique identifiers and negative value support
+-- Updated schema with email-based unique identifiers, negative value support, and gender field
 
 -- Departments table - stores configurable department names
 CREATE TABLE departments (
@@ -19,6 +18,7 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NULL, -- For manual authentication
     name VARCHAR(255) NOT NULL,
     department VARCHAR(100) NOT NULL,
+    gender ENUM('male', 'female', 'other') NULL,
     role ENUM('employee', 'manager', 'admin') DEFAULT 'employee',
     hire_date DATE NOT NULL,
     manager_email VARCHAR(255),
@@ -82,7 +82,7 @@ CREATE TABLE leave_balances (
     SickBroughtforward DECIMAL(8,3) DEFAULT 0, -- Allows negative values
     Sick DECIMAL(8,3) DEFAULT 36, -- Annual sick leave allocation, allows negative values
     SickUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
-    Maternity DECIMAL(8,3) DEFAULT 90, -- Allows negative values for adjustments
+    Maternity DECIMAL(8,3) DEFAULT 90, -- Gender-based allocation: 90 for females, 0 for males
     MaternityUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
     Parental DECIMAL(8,3) DEFAULT 20, -- Allows negative values for adjustments
     ParentalUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments

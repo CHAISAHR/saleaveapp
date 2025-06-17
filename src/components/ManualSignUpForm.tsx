@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +13,7 @@ interface ManualSignUpFormProps {
     name: string;
     surname: string;
     department: string;
+    gender: string;
   }) => void;
 }
 
@@ -31,7 +31,8 @@ export const ManualSignUpForm: React.FC<ManualSignUpFormProps> = ({ onSignUp }) 
     confirmPassword: '',
     name: '',
     surname: '',
-    department: ''
+    department: '',
+    gender: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -123,20 +124,35 @@ export const ManualSignUpForm: React.FC<ManualSignUpFormProps> = ({ onSignUp }) 
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="signup-department">Department *</Label>
-        <Select value={formData.department} onValueChange={(value) => handleChange('department', value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select your department" />
-          </SelectTrigger>
-          <SelectContent>
-            {departments.map((dept) => (
-              <SelectItem key={dept.id} value={dept.name}>
-                {dept.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="signup-department">Department *</Label>
+          <Select value={formData.department} onValueChange={(value) => handleChange('department', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select your department" />
+            </SelectTrigger>
+            <SelectContent>
+              {departments.map((dept) => (
+                <SelectItem key={dept.id} value={dept.name}>
+                  {dept.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="signup-gender">Gender *</Label>
+          <Select value={formData.gender} onValueChange={(value) => handleChange('gender', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select your gender" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="male">Male</SelectItem>
+              <SelectItem value="female">Female</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="space-y-2">

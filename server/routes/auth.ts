@@ -7,16 +7,16 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const router = express.Router();
 
-// Register new user with enhanced details
+// Register new user with enhanced details including gender
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name, surname, department } = req.body;
+    const { email, password, name, surname, department, gender } = req.body;
 
     // Validate required fields
-    if (!email || !password || !name || !surname || !department) {
+    if (!email || !password || !name || !surname || !department || !gender) {
       return res.status(400).json({ 
         success: false, 
-        message: 'All fields (email, password, name, surname, department) are required' 
+        message: 'All fields (email, password, name, surname, department, gender) are required' 
       });
     }
 
@@ -39,11 +39,23 @@ router.post('/register', async (req, res) => {
     // Combine name and surname for full name
     const fullName = `${name} ${surname}`;
 
-    // Insert new user with enhanced details
+    // Insert new user with enhanced details including gender
     const result = await executeQuery(
-      `INSERT INTO users (email, name, department, password_hash, hire_date, is_active) 
-       VALUES (?, ?, ?, ?, CURDATE(), TRUE)`,
-      [email, fullName, department, hashedPassword]
+      `INSERT INTO users (email, name, department, gender, password_hash, hire_date, is_active) 
+       VALUES (?, ?, ?, ?, ?, CURDATE(), TRUE)`,
+      [email, fullName, department, gender, hashedPassword]
+    );
+
+    // Create initial leave balance with gender-based maternity allocation
+    const currentYear = new Date().getFullYear();
+    const maternityAllocation = gender === 'male' ? 0 : 90;
+
+    await executeQuery(
+      `INSERT INTO leave_balances (
+        EmployeeName, EmployeeEmail, Department, Year, 
+        Maternity, AccumulatedLeave
+      ) VALUES (?, ?, ?, ?, ?, 0)`,
+      [fullName, email, department, currentYear, maternityAllocation]
     );
 
     res.status(201).json({

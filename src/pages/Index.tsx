@@ -88,6 +88,19 @@ const Index = () => {
     }
   }, [user]);
 
+  // Updated manualSignUp handler to include gender
+  const handleManualSignUp = (userData: {
+    email: string;
+    password: string;
+    confirmPassword: string;
+    name: string;
+    surname: string;
+    department: string;
+    gender: string;
+  }) => {
+    manualSignUp(userData);
+  };
+
   // Show loading state
   if (loading) {
     return (
@@ -156,7 +169,7 @@ const Index = () => {
                   </div>
                 </>
               ) : (
-                <ManualSignUpForm onSignUp={manualSignUp} />
+                <ManualSignUpForm onSignUp={handleManualSignUp} />
               )}
               
               <div className="relative">
