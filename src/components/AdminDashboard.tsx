@@ -9,10 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Users, Calendar as CalendarIcon, Database, Settings, Plus, Edit, Trash2, AlertCircle } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Users, Calendar as CalendarIcon, Database, Settings, Plus, Edit, Trash2, AlertCircle, TrendingUp, BarChart3 } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { AdminBalanceManager } from "./AdminBalanceManager";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 
 interface AdminDashboardProps {
   currentUser: any;
@@ -43,6 +45,40 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
     description: "",
     office_status: "closed"
   });
+
+  // Sample data for visualizations
+  const leaveTypeData = [
+    { name: 'Annual', value: 45, color: '#8884d8' },
+    { name: 'Sick', value: 23, color: '#82ca9d' },
+    { name: 'Study', value: 12, color: '#ffc658' },
+    { name: 'Wellness', value: 8, color: '#ff7300' },
+    { name: 'Family', value: 7, color: '#8dd1e1' },
+  ];
+
+  const monthlyTrendsData = [
+    { month: 'Jan', requests: 12, approved: 10, rejected: 2 },
+    { month: 'Feb', requests: 15, approved: 13, rejected: 2 },
+    { month: 'Mar', requests: 18, approved: 16, rejected: 2 },
+    { month: 'Apr', requests: 22, approved: 19, rejected: 3 },
+    { month: 'May', requests: 25, approved: 23, rejected: 2 },
+    { month: 'Jun', requests: 20, approved: 18, rejected: 2 },
+  ];
+
+  const departmentData = [
+    { department: 'HR', pending: 5, approved: 15, rejected: 2 },
+    { department: 'IT', pending: 8, approved: 22, rejected: 3 },
+    { department: 'Finance', pending: 3, approved: 12, rejected: 1 },
+    { department: 'Operations', pending: 6, approved: 18, rejected: 2 },
+    { department: 'Marketing', pending: 4, approved: 10, rejected: 1 },
+  ];
+
+  const recentRequestsData = [
+    { id: 1, employee: 'John Smith', type: 'Annual', days: 5, status: 'Pending', submitted: '2024-06-15' },
+    { id: 2, employee: 'Sarah Wilson', type: 'Sick', days: 2, status: 'Approved', submitted: '2024-06-14' },
+    { id: 3, employee: 'Mike Johnson', type: 'Study', days: 3, status: 'Pending', submitted: '2024-06-13' },
+    { id: 4, employee: 'Lisa Chen', type: 'Family', days: 1, status: 'Approved', submitted: '2024-06-12' },
+    { id: 5, employee: 'David Brown', type: 'Wellness', days: 1, status: 'Rejected', submitted: '2024-06-11' },
+  ];
 
   // Check if we have a valid token
   const hasValidToken = () => {
@@ -538,101 +574,148 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">Admin Dashboard</h2>
-        <p className="text-gray-600">System administration and management</p>
+        <p className="text-gray-600">System administration and analytics</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Visualization Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Leave Types Distribution - Pie Chart */}
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="bg-blue-100 p-2 rounded-lg">
-                <Users className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Total Users</p>
-                <p className="text-2xl font-bold text-gray-900">248</p>
-              </div>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <BarChart3 className="h-5 w-5" />
+              <span>Leave Types Distribution</span>
+            </CardTitle>
+            <CardDescription>Breakdown of leave requests by type</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={leaveTypeData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    dataKey="value"
+                    label={({ name, value }) => `${name}: ${value}`}
+                  >
+                    {leaveTypeData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
+        {/* Monthly Trends - Line Chart */}
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="bg-green-100 p-2 rounded-lg">
-                <CalendarIcon className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Holidays Managed</p>
-                <p className="text-2xl font-bold text-gray-900">{holidays.length}</p>
-              </div>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <TrendingUp className="h-5 w-5" />
+              <span>Monthly Leave Trends</span>
+            </CardTitle>
+            <CardDescription>Request trends over the past 6 months</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyTrendsData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="requests" stroke="#8884d8" strokeWidth={2} />
+                  <Line type="monotone" dataKey="approved" stroke="#82ca9d" strokeWidth={2} />
+                  <Line type="monotone" dataKey="rejected" stroke="#ff7300" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
+        {/* Department Status - Bar Chart */}
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="bg-yellow-100 p-2 rounded-lg">
-                <Database className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Database Health</p>
-                <p className="text-2xl font-bold text-gray-900">98%</p>
-              </div>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Users className="h-5 w-5" />
+              <span>Department Status</span>
+            </CardTitle>
+            <CardDescription>Leave requests status by department</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={departmentData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="department" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="pending" fill="#ffc658" />
+                  <Bar dataKey="approved" fill="#82ca9d" />
+                  <Bar dataKey="rejected" fill="#ff7300" />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
+        {/* Recent Requests - Table */}
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="bg-purple-100 p-2 rounded-lg">
-                <Settings className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">System Status</p>
-                <p className="text-2xl font-bold text-gray-900">Online</p>
-              </div>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <CalendarIcon className="h-5 w-5" />
+              <span>Recent Leave Requests</span>
+            </CardTitle>
+            <CardDescription>Latest leave requests across all departments</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Employee</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Days</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Submitted</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentRequestsData.map((request) => (
+                    <TableRow key={request.id}>
+                      <TableCell className="font-medium">{request.employee}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {request.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{request.days}</TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={
+                            request.status === 'Approved' ? 'default' : 
+                            request.status === 'Pending' ? 'secondary' : 
+                            'destructive'
+                          }
+                        >
+                          {request.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-gray-500">
+                        {new Date(request.submitted).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common administrative tasks</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button 
-              variant="outline" 
-              className="h-20 flex flex-col items-center justify-center space-y-2"
-              onClick={() => handleQuickAction('holidays')}
-            >
-              <CalendarIcon className="h-6 w-6" />
-              <span>Manage Holidays</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-20 flex flex-col items-center justify-center space-y-2"
-              onClick={() => handleQuickAction('users')}
-            >
-              <Users className="h-6 w-6" />
-              <span>User Management</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-20 flex flex-col items-center justify-center space-y-2"
-              onClick={() => handleQuickAction('database')}
-            >
-              <Database className="h-6 w-6" />
-              <span>Database Tools</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

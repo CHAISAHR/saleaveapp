@@ -525,40 +525,12 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
             );
           })}
         </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Team Summary</CardTitle>
-            <CardDescription>Overview of team leave usage from leave_balances</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">
-                  {teamMembers.reduce((acc, member) => acc + calculateLeaveBalance(member.leaveBalance, 'annual'), 0)}
-                </div>
-                <div className="text-sm text-blue-700">Total Annual Days Available</div>
-              </div>
-              
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">
-                  {teamMembers.reduce((acc, member) => acc + calculateLeaveBalance(member.leaveBalance, 'study'), 0)}
-                </div>
-                <div className="text-sm text-purple-700">Total Study Days Available</div>
-              </div>
-              
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">
-                  {teamMembers.reduce((acc, member) => acc + calculateLeaveBalance(member.leaveBalance, 'wellness'), 0)}
-                </div>
-                <div className="text-sm text-green-700">Total Wellness Days Available</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     );
   }
+
+  // Filter rejected requests
+  const rejectedRequests = historicRequests.filter(request => request.status === 'rejected');
 
   return (
     <div className="space-y-6">
@@ -602,12 +574,12 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <div className="bg-green-100 p-2 rounded-lg">
-                <Calendar className="h-5 w-5 text-green-600" />
+              <div className="bg-red-100 p-2 rounded-lg">
+                <XCircle className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">This Year</p>
-                <p className="text-2xl font-bold text-gray-900">{historicRequests.length}</p>
+                <p className="text-sm text-gray-600">Rejected</p>
+                <p className="text-2xl font-bold text-gray-900">{rejectedRequests.length}</p>
               </div>
             </div>
           </CardContent>
