@@ -9,6 +9,7 @@ import leaveRoutes from './routes/leave';
 import balanceRoutes from './routes/balance';
 import holidayRoutes from './routes/holiday';
 import rolloverRoutes from './routes/rollover';
+import departmentRoutes from './routes/departments';
 
 // Load environment variables
 dotenv.config();
@@ -30,6 +31,7 @@ app.use('/api/leave', leaveRoutes);
 app.use('/api/balance', balanceRoutes);
 app.use('/api/holiday', holidayRoutes);
 app.use('/api/rollover', rolloverRoutes);
+app.use('/api/departments', departmentRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

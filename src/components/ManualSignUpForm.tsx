@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Eye, EyeOff } from 'lucide-react';
+import { apiConfig } from '@/config/apiConfig';
 
 interface ManualSignUpFormProps {
   onSignUp: (userData: {
@@ -42,7 +43,7 @@ export const ManualSignUpForm: React.FC<ManualSignUpFormProps> = ({ onSignUp }) 
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/departments');
+        const response = await fetch(apiConfig.endpoints.departments);
         if (response.ok) {
           const data = await response.json();
           setDepartments(data.departments?.filter((dept: Department) => dept.is_active) || []);
