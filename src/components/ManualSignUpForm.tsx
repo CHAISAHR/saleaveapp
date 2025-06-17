@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +17,13 @@ interface ManualSignUpFormProps {
   }) => void;
 }
 
+interface Department {
+  id: number;
+  name: string;
+  description?: string;
+  is_active: boolean;
+}
+
 export const ManualSignUpForm: React.FC<ManualSignUpFormProps> = ({ onSignUp }) => {
   const [formData, setFormData] = useState({
     email: '',
@@ -28,6 +35,47 @@ export const ManualSignUpForm: React.FC<ManualSignUpFormProps> = ({ onSignUp }) 
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [departments, setDepartments] = useState<Department[]>([]);
+
+  // Fetch departments on component mount
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/departments');
+        if (response.ok) {
+          const data = await response.json();
+          setDepartments(data.departments?.filter((dept: Department) => dept.is_active) || []);
+        } else {
+          // Use default departments if backend is not available
+          setDepartments([
+            { id: 1, name: 'Human Resources', is_active: true },
+            { id: 2, name: 'Information Technology', is_active: true },
+            { id: 3, name: 'Finance', is_active: true },
+            { id: 4, name: 'Marketing', is_active: true },
+            { id: 5, name: 'Sales', is_active: true },
+            { id: 6, name: 'Operations', is_active: true },
+            { id: 7, name: 'Legal', is_active: true },
+            { id: 8, name: 'Administration', is_active: true }
+          ]);
+        }
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+        // Use default departments if there's an error
+        setDepartments([
+          { id: 1, name: 'Human Resources', is_active: true },
+          { id: 2, name: 'Information Technology', is_active: true },
+          { id: 3, name: 'Finance', is_active: true },
+          { id: 4, name: 'Marketing', is_active: true },
+          { id: 5, name: 'Sales', is_active: true },
+          { id: 6, name: 'Operations', is_active: true },
+          { id: 7, name: 'Legal', is_active: true },
+          { id: 8, name: 'Administration', is_active: true }
+        ]);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,14 +130,11 @@ export const ManualSignUpForm: React.FC<ManualSignUpFormProps> = ({ onSignUp }) 
             <SelectValue placeholder="Select your department" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="HR">Human Resources</SelectItem>
-            <SelectItem value="IT">Information Technology</SelectItem>
-            <SelectItem value="Finance">Finance</SelectItem>
-            <SelectItem value="Marketing">Marketing</SelectItem>
-            <SelectItem value="Sales">Sales</SelectItem>
-            <SelectItem value="Operations">Operations</SelectItem>
-            <SelectItem value="Legal">Legal</SelectItem>
-            <SelectItem value="Administration">Administration</SelectItem>
+            {departments.map((dept) => (
+              <SelectItem key={dept.id} value={dept.name}>
+                {dept.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

@@ -2,6 +2,16 @@
 -- MySQL Database Schema for Leave Management System
 -- Updated schema with email-based unique identifiers and negative value support
 
+-- Departments table - stores configurable department names
+CREATE TABLE departments (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 -- Users table - stores employee information and roles
 CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -17,7 +27,8 @@ CREATE TABLE users (
     contract_termination_date DATE NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (manager_email) REFERENCES users(email)
+    FOREIGN KEY (manager_email) REFERENCES users(email),
+    FOREIGN KEY (department) REFERENCES departments(name)
 );
 
 -- Company holidays table - stores public and company holidays
@@ -54,7 +65,7 @@ CREATE TABLE leave_taken (
     Modified_By VARCHAR(255) NULL
 );
 
--- Leave balances table - tracks employee leave balances with monthly accrual (supports negative values)
+-- Leave balances table - tracks employee leave balances with monthly accrual (supports negative values with 3 decimal places)
 CREATE TABLE leave_balances (
     BalanceID INT PRIMARY KEY AUTO_INCREMENT,
     EmployeeName VARCHAR(255) NOT NULL,
@@ -62,39 +73,40 @@ CREATE TABLE leave_balances (
     Department VARCHAR(100) NOT NULL,
     Status VARCHAR(50) DEFAULT 'Active',
     Year INT NOT NULL,
-    Broughtforward DECIMAL(6,1) DEFAULT 0, -- Increased precision, allows negative values
-    Annual DECIMAL(6,1) DEFAULT 0, -- Legacy field for compatibility, allows negative values
-    AccumulatedLeave DECIMAL(6,1) DEFAULT 0, -- Monthly accumulation (1.667 per month), allows negative values
-    AnnualUsed DECIMAL(6,1) DEFAULT 0, -- Allows negative values for adjustments
-    Forfeited DECIMAL(6,1) DEFAULT 0, -- Allows negative values for corrections
-    Annual_leave_adjustments DECIMAL(6,1) DEFAULT 0, -- Allows negative values
-    SickBroughtforward DECIMAL(6,1) DEFAULT 0, -- Allows negative values
-    Sick DECIMAL(6,1) DEFAULT 36, -- Annual sick leave allocation, allows negative values
-    SickUsed DECIMAL(6,1) DEFAULT 0, -- Allows negative values for adjustments
-    Maternity DECIMAL(6,1) DEFAULT 90, -- Allows negative values for adjustments
-    MaternityUsed DECIMAL(6,1) DEFAULT 0, -- Allows negative values for adjustments
-    Parental DECIMAL(6,1) DEFAULT 20, -- Allows negative values for adjustments
-    ParentalUsed DECIMAL(6,1) DEFAULT 0, -- Allows negative values for adjustments
-    Family DECIMAL(6,1) DEFAULT 3, -- Allows negative values for adjustments
-    FamilyUsed DECIMAL(6,1) DEFAULT 0, -- Allows negative values for adjustments
-    Adoption DECIMAL(6,1) DEFAULT 20, -- Allows negative values for adjustments
-    AdoptionUsed DECIMAL(6,1) DEFAULT 0, -- Allows negative values for adjustments
-    Study DECIMAL(6,1) DEFAULT 6, -- Allows negative values for adjustments
-    StudyUsed DECIMAL(6,1) DEFAULT 0, -- Allows negative values for adjustments
-    Mentalhealth DECIMAL(6,1) DEFAULT 2, -- Allows negative values for adjustments
-    MentalhealthUsed DECIMAL(6,1) DEFAULT 0, -- Allows negative values for adjustments
+    Broughtforward DECIMAL(8,3) DEFAULT 0, -- Increased precision to 3 decimal places, allows negative values
+    Annual DECIMAL(8,3) DEFAULT 0, -- Legacy field for compatibility, allows negative values
+    AccumulatedLeave DECIMAL(8,3) DEFAULT 0, -- Monthly accumulation (1.667 per month), allows negative values
+    AnnualUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
+    Forfeited DECIMAL(8,3) DEFAULT 0, -- Allows negative values for corrections
+    Annual_leave_adjustments DECIMAL(8,3) DEFAULT 0, -- Allows negative values
+    SickBroughtforward DECIMAL(8,3) DEFAULT 0, -- Allows negative values
+    Sick DECIMAL(8,3) DEFAULT 36, -- Annual sick leave allocation, allows negative values
+    SickUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
+    Maternity DECIMAL(8,3) DEFAULT 90, -- Allows negative values for adjustments
+    MaternityUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
+    Parental DECIMAL(8,3) DEFAULT 20, -- Allows negative values for adjustments
+    ParentalUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
+    Family DECIMAL(8,3) DEFAULT 3, -- Allows negative values for adjustments
+    FamilyUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
+    Adoption DECIMAL(8,3) DEFAULT 20, -- Allows negative values for adjustments
+    AdoptionUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
+    Study DECIMAL(8,3) DEFAULT 6, -- Allows negative values for adjustments
+    StudyUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
+    Mentalhealth DECIMAL(8,3) DEFAULT 2, -- Allows negative values for adjustments
+    MentalhealthUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
     __PowerAppsId__ VARCHAR(255) NULL,
-    Current_leave_balance DECIMAL(6,1) GENERATED ALWAYS AS (
+    Current_leave_balance DECIMAL(8,3) GENERATED ALWAYS AS (
         Broughtforward + AccumulatedLeave - AnnualUsed - Forfeited - Annual_leave_adjustments
     ) STORED,
-    Leave_balance_previous_month DECIMAL(6,1) DEFAULT 0, -- Allows negative values
+    Leave_balance_previous_month DECIMAL(8,3) DEFAULT 0, -- Allows negative values
     Contract_termination_date DATE NULL,
-    termination_balance DECIMAL(6,1) DEFAULT 0, -- Allows negative values
+    termination_balance DECIMAL(8,3) DEFAULT 0, -- Allows negative values
     Comment TEXT,
     Annual_leave_adjustment_comments TEXT,
     Manager VARCHAR(255),
     Modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY unique_employee_year (EmployeeEmail, Year)
+    UNIQUE KEY unique_employee_year (EmployeeEmail, Year),
+    FOREIGN KEY (Department) REFERENCES departments(name)
 );
 
 -- Email notifications log
@@ -133,6 +145,18 @@ CREATE INDEX idx_leave_taken_alternative_approver ON leave_taken(AlternativeAppr
 CREATE INDEX idx_company_holidays_date ON company_holidays(date);
 CREATE INDEX idx_email_notifications_recipient ON email_notifications(recipient_email);
 CREATE INDEX idx_audit_log_table_record ON audit_log(table_name, record_id);
+CREATE INDEX idx_departments_name ON departments(name);
+
+-- Insert default departments
+INSERT INTO departments (name, description) VALUES
+('Human Resources', 'HR department managing personnel and policies'),
+('Information Technology', 'IT department managing technology and systems'),
+('Finance', 'Finance department managing company finances'),
+('Marketing', 'Marketing department managing company promotion'),
+('Sales', 'Sales department managing customer relationships'),
+('Operations', 'Operations department managing daily activities'),
+('Legal', 'Legal department managing compliance and contracts'),
+('Administration', 'Administration department managing office operations');
 
 -- Insert default South African holidays for 2025 (using admin@company.com as default)
 INSERT INTO company_holidays (name, date, type, description, office_status, is_recurring, created_by_email) VALUES
