@@ -28,7 +28,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/leave', leaveRoutes);
 app.use('/api/balance', balanceRoutes);
-app.use('/api/holidays', holidayRoutes);
+app.use('/api/holiday', holidayRoutes);
 app.use('/api/rollover', rolloverRoutes);
 
 // Health check

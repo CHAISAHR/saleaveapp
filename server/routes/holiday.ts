@@ -43,4 +43,44 @@ router.post('/', authenticateToken, requireRole(['admin']), async (req: AuthRequ
   }
 });
 
+// Update holiday (admin only)
+router.put('/:id', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { name, date, type, description, office_status, is_recurring } = req.body;
+
+    await executeQuery(
+      `UPDATE company_holidays 
+       SET name = ?, date = ?, type = ?, description = ?, office_status = ?, is_recurring = ?
+       WHERE id = ?`,
+      [name, date, type, description, office_status, is_recurring, id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Holiday updated successfully'
+    });
+  } catch (error) {
+    console.error('Update holiday error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update holiday' });
+  }
+});
+
+// Delete holiday (admin only)
+router.delete('/:id', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+
+    await executeQuery('DELETE FROM company_holidays WHERE id = ?', [id]);
+
+    res.json({
+      success: true,
+      message: 'Holiday deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete holiday error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete holiday' });
+  }
+});
+
 export default router;
