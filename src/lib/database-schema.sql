@@ -1,3 +1,4 @@
+
 -- MySQL Database Schema for Leave Management System
 -- Updated schema with email-based unique identifiers, negative value support, and gender field
 
@@ -163,7 +164,11 @@ INSERT INTO departments (name, description) VALUES
 ('Cancer', 'Cervical Cancer Team'),
 ('Global', 'Global Staff');
 
--- Insert default South African holidays for 2025 (using admin@company.com as default)
+-- Insert default admin user first
+INSERT INTO users (email, name, department, role, hire_date, password_hash, is_active) VALUES
+('admin@company.com', 'System Administrator', 'Ops Team', 'admin', CURDATE(), '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', TRUE);
+
+-- Insert default South African holidays for 2025 (now that admin user exists)
 INSERT INTO company_holidays (name, date, type, description, office_status, is_recurring, created_by_email) VALUES
 ('New Year\'s Day', '2025-01-01', 'public', 'New Year\'s Day', 'closed', TRUE, 'admin@company.com'),
 ('Human Rights Day', '2025-03-21', 'public', 'Human Rights Day', 'closed', TRUE, 'admin@company.com'),
@@ -177,6 +182,12 @@ INSERT INTO company_holidays (name, date, type, description, office_status, is_r
 ('Day of Reconciliation', '2025-12-16', 'public', 'Day of Reconciliation', 'closed', TRUE, 'admin@company.com'),
 ('Christmas Day', '2025-12-25', 'public', 'Christmas Day', 'closed', TRUE, 'admin@company.com'),
 ('Day of Goodwill', '2025-12-26', 'public', 'Day of Goodwill', 'closed', TRUE, 'admin@company.com');
+
+-- Create initial leave balance for admin user
+INSERT INTO leave_balances (
+    EmployeeName, EmployeeEmail, Department, Year, 
+    Maternity, AccumulatedLeave
+) VALUES ('System Administrator', 'admin@company.com', 'Ops Team', YEAR(CURRENT_DATE), 0, 20);
 
 -- Create views for common queries
 CREATE VIEW employee_current_balances AS
