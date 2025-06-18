@@ -149,14 +149,19 @@ CREATE INDEX idx_departments_name ON departments(name);
 
 -- Insert default departments
 INSERT INTO departments (name, description) VALUES
-('Human Resources', 'HR department managing personnel and policies'),
-('Information Technology', 'IT department managing technology and systems'),
+('Ops Team', 'HR department managing personnel and policies'),
+('Access to Medicines', 'IT department managing technology and systems'),
 ('Finance', 'Finance department managing company finances'),
-('Marketing', 'Marketing department managing company promotion'),
-('Sales', 'Sales department managing customer relationships'),
-('Operations', 'Operations department managing daily activities'),
-('Legal', 'Legal department managing compliance and contracts'),
-('Administration', 'Administration department managing office operations');
+('Assistive Technology', 'AT team'),
+('HIV SS, Prep, Paeds, SRMNH', 'Self Screening'),
+('FCDO', 'Operations department managing daily activities'),
+('SHF', 'Legal department managing compliance and contracts'),
+('PF', 'Pandemic Fund'),
+('TB', 'Tuberculosis'),
+('Malaria', 'Malaria team'),
+('SLT', 'Senior Leadership Team'),
+('Cancer', 'Cervical Cancer Team'),
+('Global', 'Global Staff');
 
 -- Insert default South African holidays for 2025 (using admin@company.com as default)
 INSERT INTO company_holidays (name, date, type, description, office_status, is_recurring, created_by_email) VALUES
