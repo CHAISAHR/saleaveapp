@@ -48,27 +48,27 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
 
   // Updated sample data for visualizations
   const pendingLeavesByDepartment = [
-    { name: 'HR', value: 5, color: '#8884d8' },
-    { name: 'IT', value: 8, color: '#82ca9d' },
+    { name: 'Ops', value: 5, color: '#8884d8' },
+    { name: 'Global', value: 8, color: '#82ca9d' },
     { name: 'Finance', value: 3, color: '#ffc658' },
-    { name: 'Operations', value: 6, color: '#ff7300' },
-    { name: 'Marketing', value: 4, color: '#8dd1e1' },
+    { name: 'Access', value: 6, color: '#ff7300' },
+    { name: 'SHF', value: 4, color: '#8dd1e1' },
   ];
 
   const departmentData = [
-    { department: 'HR', pending: 5, approved: 15, rejected: 2 },
-    { department: 'IT', pending: 8, approved: 22, rejected: 3 },
+    { department: 'Ops', pending: 5, approved: 15, rejected: 2 },
+    { department: 'Global', pending: 8, approved: 22, rejected: 3 },
     { department: 'Finance', pending: 3, approved: 12, rejected: 1 },
-    { department: 'Operations', pending: 6, approved: 18, rejected: 2 },
-    { department: 'Marketing', pending: 4, approved: 10, rejected: 1 },
+    { department: 'Access', pending: 6, approved: 18, rejected: 2 },
+    { department: 'SHF', pending: 4, approved: 10, rejected: 1 },
   ];
 
   const currentlyOnLeaveData = [
-    { id: 1, employee: 'John Smith', department: 'IT', type: 'Annual', startDate: '2024-06-10', endDate: '2024-06-20', daysRemaining: 3 },
-    { id: 2, employee: 'Sarah Wilson', department: 'HR', type: 'Sick', startDate: '2024-06-15', endDate: '2024-06-17', daysRemaining: 1 },
+    { id: 1, employee: 'John Smith', department: 'Ops', type: 'Annual', startDate: '2024-06-10', endDate: '2024-06-20', daysRemaining: 3 },
+    { id: 2, employee: 'Sarah Wilson', department: 'Ops', type: 'Sick', startDate: '2024-06-15', endDate: '2024-06-17', daysRemaining: 1 },
     { id: 3, employee: 'Mike Johnson', department: 'Finance', type: 'Study', startDate: '2024-06-12', endDate: '2024-06-19', daysRemaining: 2 },
-    { id: 4, employee: 'Lisa Chen', department: 'Operations', type: 'Family', startDate: '2024-06-16', endDate: '2024-06-16', daysRemaining: 0 },
-    { id: 5, employee: 'David Brown', department: 'Marketing', type: 'Annual', startDate: '2024-06-14', endDate: '2024-06-21', daysRemaining: 4 },
+    { id: 4, employee: 'Lisa Chen', department: 'AT', type: 'Family', startDate: '2024-06-16', endDate: '2024-06-16', daysRemaining: 0 },
+    { id: 5, employee: 'David Brown', department: 'TB', type: 'Annual', startDate: '2024-06-14', endDate: '2024-06-21', daysRemaining: 4 },
   ];
 
   // Check if we have a valid token
