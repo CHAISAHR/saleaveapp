@@ -21,11 +21,18 @@ let connection: mysql.Connection;
 
 export const connectDatabase = async (): Promise<mysql.Connection> => {
   try {
+    console.log('Attempting to connect to database...');
     connection = await mysql.createConnection(dbConfig);
-    console.log('Connected to MySQL database');
+    console.log('Connected to MySQL database successfully');
     return connection;
   } catch (error) {
     console.error('Database connection failed:', error);
+    console.error('Database config:', {
+      host: dbConfig.host,
+      user: dbConfig.user,
+      database: dbConfig.database,
+      port: dbConfig.port
+    });
     throw error;
   }
 };
@@ -39,6 +46,9 @@ export const getConnection = (): mysql.Connection => {
 
 export const executeQuery = async (query: string, params?: any[]): Promise<any> => {
   try {
+    if (!connection) {
+      throw new Error('Database connection not established');
+    }
     const [results] = await connection.execute(query, params);
     return results;
   } catch (error) {
