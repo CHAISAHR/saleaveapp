@@ -66,10 +66,10 @@ export const DepartmentManager = () => {
         { id: 5, name: 'SHF', description: 'Sales department managing customer relationships', is_active: true, created_at: '', updated_at: '' },
         { id: 6, name: 'TB', description: 'Operations department managing daily activities', is_active: true, created_at: '', updated_at: '' },
         { id: 7, name: 'HIV SS, Prep,& SRMNH', description: 'Legal department managing compliance and contracts', is_active: true, created_at: '', updated_at: '' },
-        { id: 7, name: 'Cancer', description: 'Cervical Cancer', is_active: true, created_at: '', updated_at: '' },
-        { id: 7, name: 'Global', description: 'Cervical Cancer', is_active: true, created_at: '', updated_at: '' },
-        { id: 7, name: 'FCDO', description: 'Cervical Cancer', is_active: true, created_at: '', updated_at: '' },
-        { id: 8, name: 'Other', description: 'Administration department managing office operations', is_active: true, created_at: '', updated_at: '' }
+        { id: 8, name: 'Cancer', description: 'Cervical Cancer', is_active: true, created_at: '', updated_at: '' },
+        { id: 9, name: 'Global', description: 'Cervical Cancer', is_active: true, created_at: '', updated_at: '' },
+        { id: 10, name: 'FCDO', description: 'Cervical Cancer', is_active: true, created_at: '', updated_at: '' },
+        { id: 11, name: 'Other', description: 'Administration department managing office operations', is_active: true, created_at: '', updated_at: '' }
       ]);
     } finally {
       setLoading(false);
