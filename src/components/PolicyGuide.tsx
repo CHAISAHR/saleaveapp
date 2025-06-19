@@ -9,7 +9,7 @@ export const PolicyGuide = () => {
     accrual: "1.66 days per month",
     carryOver: "Expires 6 months after leave year end",
     eligibility: "All permanent employees",
-    requirements: "2 weeks advance notice for planned leave",
+    requirements: "2 days advance notice for planned leave",
     icon: Calendar,
     color: "blue"
   }, {
