@@ -59,14 +59,17 @@ export const DepartmentManager = () => {
       console.error('Error fetching departments:', error);
       // Set default departments if backend is not available
       setDepartments([
-        { id: 1, name: 'Human Resources', description: 'HR department managing personnel and policies', is_active: true, created_at: '', updated_at: '' },
-        { id: 2, name: 'Information Technology', description: 'IT department managing technology and systems', is_active: true, created_at: '', updated_at: '' },
+        { id: 1, name: 'Hr & Ops', description: 'HR department managing personnel and policies', is_active: true, created_at: '', updated_at: '' },
+        { id: 2, name: 'Access to Medicines', description: 'IT department managing technology and systems', is_active: true, created_at: '', updated_at: '' },
         { id: 3, name: 'Finance', description: 'Finance department managing company finances', is_active: true, created_at: '', updated_at: '' },
-        { id: 4, name: 'Marketing', description: 'Marketing department managing company promotion', is_active: true, created_at: '', updated_at: '' },
-        { id: 5, name: 'Sales', description: 'Sales department managing customer relationships', is_active: true, created_at: '', updated_at: '' },
-        { id: 6, name: 'Operations', description: 'Operations department managing daily activities', is_active: true, created_at: '', updated_at: '' },
-        { id: 7, name: 'Legal', description: 'Legal department managing compliance and contracts', is_active: true, created_at: '', updated_at: '' },
-        { id: 8, name: 'Administration', description: 'Administration department managing office operations', is_active: true, created_at: '', updated_at: '' }
+        { id: 4, name: 'Assistive Technologies', description: 'Marketing department managing company promotion', is_active: true, created_at: '', updated_at: '' },
+        { id: 5, name: 'SHF', description: 'Sales department managing customer relationships', is_active: true, created_at: '', updated_at: '' },
+        { id: 6, name: 'TB', description: 'Operations department managing daily activities', is_active: true, created_at: '', updated_at: '' },
+        { id: 7, name: 'HIV SS, Prep,& SRMNH', description: 'Legal department managing compliance and contracts', is_active: true, created_at: '', updated_at: '' },
+        { id: 7, name: 'Cancer', description: 'Cervical Cancer', is_active: true, created_at: '', updated_at: '' },
+        { id: 7, name: 'Global', description: 'Cervical Cancer', is_active: true, created_at: '', updated_at: '' },
+        { id: 7, name: 'FCDO', description: 'Cervical Cancer', is_active: true, created_at: '', updated_at: '' },
+        { id: 8, name: 'Other', description: 'Administration department managing office operations', is_active: true, created_at: '', updated_at: '' }
       ]);
     } finally {
       setLoading(false);
