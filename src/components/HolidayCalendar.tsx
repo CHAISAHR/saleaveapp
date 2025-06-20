@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { CalendarDays, Settings, Clock, Calendar as CalendarIcon, MapPin, Edit, Trash2, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { apiConfig } from '@/config/apiConfig';
 
 interface HolidayCalendarProps {
   userRole?: 'employee' | 'manager' | 'admin';
@@ -58,7 +59,7 @@ export const HolidayCalendar = ({
     try {
       setLoading(true);
       
-      const response = await fetch('http://localhost:3001/api/holiday', {
+      const response = await fetch(apiConfig.endpoints.holiday, {
         headers: getAuthHeaders()
       });
 
@@ -197,7 +198,7 @@ export const HolidayCalendar = ({
     try {
       setLoading(true);
       
-      const response = await fetch('http://localhost:3001/api/holiday', {
+      const response = await fetch(apiConfig.endpoints.holiday, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -245,7 +246,7 @@ export const HolidayCalendar = ({
     try {
       setLoading(true);
       
-      const response = await fetch(`http://localhost:3001/api/holiday/${editingHoliday.id}`, {
+      const response = await fetch(`${apiConfig.endpoints.holiday}/${editingHoliday.id}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -288,7 +289,7 @@ export const HolidayCalendar = ({
     try {
       setLoading(true);
       
-      const response = await fetch(`http://localhost:3001/api/holiday/${holidayId}`, {
+      const response = await fetch(`${apiConfig.endpoints.holiday}/${holidayId}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });

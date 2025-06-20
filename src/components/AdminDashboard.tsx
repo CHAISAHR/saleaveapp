@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { AdminBalanceManager } from "./AdminBalanceManager";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { apiConfig } from '@/config/apiConfig';
 
 interface AdminDashboardProps {
   currentUser: any;
@@ -104,7 +105,7 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
       setLoading(true);
       setBackendError(false);
       
-      const response = await fetch('http://localhost:3001/api/holiday', {
+      const response = await fetch(apiConfig.endpoints.holiday, {
         headers: getAuthHeaders()
       });
 
@@ -127,7 +128,7 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
       if (error instanceof Error && error.message === 'Failed to fetch') {
         toast({
           title: "Backend Connection Error",
-          description: "Cannot connect to the backend server. Please ensure the server is running on localhost:3001.",
+          description: "Cannot connect to the backend server. Please check your connection.",
           variant: "destructive",
         });
       } else if (error instanceof Error && error.message === 'No valid authentication token') {
@@ -177,7 +178,7 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
     try {
       setLoading(true);
       
-      const response = await fetch('http://localhost:3001/api/holiday', {
+      const response = await fetch(apiConfig.endpoints.holiday, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -218,7 +219,7 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
       if (error instanceof Error && error.message === 'Failed to fetch') {
         toast({
           title: "Backend Connection Error",
-          description: "Cannot connect to the backend server. Please ensure the server is running on localhost:3001.",
+          description: "Cannot connect to the backend server. Please check your connection.",
           variant: "destructive",
         });
       } else if (error instanceof Error && error.message === 'No valid authentication token') {
@@ -542,7 +543,7 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
                   Cannot connect to the backend server. Please ensure:
                 </p>
                 <ul className="list-disc list-inside text-sm text-gray-600 mt-2">
-                  <li>The backend server is running on localhost:3001</li>
+                  <li>The backend server is running and accessible</li>
                   <li>You have a valid authentication token</li>
                   <li>The database is properly configured</li>
                 </ul>
