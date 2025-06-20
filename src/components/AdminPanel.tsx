@@ -12,6 +12,7 @@ import { Users, Plus, Edit, Trash2, AlertCircle, Building } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { DepartmentManager } from "@/components/DepartmentManager";
+import { apiConfig } from "@/config/apiConfig";
 
 interface AdminPanelProps {
   currentUser: any;
@@ -71,7 +72,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
   // Fetch departments from backend
   const fetchDepartments = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/departments', {
+      const response = await fetch(apiConfig.endpoints.departments, {
         headers: getAuthHeaders()
       });
 
@@ -122,7 +123,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
       setLoading(true);
       setBackendError(false);
       
-      const response = await fetch('http://localhost:3001/api/user', {
+      const response = await fetch(apiConfig.endpoints.users, {
         headers: getAuthHeaders()
       });
 
@@ -145,7 +146,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
       if (error instanceof Error && error.message === 'Failed to fetch') {
         toast({
           title: "Backend Connection Error",
-          description: "Cannot connect to the backend server. Please ensure the server is running on localhost:3001.",
+          description: "Cannot connect to the backend server. Please ensure the server is running.",
           variant: "destructive",
         });
       } else {
@@ -188,7 +189,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
     try {
       setLoading(true);
       
-      const response = await fetch('http://localhost:3001/api/auth/register', {
+      const response = await fetch(`${apiConfig.endpoints.auth}/register`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -240,7 +241,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
       if (error instanceof Error && error.message === 'Failed to fetch') {
         toast({
           title: "Backend Connection Error",
-          description: "Cannot connect to the backend server. Please ensure the server is running on localhost:3001.",
+          description: "Cannot connect to the backend server. Please ensure the server is running.",
           variant: "destructive",
         });
       } else {
@@ -257,7 +258,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
 
   const handleUpdateUserRole = async (userId: number, newRole: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/user/${userId}/role`, {
+      const response = await fetch(`${apiConfig.endpoints.users}/${userId}/role`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({ role: newRole })
@@ -289,7 +290,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
 
   const handleUpdateUserManager = async (userId: number, managerEmail: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/user/${userId}/manager`, {
+      const response = await fetch(`${apiConfig.endpoints.users}/${userId}/manager`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({ manager_email: managerEmail })
@@ -350,7 +351,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                   Cannot connect to the backend server. Please ensure:
                 </p>
                 <ul className="list-disc list-inside text-sm text-gray-600 mt-2">
-                  <li>The backend server is running on localhost:3001</li>
+                  <li>The backend server is running</li>
                   <li>You have a valid authentication token</li>
                   <li>The database is properly configured</li>
                 </ul>
