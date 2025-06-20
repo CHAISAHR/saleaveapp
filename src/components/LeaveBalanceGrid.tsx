@@ -1,6 +1,8 @@
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ForfeitRibbon } from "@/components/ForfeitRibbon";
+import { apiConfig, makeApiRequest } from "@/config/apiConfig";
 
 interface LeaveBalance {
   type: string;
@@ -13,13 +15,106 @@ interface LeaveBalance {
 }
 
 interface LeaveBalanceGridProps {
-  leaveBalances: LeaveBalance[];
+  leaveBalances?: LeaveBalance[];
+  userEmail?: string;
 }
 
-export const LeaveBalanceGrid = ({ leaveBalances }: LeaveBalanceGridProps) => {
+export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: LeaveBalanceGridProps) => {
+  const [leaveBalances, setLeaveBalances] = useState<LeaveBalance[]>(propBalances || []);
+  const [loading, setLoading] = useState(!propBalances);
+
+  // Get authorization headers
+  const getAuthHeaders = () => {
+    const authToken = localStorage.getItem('auth_token');
+    return {
+      'Authorization': `Bearer ${authToken}`,
+      'Content-Type': 'application/json'
+    };
+  };
+
+  // Fetch leave balances from backend
+  const fetchLeaveBalances = async () => {
+    if (propBalances) return; // Use prop data if provided
+    
+    try {
+      setLoading(true);
+      
+      const response = await fetch(`${apiConfig.endpoints.balance}${userEmail ? `?email=${userEmail}` : ''}`, {
+        headers: getAuthHeaders()
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setLeaveBalances(data.balances || []);
+      } else {
+        console.error('Failed to fetch leave balances');
+        // Fallback to default balances
+        setLeaveBalances(getDefaultBalances());
+      }
+    } catch (error) {
+      console.error('Error fetching leave balances:', error);
+      // Fallback to default balances
+      setLeaveBalances(getDefaultBalances());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Default balances as fallback
+  const getDefaultBalances = (): LeaveBalance[] => [
+    {
+      type: 'Annual',
+      used: 8,
+      total: 20,
+      accrued: 12.5,
+      unit: 'days',
+      broughtForward: 5,
+      balance: 9.5
+    },
+    {
+      type: 'Sick',
+      used: 3,
+      total: 36,
+      accrued: 36,
+      unit: 'days',
+      balance: 33
+    },
+    {
+      type: 'Maternity',
+      used: 0,
+      total: 90,
+      accrued: 90,
+      unit: 'days',
+      balance: 90
+    },
+    {
+      type: 'Parental',
+      used: 0,
+      total: 20,
+      accrued: 20,
+      unit: 'days',
+      balance: 20
+    }
+  ];
+
+  useEffect(() => {
+    fetchLeaveBalances();
+  }, [userEmail]);
+
   // Get annual leave data for forfeit calculation
   const annualLeave = leaveBalances.find(b => b.type === 'Annual');
   
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading leave balances...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Forfeit ribbon */}

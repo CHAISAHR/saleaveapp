@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Edit, Trash2, Building } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiConfig } from "@/config/apiConfig";
 
 interface Department {
   id: number;
@@ -45,7 +45,7 @@ export const DepartmentManager = () => {
     try {
       setLoading(true);
       
-      const response = await fetch('http://localhost:3001/api/departments', {
+      const response = await fetch(apiConfig.endpoints.departments, {
         headers: getAuthHeaders()
       });
 
@@ -94,7 +94,7 @@ export const DepartmentManager = () => {
     try {
       setLoading(true);
       
-      const response = await fetch('http://localhost:3001/api/departments', {
+      const response = await fetch(apiConfig.endpoints.departments, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(newDepartment)
@@ -151,7 +151,7 @@ export const DepartmentManager = () => {
     try {
       setLoading(true);
       
-      const response = await fetch(`http://localhost:3001/api/departments/${editingDepartment.id}`, {
+      const response = await fetch(`${apiConfig.endpoints.departments}/${editingDepartment.id}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -193,7 +193,7 @@ export const DepartmentManager = () => {
     try {
       setLoading(true);
       
-      const response = await fetch(`http://localhost:3001/api/departments/${departmentId}`, {
+      const response = await fetch(`${apiConfig.endpoints.departments}/${departmentId}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
