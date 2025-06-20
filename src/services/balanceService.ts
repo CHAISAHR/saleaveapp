@@ -1,4 +1,3 @@
-
 import { apiConfig } from '@/config/apiConfig';
 
 // Balance management service for automatic updates and calculations
@@ -171,7 +170,6 @@ class BalanceService {
         return this.calculateOtherLeaveBalance(20, balance.AdoptionUsed);
       case 'study':
         return this.calculateOtherLeaveBalance(6, balance.StudyUsed);
-      case 'wellness':
       case 'mentalhealth':
         return this.calculateOtherLeaveBalance(2, balance.MentalhealthUsed);
       default:
