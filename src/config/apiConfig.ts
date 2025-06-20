@@ -1,6 +1,6 @@
 
 // API configuration for different environments
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://leave-smart-track-production.up.railway.app';
 
 export const apiConfig = {
   baseURL: API_BASE_URL,
