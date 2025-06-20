@@ -1,4 +1,6 @@
 
+import { apiConfig } from '@/config/apiConfig';
+
 // Balance management service for automatic updates and calculations
 export interface EmployeeBalance {
   BalanceID: number;
@@ -38,8 +40,6 @@ export interface LeaveRequest {
   workingDays: number;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-
 class BalanceService {
   private getAuthToken(): string | null {
     return localStorage.getItem('authToken');
@@ -53,7 +53,7 @@ class BalanceService {
       ...options.headers,
     };
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetch(`${apiConfig.endpoints.balance}${endpoint}`, {
       ...options,
       headers,
     });
@@ -203,7 +203,7 @@ class BalanceService {
   // Update balance when leave is cancelled (restore the days)
   async updateBalanceOnCancellation(leaveRequest: LeaveRequest): Promise<void> {
     try {
-      await this.apiRequest('/balance/update', {
+      await this.apiRequest('/update', {
         method: 'PUT',
         body: JSON.stringify({
           employeeEmail: leaveRequest.Requester,
@@ -224,7 +224,7 @@ class BalanceService {
   // Update balance when leave is approved
   async updateBalanceOnApproval(leaveRequest: LeaveRequest): Promise<void> {
     try {
-      await this.apiRequest('/balance/update', {
+      await this.apiRequest('/update', {
         method: 'PUT',
         body: JSON.stringify({
           employeeEmail: leaveRequest.Requester,
@@ -245,7 +245,7 @@ class BalanceService {
   // Get employee balance
   async getEmployeeBalance(employeeEmail: string, year: number = new Date().getFullYear()): Promise<EmployeeBalance | null> {
     try {
-      const response = await this.apiRequest(`/balance/${employeeEmail}?year=${year}`);
+      const response = await this.apiRequest(`/${employeeEmail}?year=${year}`);
       return response.balance;
     } catch (error) {
       console.error('Failed to get employee balance:', error);
