@@ -30,4 +30,4 @@ dist-ssr
 .env.production.local
 */.env
 server/.env
-
+.env
