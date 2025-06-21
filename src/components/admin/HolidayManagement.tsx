@@ -24,13 +24,16 @@ export const HolidayManagement = () => {
   // Check if we have a valid token
   const hasValidToken = () => {
     const authToken = localStorage.getItem('auth_token');
+    console.log('[HolidayManagement] Checking auth token:', authToken ? 'present' : 'missing');
     return authToken && authToken !== 'null' && authToken !== '';
   };
 
   // Get authorization headers
   const getAuthHeaders = () => {
     const authToken = localStorage.getItem('auth_token');
+    console.log('[HolidayManagement] Getting auth headers, token present:', !!authToken);
     if (!authToken || authToken === 'null' || authToken === '') {
+      console.error('[HolidayManagement] No valid authentication token');
       throw new Error('No valid authentication token');
     }
     return {
@@ -41,7 +44,10 @@ export const HolidayManagement = () => {
 
   // Fetch holidays from backend
   const fetchHolidays = async () => {
+    console.log('[HolidayManagement] Starting fetchHolidays...');
+    
     if (!hasValidToken()) {
+      console.warn('[HolidayManagement] No valid token, showing auth required message');
       toast({
         title: "Authentication Required",
         description: "Please log in to access holiday management.",
@@ -54,39 +60,59 @@ export const HolidayManagement = () => {
       setLoading(true);
       setBackendError(false);
       
-      const response = await fetch(apiConfig.endpoints.holiday, {
-        headers: getAuthHeaders()
-      });
+      const url = apiConfig.endpoints.holiday;
+      console.log('[HolidayManagement] Fetching holidays from:', url);
+      
+      const headers = getAuthHeaders();
+      console.log('[HolidayManagement] Request headers:', headers);
+      
+      const response = await fetch(url, { headers });
+      
+      console.log('[HolidayManagement] Fetch response status:', response.status);
+      console.log('[HolidayManagement] Fetch response ok:', response.ok);
 
       if (response.ok) {
         const data = await response.json();
+        console.log('[HolidayManagement] Successfully fetched holidays:', data.holidays?.length || 0);
         setHolidays(data.holidays || []);
       } else if (response.status === 401) {
+        console.warn('[HolidayManagement] 401 - Session expired');
         toast({
           title: "Session Expired",
           description: "Please log in again to continue.",
           variant: "destructive",
         });
+      } else if (response.status === 403) {
+        console.warn('[HolidayManagement] 403 - Admin access denied');
+        toast({
+          title: "Access Denied",
+          description: "Admin privileges required for holiday management.",
+          variant: "destructive",
+        });
       } else {
-        throw new Error('Failed to fetch holidays');
+        console.error('[HolidayManagement] HTTP error:', response.status);
+        throw new Error(`HTTP ${response.status}: Failed to fetch holidays`);
       }
     } catch (error) {
-      console.error('Error fetching holidays:', error);
+      console.error('[HolidayManagement] Error fetching holidays:', error);
       setBackendError(true);
       
       if (error instanceof Error && error.message === 'Failed to fetch') {
+        console.error('[HolidayManagement] Network error - backend connection failed');
         toast({
           title: "Backend Connection Error",
           description: "Cannot connect to the backend server. Please check your connection.",
           variant: "destructive",
         });
       } else if (error instanceof Error && error.message === 'No valid authentication token') {
+        console.error('[HolidayManagement] Auth token error');
         toast({
           title: "Authentication Required",
           description: "Please log in to access holiday management.",
           variant: "destructive",
         });
       } else {
+        console.error('[HolidayManagement] Unknown error:', error);
         toast({
           title: "Error",
           description: "Failed to load holidays",
@@ -95,11 +121,13 @@ export const HolidayManagement = () => {
       }
     } finally {
       setLoading(false);
+      console.log('[HolidayManagement] Fetch holidays completed');
     }
   };
 
   // Load holidays on component mount
   useEffect(() => {
+    console.log('[HolidayManagement] Component mounted, fetching holidays...');
     fetchHolidays();
   }, []);
 

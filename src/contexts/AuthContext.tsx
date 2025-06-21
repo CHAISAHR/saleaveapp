@@ -39,10 +39,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initializeAuth = async () => {
+      console.log('[AuthContext] Initializing authentication...');
       try {
         await msalInstance.initialize();
         const accounts = msalInstance.getAllAccounts();
+        console.log('[AuthContext] MSAL accounts found:', accounts.length);
         if (accounts.length > 0) {
+          console.log('[AuthContext] Setting MSAL user:', accounts[0].username);
           setUser(accounts[0]);
         }
         
@@ -50,7 +53,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const authToken = localStorage.getItem('auth_token');
         const manualUser = localStorage.getItem('manualUser');
         
+        console.log('[AuthContext] Manual auth token present:', !!authToken);
+        console.log('[AuthContext] Manual user data present:', !!manualUser);
+        
         if (authToken && authToken !== 'mock-jwt-token' && manualUser && !accounts.length) {
+          console.log('[AuthContext] Validating manual login token...');
           try {
             // Validate token with backend
             const response = await fetch(`${apiConfig.endpoints.auth}/me`, {
@@ -60,8 +67,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
             });
             
+            console.log('[AuthContext] Token validation response:', response.status);
+            
             if (response.ok) {
               const userData = await response.json();
+              console.log('[AuthContext] Token validation successful, user role:', userData.user.role);
               // Create AccountInfo-like object from backend user data
               const userAccount: AccountInfo = {
                 homeAccountId: `manual-${userData.user.email}`,
@@ -76,25 +86,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   iat: Date.now() / 1000,
                   exp: (Date.now() / 1000) + 3600,
                   sub: `manual-${userData.user.email}`,
-                  email: userData.user.email
+                  email: userData.user.email,
+                  role: userData.user.role
                 }
               };
               setUser(userAccount);
             } else {
+              console.warn('[AuthContext] Token validation failed:', response.status);
               // Token is invalid, clear it
               localStorage.removeItem('auth_token');
               localStorage.removeItem('manualUser');
             }
           } catch (error) {
-            console.error('Token validation failed:', error);
+            console.error('[AuthContext] Token validation error:', error);
             localStorage.removeItem('auth_token');
             localStorage.removeItem('manualUser');
           }
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        console.error('[AuthContext] Auth initialization error:', error);
       } finally {
         setLoading(false);
+        console.log('[AuthContext] Auth initialization completed');
       }
     };
 
@@ -256,6 +269,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     loading,
   };
+
+  console.log('[AuthContext] Current auth state - user:', user?.username, 'authenticated:', !!user);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

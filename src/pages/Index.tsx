@@ -38,18 +38,24 @@ const Index = () => {
 
   // Determine user role based on email or stored data
   const determineUserRole = (userEmail: string): 'employee' | 'manager' | 'admin' => {
+    console.log('[Index] Determining user role for:', userEmail);
+    
     // Admin users (you can modify this logic as needed)
     const adminEmails = ['admin@company.com', 'hr@company.com'];
     
     // Manager users (you can modify this logic as needed)
     const managerEmails = ['sarah.johnson@company.com', 'manager@company.com'];
     
+    let role: 'employee' | 'manager' | 'admin' = 'employee';
+    
     if (adminEmails.includes(userEmail)) {
-      return 'admin';
+      role = 'admin';
     } else if (managerEmails.includes(userEmail)) {
-      return 'manager';
+      role = 'manager';
     }
-    return 'employee';
+    
+    console.log('[Index] Determined role:', role, 'for user:', userEmail);
+    return role;
   };
 
   // Get user's full name from different sources
@@ -83,8 +89,17 @@ const Index = () => {
   // Set initial role based on user's actual role
   useEffect(() => {
     if (user) {
+      console.log('[Index] User changed, determining role for:', user.username);
       const actualRole = determineUserRole(user.username);
+      console.log('[Index] Setting user role to:', actualRole);
       setUserRole(actualRole);
+      
+      // Log token info for debugging
+      const authToken = localStorage.getItem('auth_token');
+      console.log('[Index] Auth token present:', !!authToken);
+      if (user.idTokenClaims?.role) {
+        console.log('[Index] User role from token claims:', user.idTokenClaims.role);
+      }
     }
   }, [user]);
 
