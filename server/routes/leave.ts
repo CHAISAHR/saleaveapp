@@ -7,6 +7,11 @@ import { emailService } from '../services/emailService';
 
 const router = express.Router();
 
+// Extend AuthRequest to include files property
+interface AuthRequestWithFiles extends AuthRequest {
+  files?: Express.Multer.File[];
+}
+
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
 const upload = multer({ 
@@ -15,7 +20,7 @@ const upload = multer({
 });
 
 // Submit leave request with file attachments
-router.post('/request', authenticateToken, upload.array('attachments', 10), async (req: AuthRequest, res) => {
+router.post('/request', authenticateToken, upload.array('attachments', 10), async (req: AuthRequestWithFiles, res) => {
   try {
     const { title, detail, startDate, endDate, leaveType, workingDays } = req.body;
     const requester = req.user!.email;
