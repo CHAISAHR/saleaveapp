@@ -1,3 +1,4 @@
+
 import express from 'express';
 import multer from 'multer';
 import { executeQuery } from '../config/database';
@@ -8,7 +9,7 @@ const router = express.Router();
 
 // Extend AuthRequest to include files property
 interface AuthRequestWithFiles extends AuthRequest {
-  files?: multer.File[];
+  files?: Express.Multer.File[];
 }
 
 // Configure multer for file uploads
@@ -23,7 +24,7 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
   try {
     const { title, detail, startDate, endDate, leaveType, workingDays } = req.body;
     const requester = req.user!.email;
-    const files = req.files as multer.File[];
+    const files = req.files as Express.Multer.File[];
 
     const result = await executeQuery(
       `INSERT INTO leave_taken (Title, Detail, StartDate, EndDate, LeaveType, Requester, Status, Created, workingDays) 
