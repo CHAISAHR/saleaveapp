@@ -2,6 +2,13 @@
 // API configuration for different environments
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+console.log('API Configuration:', {
+  VITE_API_URL: import.meta.env.VITE_API_URL,
+  API_BASE_URL: API_BASE_URL,
+  mode: import.meta.env.MODE,
+  dev: import.meta.env.DEV
+});
+
 export const apiConfig = {
   baseURL: API_BASE_URL,
   endpoints: {
@@ -18,6 +25,9 @@ export const apiConfig = {
 // Helper function for making API requests with proper error handling
 export const makeApiRequest = async (url: string, options: RequestInit = {}) => {
   try {
+    console.log('Making API request to:', url);
+    console.log('Request options:', options);
+    
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -26,8 +36,13 @@ export const makeApiRequest = async (url: string, options: RequestInit = {}) => 
       },
     });
     
+    console.log('Response status:', response.status);
+    console.log('Response ok:', response.ok);
+    
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('API Error Response:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
     
     return response;
