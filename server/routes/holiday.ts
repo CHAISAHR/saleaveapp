@@ -54,9 +54,9 @@ router.post('/', authenticateToken, requireRole(['admin']), async (req: AuthRequ
 
     console.log('Inserting holiday into database...');
     const result = await executeQuery(
-      `INSERT INTO company_holidays (name, date, type, description, office_status, is_recurring, created_by) 
+      `INSERT INTO company_holidays (name, date, type, description, office_status, is_recurring, created_by_email) 
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [name, date, type || 'public', description || '', office_status || 'closed', is_recurring || false, req.user!.id]
+      [name, date, type || 'public', description || '', office_status || 'closed', is_recurring || false, req.user!.email]
     );
 
     console.log('Holiday inserted successfully, ID:', result.insertId);
@@ -66,23 +66,23 @@ router.post('/', authenticateToken, requireRole(['admin']), async (req: AuthRequ
       message: 'Holiday added successfully',
       holidayId: result.insertId
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Add holiday error:', error);
     console.error('Error details:', {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
-      code: (error as any)?.code,
-      errno: (error as any)?.errno,
-      sqlState: (error as any)?.sqlState
+      code: error?.code,
+      errno: error?.errno,
+      sqlState: error?.sqlState
     });
 
     // Check for specific database errors
-    if ((error as any)?.code === 'ER_NO_SUCH_TABLE') {
+    if (error?.code === 'ER_NO_SUCH_TABLE') {
       res.status(500).json({ 
         success: false, 
         message: 'Database table not found. Please ensure the database is properly initialized.' 
       });
-    } else if ((error as any)?.code === 'ER_BAD_FIELD_ERROR') {
+    } else if (error?.code === 'ER_BAD_FIELD_ERROR') {
       res.status(500).json({ 
         success: false, 
         message: 'Database column error. Please check the database schema.' 
