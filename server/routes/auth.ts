@@ -77,7 +77,7 @@ router.post('/register', async (req, res) => {
       message: 'User registered successfully',
       userId: result.insertId
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Registration error:', error);
     
     // Provide more specific error messages
