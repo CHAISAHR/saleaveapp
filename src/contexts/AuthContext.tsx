@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AccountInfo } from '@azure/msal-browser';
 import { msalInstance, loginRequest } from '@/config/authConfig';
+import { apiConfig, makeApiRequest } from '@/config/apiConfig';
 
 interface AuthContextType {
   user: AccountInfo | null;
@@ -15,6 +16,7 @@ interface AuthContextType {
     name: string;
     surname: string;
     department: string;
+    gender: string;
   }) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -44,10 +46,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(accounts[0]);
         }
         
-        // Check for manually logged in user in localStorage
+        // Check for manually logged in user and validate token
+        const authToken = localStorage.getItem('auth_token');
         const manualUser = localStorage.getItem('manualUser');
-        if (manualUser && !accounts.length) {
-          setUser(JSON.parse(manualUser));
+        
+        if (authToken && authToken !== 'mock-jwt-token' && manualUser && !accounts.length) {
+          try {
+            // Validate token with backend
+            const response = await fetch(`${apiConfig.endpoints.auth}/me`, {
+              headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (response.ok) {
+              const userData = await response.json();
+              // Create AccountInfo-like object from backend user data
+              const userAccount: AccountInfo = {
+                homeAccountId: `manual-${userData.user.email}`,
+                environment: 'manual',
+                tenantId: 'manual-tenant',
+                username: userData.user.email,
+                localAccountId: `manual-${userData.user.email}`,
+                name: userData.user.name,
+                idTokenClaims: {
+                  aud: 'manual',
+                  iss: 'manual',
+                  iat: Date.now() / 1000,
+                  exp: (Date.now() / 1000) + 3600,
+                  sub: `manual-${userData.user.email}`,
+                  email: userData.user.email
+                }
+              };
+              setUser(userAccount);
+            } else {
+              // Token is invalid, clear it
+              localStorage.removeItem('auth_token');
+              localStorage.removeItem('manualUser');
+            }
+          } catch (error) {
+            console.error('Token validation failed:', error);
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('manualUser');
+          }
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
@@ -66,6 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(response.account);
         // Clear any manual user data
         localStorage.removeItem('manualUser');
+        localStorage.removeItem('auth_token');
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -76,29 +119,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Manual login attempt:', email);
       
-      // Create a mock user object similar to MSAL account structure
-      const mockUser: AccountInfo = {
-        homeAccountId: `manual-${email}`,
-        environment: 'manual',
-        tenantId: 'manual-tenant',
-        username: email,
-        localAccountId: `manual-${email}`,
-        name: email.split('@')[0], // Use email prefix as name
-        idTokenClaims: {
-          aud: 'manual',
-          iss: 'manual',
-          iat: Date.now() / 1000,
-          exp: (Date.now() / 1000) + 3600,
-          sub: `manual-${email}`,
-          email: email
-        }
-      };
+      const response = await makeApiRequest(`${apiConfig.endpoints.auth}/login`, {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      });
 
-      setUser(mockUser);
-      localStorage.setItem('manualUser', JSON.stringify(mockUser));
-      localStorage.setItem('auth_token', 'mock-jwt-token'); // Mock token for admin access
+      const data = await response.json();
+      
+      if (data.success && data.token) {
+        // Store the real JWT token
+        localStorage.setItem('auth_token', data.token);
+        
+        // Create AccountInfo-like object from backend user data
+        const userAccount: AccountInfo = {
+          homeAccountId: `manual-${data.user.email}`,
+          environment: 'manual',
+          tenantId: 'manual-tenant',
+          username: data.user.email,
+          localAccountId: `manual-${data.user.email}`,
+          name: data.user.name,
+          idTokenClaims: {
+            aud: 'manual',
+            iss: 'manual',
+            iat: Date.now() / 1000,
+            exp: (Date.now() / 1000) + 86400, // 24 hours
+            sub: `manual-${data.user.email}`,
+            email: data.user.email,
+            role: data.user.role,
+            department: data.user.department
+          }
+        };
+
+        setUser(userAccount);
+        localStorage.setItem('manualUser', JSON.stringify(userAccount));
+      } else {
+        throw new Error(data.message || 'Login failed');
+      }
     } catch (error) {
       console.error('Manual login error:', error);
+      throw error;
     }
   };
 
@@ -109,6 +168,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     name: string;
     surname: string;
     department: string;
+    gender: string;
   }) => {
     try {
       // Basic validation
@@ -120,37 +180,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Password must be at least 6 characters long');
       }
 
-      if (!userData.name || !userData.surname || !userData.department) {
+      if (!userData.name || !userData.surname || !userData.department || !userData.gender) {
         throw new Error('Please fill in all required fields');
       }
 
       console.log('Manual sign up attempt:', userData);
       
-      // Create a mock user object with full name
-      const fullName = `${userData.name} ${userData.surname}`;
-      const mockUser: AccountInfo = {
-        homeAccountId: `manual-${userData.email}`,
-        environment: 'manual',
-        tenantId: 'manual-tenant',
-        username: userData.email,
-        localAccountId: `manual-${userData.email}`,
-        name: fullName,
-        idTokenClaims: {
-          aud: 'manual',
-          iss: 'manual',
-          iat: Date.now() / 1000,
-          exp: (Date.now() / 1000) + 3600,
-          sub: `manual-${userData.email}`,
+      const response = await makeApiRequest(`${apiConfig.endpoints.auth}/register`, {
+        method: 'POST',
+        body: JSON.stringify({
           email: userData.email,
-          given_name: userData.name,
-          family_name: userData.surname,
-          department: userData.department
-        }
-      };
+          password: userData.password,
+          name: userData.name,
+          surname: userData.surname,
+          department: userData.department,
+          gender: userData.gender
+        })
+      });
 
-      setUser(mockUser);
-      localStorage.setItem('manualUser', JSON.stringify(mockUser));
-      localStorage.setItem('auth_token', 'mock-jwt-token'); // Mock token for admin access
+      const data = await response.json();
+      
+      if (data.success) {
+        // After successful registration, log the user in
+        await manualLogin(userData.email, userData.password);
+      } else {
+        throw new Error(data.message || 'Registration failed');
+      }
     } catch (error) {
       console.error('Manual sign up error:', error);
       throw error;
@@ -160,9 +215,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const resetPassword = async (email: string) => {
     try {
       console.log('Password reset requested for:', email);
-      // In a real app, this would call your backend API
-      // For now, we'll just simulate the request
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const response = await makeApiRequest(`${apiConfig.endpoints.auth}/reset-password`, {
+        method: 'POST',
+        body: JSON.stringify({ email })
+      });
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.message || 'Password reset failed');
+      }
     } catch (error) {
       console.error('Password reset error:', error);
       throw error;
