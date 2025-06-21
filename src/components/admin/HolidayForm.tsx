@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { HolidayFormDialog } from "./HolidayFormDialog";
 import { useHolidayForm } from "./hooks/useHolidayForm";
@@ -31,12 +31,11 @@ export const HolidayForm = ({ onHolidayAdded, hasValidToken, getAuthHeaders, loa
   });
 
   return (
-    <>
+    <Dialog open={showHolidayForm} onOpenChange={setShowHolidayForm}>
       <DialogTrigger asChild>
         <Button 
           className="bg-blue-600 hover:bg-blue-700" 
           disabled={loading || !hasValidToken()}
-          onClick={() => setShowHolidayForm(true)}
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Holiday
@@ -51,6 +50,6 @@ export const HolidayForm = ({ onHolidayAdded, hasValidToken, getAuthHeaders, loa
         onSubmit={handleAddHoliday}
         loading={loading}
       />
-    </>
+    </Dialog>
   );
 };
