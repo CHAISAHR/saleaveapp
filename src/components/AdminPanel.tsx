@@ -101,28 +101,36 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
         console.log('Using default departments due to fetch failure');
         // Set default departments if backend is not available
         setDepartments([
-          { id: 1, name: 'Human Resources', description: 'HR department', is_active: true },
-          { id: 2, name: 'Information Technology', description: 'IT department', is_active: true },
-          { id: 3, name: 'Finance', description: 'Finance department', is_active: true },
-          { id: 4, name: 'Marketing', description: 'Marketing department', is_active: true },
-          { id: 5, name: 'Sales', description: 'Sales department', is_active: true },
-          { id: 6, name: 'Operations', description: 'Operations department', is_active: true },
-          { id: 7, name: 'Legal', description: 'Legal department', is_active: true },
-          { id: 8, name: 'Administration', description: 'Administration department', is_active: true }
+        { id: 1, name: 'HR & Ops', description: 'HR department managing personnel and policies', is_active: true},
+        { id: 2, name: 'Access to Medicines', description: 'IT department managing technology and systems', is_active: true},
+        { id: 3, name: 'Finance', description: 'Finance department managing company finances', is_active: true},
+        { id: 4, name: 'Assistive Technologies', description: 'AT department', is_active: true},
+        { id: 5, name: 'SHF', description: 'Sales department managing customer relationships', is_active: true},
+        { id: 6, name: 'TB', description: 'Operations department managing daily activities', is_active: true},
+        { id: 7, name: 'HIV SS, Prep,& SRMNH', description: 'HIV team', is_active: true},
+        { id: 8, name: 'Cancer', description: 'Cervical Cancer', is_active: true},
+        { id: 9, name: 'Global', description: 'Global Team', is_active: true},
+        { id: 10, name: 'FCDO', description: 'FCDO', is_active: true},
+        { id: 11, name: 'Malaria', description: 'Malaria team', is_active: true},
+        { id: 12, name: 'Other', description: 'Any other team', is_active: true}
         ]);
       }
     } catch (error) {
       console.error('Error fetching departments:', error);
       // Set default departments
       setDepartments([
-        { id: 1, name: 'Human Resources', description: 'HR department', is_active: true },
-        { id: 2, name: 'Information Technology', description: 'IT department', is_active: true },
-        { id: 3, name: 'Finance', description: 'Finance department', is_active: true },
-        { id: 4, name: 'Marketing', description: 'Marketing department', is_active: true },
-        { id: 5, name: 'Sales', description: 'Sales department', is_active: true },
-        { id: 6, name: 'Operations', description: 'Operations department', is_active: true },
-        { id: 7, name: 'Legal', description: 'Legal department', is_active: true },
-        { id: 8, name: 'Administration', description: 'Administration department', is_active: true }
+        { id: 1, name: 'HR & Ops', description: 'HR department managing personnel and policies', is_active: true},
+        { id: 2, name: 'Access to Medicines', description: 'IT department managing technology and systems', is_active: true},
+        { id: 3, name: 'Finance', description: 'Finance department managing company finances', is_active: true},
+        { id: 4, name: 'Assistive Technologies', description: 'AT department', is_active: true},
+        { id: 5, name: 'SHF', description: 'Sales department managing customer relationships', is_active: true},
+        { id: 6, name: 'TB', description: 'Operations department managing daily activities', is_active: true},
+        { id: 7, name: 'HIV SS, Prep,& SRMNH', description: 'HIV team', is_active: true},
+        { id: 8, name: 'Cancer', description: 'Cervical Cancer', is_active: true},
+        { id: 9, name: 'Global', description: 'Global Team', is_active: true},
+        { id: 10, name: 'FCDO', description: 'FCDO', is_active: true},
+        { id: 11, name: 'Malaria', description: 'Malaria team', is_active: true},
+        { id: 12, name: 'Other', description: 'Any other team', is_active: true}
       ]);
     }
   };
