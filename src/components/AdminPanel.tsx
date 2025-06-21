@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -525,12 +526,12 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
 
                   <div className="space-y-2">
                     <Label htmlFor="manager">Manager (Optional)</Label>
-                    <Select value={newUser.manager_email} onValueChange={(value) => setNewUser(prev => ({ ...prev, manager_email: value }))}>
+                    <Select value={newUser.manager_email || "none"} onValueChange={(value) => setNewUser(prev => ({ ...prev, manager_email: value === "none" ? "" : value }))}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a manager" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No Manager</SelectItem>
+                        <SelectItem value="none">No Manager</SelectItem>
                         {managers.map((manager) => (
                           <SelectItem key={manager.id} value={manager.email}>
                             {manager.name} ({manager.email})
@@ -645,14 +646,14 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                         </TableCell>
                         <TableCell>
                           <Select
-                            value={user.manager_email || ""}
-                            onValueChange={(value) => handleUpdateUserManager(user.id, value)}
+                            value={user.manager_email || "none"}
+                            onValueChange={(value) => handleUpdateUserManager(user.id, value === "none" ? "" : value)}
                           >
                             <SelectTrigger className="w-48">
                               <SelectValue placeholder="No Manager" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">No Manager</SelectItem>
+                              <SelectItem value="none">No Manager</SelectItem>
                               {managers.filter(m => m.email !== user.email).map((manager) => (
                                 <SelectItem key={manager.id} value={manager.email}>
                                   {manager.name}

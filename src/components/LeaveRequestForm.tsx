@@ -582,11 +582,12 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                 <div className="space-y-4 pl-6 border-l-2 border-blue-300">
                   <div className="space-y-2">
                     <Label htmlFor="alternativeManager">Alternative Manager *</Label>
-                    <Select value={formData.alternativeManager} onValueChange={(value) => setFormData(prev => ({ ...prev, alternativeManager: value }))}>
+                    <Select value={formData.alternativeManager || "none"} onValueChange={(value) => setFormData(prev => ({ ...prev, alternativeManager: value === "none" ? "" : value }))}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select alternative manager" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">Select a manager</SelectItem>
                         {availableManagers.map((manager) => (
                           <SelectItem key={manager.email} value={manager.email}>
                             <div>
