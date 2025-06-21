@@ -22,23 +22,27 @@ export const ManualSignInForm: React.FC<ManualSignInFormProps> = ({ onSignIn }) 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="signin-email">Email</Label>
         <Input
-          id="email"
+          id="signin-email"
+          name="email"
           type="email"
           placeholder="Enter your email"
+          autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="signin-password">Password</Label>
         <div className="relative">
           <Input
-            id="password"
+            id="signin-password"
+            name="password"
             type={showPassword ? 'text' : 'password'}
             placeholder="Enter your password"
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

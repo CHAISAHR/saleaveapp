@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -101,7 +102,9 @@ export const ManualSignUpForm: React.FC<ManualSignUpFormProps> = ({ onSignUp }) 
           <Label htmlFor="signup-name">First Name *</Label>
           <Input
             id="signup-name"
+            name="given-name"
             placeholder="Enter your first name"
+            autoComplete="given-name"
             value={formData.name}
             onChange={(e) => handleChange('name', e.target.value)}
             required
@@ -111,7 +114,9 @@ export const ManualSignUpForm: React.FC<ManualSignUpFormProps> = ({ onSignUp }) 
           <Label htmlFor="signup-surname">Last Name *</Label>
           <Input
             id="signup-surname"
+            name="family-name"
             placeholder="Enter your last name"
+            autoComplete="family-name"
             value={formData.surname}
             onChange={(e) => handleChange('surname', e.target.value)}
             required
@@ -123,8 +128,10 @@ export const ManualSignUpForm: React.FC<ManualSignUpFormProps> = ({ onSignUp }) 
         <Label htmlFor="signup-email">Email *</Label>
         <Input
           id="signup-email"
+          name="email"
           type="email"
           placeholder="Enter your email"
+          autoComplete="email"
           value={formData.email}
           onChange={(e) => handleChange('email', e.target.value)}
           required
@@ -135,7 +142,7 @@ export const ManualSignUpForm: React.FC<ManualSignUpFormProps> = ({ onSignUp }) 
         <div className="space-y-2">
           <Label htmlFor="signup-department">Department *</Label>
           <Select value={formData.department} onValueChange={(value) => handleChange('department', value)}>
-            <SelectTrigger>
+            <SelectTrigger id="signup-department">
               <SelectValue placeholder="Select your department" />
             </SelectTrigger>
             <SelectContent>
@@ -150,7 +157,7 @@ export const ManualSignUpForm: React.FC<ManualSignUpFormProps> = ({ onSignUp }) 
         <div className="space-y-2">
           <Label htmlFor="signup-gender">Gender *</Label>
           <Select value={formData.gender} onValueChange={(value) => handleChange('gender', value)}>
-            <SelectTrigger>
+            <SelectTrigger id="signup-gender">
               <SelectValue placeholder="Select your gender" />
             </SelectTrigger>
             <SelectContent>
@@ -167,8 +174,10 @@ export const ManualSignUpForm: React.FC<ManualSignUpFormProps> = ({ onSignUp }) 
         <div className="relative">
           <Input
             id="signup-password"
+            name="new-password"
             type={showPassword ? 'text' : 'password'}
             placeholder="Enter your password"
+            autoComplete="new-password"
             value={formData.password}
             onChange={(e) => handleChange('password', e.target.value)}
             required
@@ -194,8 +203,10 @@ export const ManualSignUpForm: React.FC<ManualSignUpFormProps> = ({ onSignUp }) 
         <div className="relative">
           <Input
             id="confirm-password"
+            name="confirm-password"
             type={showConfirmPassword ? 'text' : 'password'}
             placeholder="Confirm your password"
+            autoComplete="new-password"
             value={formData.confirmPassword}
             onChange={(e) => handleChange('confirmPassword', e.target.value)}
             required

@@ -26,9 +26,10 @@ export const HolidayFormFields = ({ newHoliday, setNewHoliday }: HolidayFormFiel
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">Holiday Name *</Label>
+        <Label htmlFor="holiday-name">Holiday Name *</Label>
         <Input
-          id="name"
+          id="holiday-name"
+          name="holiday-name"
           placeholder="e.g., New Year's Day"
           value={newHoliday.name}
           onChange={(e) => setNewHoliday(prev => ({ ...prev, name: e.target.value }))}
@@ -60,9 +61,9 @@ export const HolidayFormFields = ({ newHoliday, setNewHoliday }: HolidayFormFiel
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="type">Holiday Type</Label>
+          <Label htmlFor="holiday-type">Holiday Type</Label>
           <Select value={newHoliday.type} onValueChange={(value) => setNewHoliday(prev => ({ ...prev, type: value }))}>
-            <SelectTrigger>
+            <SelectTrigger id="holiday-type">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -73,9 +74,9 @@ export const HolidayFormFields = ({ newHoliday, setNewHoliday }: HolidayFormFiel
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="status">Office Status</Label>
+          <Label htmlFor="office-status">Office Status</Label>
           <Select value={newHoliday.office_status} onValueChange={(value) => setNewHoliday(prev => ({ ...prev, office_status: value }))}>
-            <SelectTrigger>
+            <SelectTrigger id="office-status">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -88,9 +89,10 @@ export const HolidayFormFields = ({ newHoliday, setNewHoliday }: HolidayFormFiel
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="holiday-description">Description</Label>
         <Textarea
-          id="description"
+          id="holiday-description"
+          name="holiday-description"
           placeholder="Brief description of the holiday"
           value={newHoliday.description}
           onChange={(e) => setNewHoliday(prev => ({ ...prev, description: e.target.value }))}

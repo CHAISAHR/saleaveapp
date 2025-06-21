@@ -59,8 +59,10 @@ export const PasswordResetForm: React.FC<PasswordResetFormProps> = ({ onBack, on
             <Label htmlFor="reset-email">Email</Label>
             <Input
               id="reset-email"
+              name="email"
               type="email"
               placeholder="Enter your email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
