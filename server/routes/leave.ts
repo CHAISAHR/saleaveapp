@@ -1,10 +1,9 @@
-
-
 import express from 'express';
 import multer from 'multer';
 import { executeQuery } from '../config/database';
 import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
 import { emailService } from '../services/emailService';
+import { HolidayService } from '../services/holidayService';
 
 const router = express.Router();
 
@@ -23,9 +22,12 @@ const upload = multer({
 // Submit leave request with file attachments
 router.post('/request', authenticateToken, upload.array('attachments', 10), async (req: AuthRequestWithFiles, res) => {
   try {
-    const { title, detail, startDate, endDate, leaveType, workingDays } = req.body;
+    const { title, detail, startDate, endDate, leaveType } = req.body;
     const requester = req.user!.email;
     const files = Array.isArray(req.files) ? req.files : [];
+
+    // Calculate working days excluding holidays
+    const workingDays = await HolidayService.calculateWorkingDaysExcludingHolidays(startDate, endDate);
 
     const result = await executeQuery(
       `INSERT INTO leave_taken (Title, Detail, StartDate, EndDate, LeaveType, Requester, Status, Created, workingDays) 
@@ -68,7 +70,8 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
     res.status(201).json({
       success: true,
       message: 'Leave request submitted successfully',
-      leaveId: leaveId
+      leaveId: leaveId,
+      workingDays: workingDays
     });
   } catch (error) {
     console.error('Leave request error:', error);
