@@ -1,3 +1,4 @@
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -9,6 +10,7 @@ import balanceRoutes from './routes/balance';
 import holidayRoutes from './routes/holiday';
 import rolloverRoutes from './routes/rollover';
 import departmentRoutes from './routes/departments';
+import externalRoutes from './routes/external';
 
 // Load environment variables
 dotenv.config();
@@ -37,6 +39,7 @@ app.use('/api/balance', balanceRoutes);
 app.use('/api/holiday', holidayRoutes);
 app.use('/api/rollover', rolloverRoutes);
 app.use('/api/departments', departmentRoutes);
+app.use('/api/external', externalRoutes); // External API endpoints
 
 // Health check
 app.get('/health', (req, res) => {

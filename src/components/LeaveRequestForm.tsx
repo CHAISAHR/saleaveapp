@@ -35,6 +35,24 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
   });
 
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [companyHolidays, setCompanyHolidays] = useState<Date[]>([]);
+
+  // Fetch company holidays on component mount
+  useState(() => {
+    const fetchHolidays = async () => {
+      try {
+        const response = await fetch('/api/holiday');
+        if (response.ok) {
+          const data = await response.json();
+          const holidays = data.holidays.map((h: any) => new Date(h.date));
+          setCompanyHolidays(holidays);
+        }
+      } catch (error) {
+        console.error('Failed to fetch holidays:', error);
+      }
+    };
+    fetchHolidays();
+  });
 
   // Mock list of available managers - in real app this would come from API
   const availableManagers = [
@@ -135,6 +153,14 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     );
   };
 
+  const isCompanyHoliday = (date: Date) => {
+    return companyHolidays.some(holiday => 
+      holiday.getDate() === date.getDate() &&
+      holiday.getMonth() === date.getMonth() &&
+      holiday.getFullYear() === date.getFullYear()
+    );
+  };
+
   const calculateWorkingDays = () => {
     if (!formData.startDate || !formData.endDate) return 0;
 
@@ -143,7 +169,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     const endDate = new Date(formData.endDate);
 
     while (currentDate <= endDate) {
-      if (!isWeekend(currentDate) && !isPublicHoliday(currentDate)) {
+      if (!isWeekend(currentDate) && !isPublicHoliday(currentDate) && !isCompanyHoliday(currentDate)) {
         workingDays++;
       }
       currentDate.setDate(currentDate.getDate() + 1);
@@ -250,10 +276,11 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         : "Manager";
       
       // Send email to approver (manager or alternative manager)
-      console.log(`Email sent to ${formData.useAlternativeManager ? 'alternative ' : ''}manager (${approverEmail}):
-        Subject: New Leave Request - ${requestData.title}
-        
-        Dear ${approverName},
+      const managerEmailData = {
+        to: approverEmail,
+        cc: 'admin@company.com', // Copy admin
+        subject: `New Leave Request - ${requestData.title}`,
+        body: `Dear ${approverName},
         
         A new leave request has been submitted and requires your approval:
         ${formData.useAlternativeManager ? `\n⚠️ ALTERNATIVE APPROVAL: You have been designated as the alternative approver for this request.\nReason: ${formData.alternativeManagerReason}\n` : ''}
@@ -266,7 +293,8 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         - Type: ${selectedLeaveType?.label}
         - Title: ${requestData.title}
         - Dates: ${requestData.startDate} to ${requestData.endDate}
-        - Working Days: ${requestData.workingDays}
+        - Calendar Days: ${getCalendarDays()}
+        - Working Days Applied: ${requestData.workingDays}
         - Description: ${requestData.description}
         ${requestData.requiresHRApproval ? '\n⚠️ REQUIRES HR APPROVAL: Insufficient leave balance' : ''}
         ${requestData.requiresMedicalCert ? '\n📄 REQUIRES: Medical certificate to be forwarded to HR' : ''}
@@ -275,78 +303,34 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         Please log into the leave management system to review and approve this request.
         
         Best regards,
-        Leave Management System`);
-      
-      // Send email to HR if required
-      if (requestData.requiresHRApproval) {
-        console.log(`Email sent to HR (hr@company.com):
-          Subject: Leave Request Requires HR Approval - ${requestData.title}
-          
-          Dear HR Team,
-          
-          A leave request has been submitted that requires HR approval due to insufficient leave balance:
-          
-          Employee: ${requestData.submittedBy}
-          Email: ${currentUser.email}
-          Department: ${currentUser.department}
-          ${formData.useAlternativeManager ? `Alternative Manager: ${approverName} (${approverEmail})` : `Manager: ${approverEmail}`}
-          ${formData.useAlternativeManager ? `Alternative Manager Reason: ${formData.alternativeManagerReason}` : ''}
-          
-          Leave Details:
-          - Type: ${selectedLeaveType?.label}
-          - Available Balance: ${selectedLeaveType?.balance} days
-          - Requested: ${requestData.workingDays} days
-          - Shortfall: ${requestData.workingDays - (selectedLeaveType?.balance || 0)} days
-          
-          Please review this request for final approval after manager approval.
-          
-          Best regards,
-          Leave Management System`);
-      }
+        Leave Management System`
+      };
+
+      console.log('Manager Email:', managerEmailData);
       
       // Send confirmation email to employee
-      console.log(`Email sent to employee (${currentUser.email}):
-        Subject: Leave Request Submitted - ${requestData.title}
-        
-        Dear ${currentUser.name},
+      const employeeEmailData = {
+        to: currentUser.email,
+        subject: `Leave Request Submitted - ${requestData.title}`,
+        body: `Dear ${currentUser.name},
         
         Your leave request has been successfully submitted and is pending approval.
         
         Request Details:
         - Type: ${selectedLeaveType?.label}
         - Dates: ${requestData.startDate} to ${requestData.endDate}
-        - Working Days: ${requestData.workingDays}
+        - Calendar Days: ${getCalendarDays()}
+        - Working Days Applied: ${requestData.workingDays}
         - Status: Pending Approval
         ${formData.useAlternativeManager ? `\n📋 Alternative Approver: ${approverName} (${approverEmail})` : ''}
-        ${formData.useAlternativeManager ? `\nReason for Alternative Approver: ${formData.alternativeManagerReason}` : ''}
-        ${requestData.requiresHRApproval ? '\n⚠️ Note: This request requires HR approval due to insufficient balance' : ''}
-        ${requestData.requiresMedicalCert ? '\n📄 Action Required: Please forward medical certificate to HR' : ''}
-        ${requestData.attachedFiles && requestData.attachedFiles.length > 0 ? `\n📎 Documents Attached: ${requestData.attachedFiles.map((f: File) => f.name).join(', ')}` : ''}
         
         You will receive an email notification once your ${formData.useAlternativeManager ? 'alternative ' : ''}manager reviews your request.
         
         Best regards,
-        Leave Management System`);
-      
-      // Log to leave_taken table with alternative manager information
-      const leaveRecord = {
-        Title: requestData.title,
-        Detail: requestData.description,
-        StartDate: requestData.startDate,
-        EndDate: requestData.endDate,
-        LeaveType: selectedLeaveType?.label,
-        Requester: currentUser.email,
-        Approver: formData.useAlternativeManager ? null : approverEmail,
-        AlternativeApprover: formData.useAlternativeManager ? formData.alternativeManager : null,
-        ApproverReason: formData.useAlternativeManager ? formData.alternativeManagerReason : null,
-        Status: 'pending',
-        workingDays: requestData.workingDays,
-        Created: new Date().toISOString(),
-        requiresHRApproval: requestData.requiresHRApproval,
-        attachedFiles: requestData.attachedFiles ? requestData.attachedFiles.map((f: File) => ({ name: f.name, size: f.size, type: f.type })) : []
+        Leave Management System`
       };
-      
-      console.log('Leave record to be created:', leaveRecord);
+
+      console.log('Employee Email:', employeeEmailData);
       
     } catch (error) {
       console.error('Failed to send email notifications:', error);
@@ -406,6 +390,43 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
 
     // Send email notifications
     await sendEmailNotifications(requestData);
+
+    // Submit to API with file attachments
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('detail', formData.description);
+      formDataToSend.append('startDate', formData.startDate!.toISOString());
+      formDataToSend.append('endDate', formData.endDate!.toISOString());
+      formDataToSend.append('leaveType', selectedLeaveType?.label || '');
+      formDataToSend.append('workingDays', workingDays.toString());
+      
+      // Add file attachments
+      attachedFiles.forEach((file, index) => {
+        formDataToSend.append(`attachments`, file);
+      });
+
+      const response = await fetch('/api/leave/request', {
+        method: 'POST',
+        body: formDataToSend,
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit leave request');
+      }
+
+    } catch (error) {
+      console.error('Failed to submit leave request:', error);
+      toast({
+        title: "Submission Failed",
+        description: "Failed to submit leave request. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     let toastMessage = `Your ${selectedLeaveType?.label.toLowerCase()} request for ${workingDays} working day${workingDays > 1 ? 's' : ''} has been submitted for approval.`;
     
@@ -550,14 +571,14 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
             </Label>
           </div>
 
-          {/* Alternative Manager Section */}
-          <Card className="border-blue-200 bg-blue-50">
+          {/* Alternative Manager Section - Changed to purple theme */}
+          <Card className="border-purple-200 bg-purple-50">
             <CardHeader className="pb-3">
               <div className="flex items-center space-x-2">
-                <Users className="h-5 w-5 text-blue-600" />
-                <CardTitle className="text-base text-blue-800">Manager Approval Options</CardTitle>
+                <Users className="h-5 w-5 text-purple-600" />
+                <CardTitle className="text-base text-purple-800">Manager Approval Options</CardTitle>
               </div>
-              <CardDescription className="text-blue-700">
+              <CardDescription className="text-purple-700">
                 If your regular manager is unavailable, you can assign an alternative manager to approve this request.
               </CardDescription>
             </CardHeader>
@@ -573,13 +594,13 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                     alternativeManagerReason: checked ? prev.alternativeManagerReason : ""
                   }))}
                 />
-                <Label htmlFor="useAlternativeManager" className="text-sm font-medium text-blue-800">
+                <Label htmlFor="useAlternativeManager" className="text-sm font-medium text-purple-800">
                   Use Alternative Manager
                 </Label>
               </div>
 
               {formData.useAlternativeManager && (
-                <div className="space-y-4 pl-6 border-l-2 border-blue-300">
+                <div className="space-y-4 pl-6 border-l-2 border-purple-300">
                   <div className="space-y-2">
                     <Label htmlFor="alternativeManager">Alternative Manager *</Label>
                     <Select value={formData.alternativeManager || "none"} onValueChange={(value) => setFormData(prev => ({ ...prev, alternativeManager: value === "none" ? "" : value }))}>
@@ -706,28 +727,28 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
           )}
 
           {formData.startDate && formData.endDate && (
-            <Card className="border-blue-200 bg-blue-50">
+            <Card className="border-green-200 bg-green-50">
               <CardContent className="p-4">
                 <div className="space-y-2">
-                  <div className="flex items-center space-x-2 text-blue-700">
+                  <div className="flex items-center space-x-2 text-green-700">
                     <Info className="h-4 w-4" />
                     <span className="text-sm font-medium">Leave Days Summary</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-blue-600">Calendar Days:</span>
-                      <span className="font-medium text-blue-800">{getCalendarDays()} day{getCalendarDays() > 1 ? 's' : ''}</span>
+                      <span className="text-green-600">Calendar Days:</span>
+                      <span className="font-medium text-green-800">{getCalendarDays()} day{getCalendarDays() > 1 ? 's' : ''}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-blue-600">Working Days Applied:</span>
-                      <span className="font-medium text-blue-800">
+                      <span className="text-green-600">Working Days Applied:</span>
+                      <span className="font-medium text-green-800">
                         {calculateWorkingDays()} day{calculateWorkingDays() > 1 ? 's' : ''}
                         {formData.isHalfDay && " (Half Day)"}
                       </span>
                     </div>
                   </div>
-                  <div className="text-xs text-blue-600 bg-blue-100 p-2 rounded mt-2">
-                    Working days exclude weekends and South African public holidays. 
+                  <div className="text-xs text-green-600 bg-green-100 p-2 rounded mt-2">
+                    Working days exclude weekends, South African public holidays, and company holidays. 
                     {formData.isHalfDay && " Half-day requests count as 0.5 days per working day selected."}
                   </div>
                 </div>
@@ -759,8 +780,8 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                 </div>
                 
                 {selectedLeaveType.value === 'annual' && (
-                  <div className="mt-2 text-xs text-yellow-700 bg-yellow-50 p-2 rounded">
-                    <strong>Reminder:</strong> Annual leave expires 6 months after the leave year ends.
+                  <div className="mt-2 text-xs text-orange-700 bg-orange-50 p-2 rounded">
+                    <strong>Policy Update:</strong> Annual leave must be used within the leave year. Unused leave may be forfeited based on company policy.
                   </div>
                 )}
                 
