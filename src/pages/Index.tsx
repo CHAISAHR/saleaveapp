@@ -16,8 +16,8 @@ const Index = () => {
 
   const { userRole, setUserRole, currentUser } = useUserRole(user);
 
-  // Updated manualSignUp handler to include gender
-  const handleManualSignUp = (userData: {
+  // Updated manualSignUp handler to include gender - now properly async
+  const handleManualSignUp = async (userData: {
     email: string;
     password: string;
     confirmPassword: string;
@@ -26,7 +26,7 @@ const Index = () => {
     department: string;
     gender: string;
   }) => {
-    manualSignUp(userData);
+    await manualSignUp(userData);
   };
 
   // Show loading state
