@@ -1,4 +1,5 @@
 
+
 import express from 'express';
 import multer from 'multer';
 import { executeQuery } from '../config/database';
@@ -9,7 +10,7 @@ const router = express.Router();
 
 // Extend AuthRequest to include files property
 interface AuthRequestWithFiles extends AuthRequest {
-  files?: Express.Multer.File[];
+  files?: { [fieldname: string]: Express.Multer.File[] } | Express.Multer.File[];
 }
 
 // Configure multer for file uploads
@@ -24,7 +25,7 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
   try {
     const { title, detail, startDate, endDate, leaveType, workingDays } = req.body;
     const requester = req.user!.email;
-    const files = req.files as Express.Multer.File[];
+    const files = Array.isArray(req.files) ? req.files : [];
 
     const result = await executeQuery(
       `INSERT INTO leave_taken (Title, Detail, StartDate, EndDate, LeaveType, Requester, Status, Created, workingDays) 
@@ -102,7 +103,7 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
       params = [req.user!.email, req.user!.email];
     } else {
       // Employee can only see their own requests with attachments
-      query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.Leave Type, 
+      query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
                lt.Requester, lt.Approver, lt.Status, lt.Created, lt.Modified, lt.Modified_By,
                lt.workingDays, COUNT(la.id) as attachment_count
                FROM leave_taken lt 
