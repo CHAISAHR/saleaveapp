@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,6 +67,52 @@ export const AdminAllRequests = () => {
     fetchRequests();
   }, []);
 
+  const downloadRequests = () => {
+    const csvHeaders = [
+      'Employee',
+      'Title',
+      'Detail',
+      'Leave Type',
+      'Start Date',
+      'End Date',
+      'Working Days',
+      'Status',
+      'Approver',
+      'Submitted Date'
+    ];
+
+    const csvData = requests.map(request => [
+      request.Requester,
+      request.Title,
+      request.Detail || '',
+      request.LeaveType,
+      new Date(request.StartDate).toLocaleDateString(),
+      new Date(request.EndDate).toLocaleDateString(),
+      request.workingDays,
+      request.Status,
+      request.Approver || '',
+      new Date(request.Created).toLocaleDateString()
+    ]);
+
+    const csvContent = [
+      csvHeaders.join(','),
+      ...csvData.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `leave_requests_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+
+    toast({
+      title: "Download Complete",
+      description: "Leave requests have been downloaded as CSV.",
+    });
+  };
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status.toLowerCase()) {
       case 'approved': return 'default';
@@ -94,13 +139,22 @@ export const AdminAllRequests = () => {
           <h2 className="text-2xl font-bold text-gray-900">All Leave Requests</h2>
           <p className="text-gray-600">View and manage all employee leave requests</p>
         </div>
-        <Button 
-          onClick={() => setShowBulkUpload(true)}
-          variant="outline"
-        >
-          <Upload className="h-4 w-4 mr-2" />
-          Bulk Upload
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={downloadRequests}
+            variant="outline"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Download CSV
+          </Button>
+          <Button 
+            onClick={() => setShowBulkUpload(true)}
+            variant="outline"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Bulk Upload
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { DepartmentManager } from "@/components/DepartmentManager";
 import { UserManagement } from "@/components/admin/UserManagement";
+import { AdminAllBalances } from "@/components/AdminAllBalances";
 import { apiConfig } from "@/config/apiConfig";
 
 interface AdminPanelProps {
@@ -89,11 +90,16 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
       <Tabs defaultValue="users" className="space-y-4">
         <TabsList>
           <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="balances">All Balances</TabsTrigger>
           <TabsTrigger value="departments">Departments</TabsTrigger>
         </TabsList>
 
         <TabsContent value="users">
           <UserManagement />
+        </TabsContent>
+
+        <TabsContent value="balances">
+          <AdminAllBalances />
         </TabsContent>
 
         <TabsContent value="departments">
