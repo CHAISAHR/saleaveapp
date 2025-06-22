@@ -6,6 +6,7 @@ import { AdminAllRequests } from "@/components/AdminAllRequests";
 import { AdminAllBalances } from "@/components/AdminAllBalances";
 import { AdminPanel } from "@/components/AdminPanel";
 import { HolidayCalendar } from "@/components/HolidayCalendar";
+import { About } from "@/components/About";
 
 interface MainContentProps {
   activeTab: string;
@@ -47,7 +48,8 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
       case 'holidays':
         return <HolidayCalendar userRole={userRole} />;
 
-      // Removed the 'admin' case since we removed the admin tab
+      case 'about':
+        return <About />;
 
       default:
         return <div>Page not found</div>;
