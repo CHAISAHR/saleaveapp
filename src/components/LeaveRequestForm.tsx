@@ -17,6 +17,7 @@ interface LeaveRequestFormProps {
 }
 
 export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestFormProps) => {
+  // ... keep existing code (state and handlers)
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [attachments, setAttachments] = useState<FileList | null>(null);
