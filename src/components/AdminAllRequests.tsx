@@ -1,15 +1,14 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, XCircle, AlertCircle, Edit, Save, X, Download, Ban } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Upload, Download, FileText, Calendar, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { balanceService } from "@/services/balanceService";
+import { apiConfig } from "@/config/apiConfig";
+import { CSVUploader } from "./admin/CSVUploader";
 
 interface LeaveRequest {
   LeaveID: number;
@@ -20,183 +19,71 @@ interface LeaveRequest {
   LeaveType: string;
   Requester: string;
   Approver?: string;
-  Status: 'pending' | 'approved' | 'rejected' | 'cancelled';
-  workingDays: number;
+  Status: string;
   Created: string;
-  Modified: string;
-  ModifiedBy?: string;
+  workingDays: number;
+  attachment_count: number;
 }
 
 export const AdminAllRequests = () => {
   const { toast } = useToast();
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editingRequest, setEditingRequest] = useState<LeaveRequest | null>(null);
+  const [requests, setRequests] = useState<LeaveRequest[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
 
-  // Mock data - in real app this would come from API
-  const [requests, setRequests] = useState<LeaveRequest[]>([
-    {
-      LeaveID: 1,
-      Title: "Family Vacation",
-      Detail: "Summer vacation with family",
-      StartDate: "2024-07-15",
-      EndDate: "2024-07-19",
-      LeaveType: "Annual",
-      Requester: "john.smith@company.com",
-      Approver: "sarah.johnson@company.com",
-      Status: "approved",
-      workingDays: 5,
-      Created: "2024-06-15T10:00:00Z",
-      Modified: "2024-06-16T14:30:00Z",
-      ModifiedBy: "sarah.johnson@company.com"
-    },
-    {
-      LeaveID: 2,
-      Title: "Medical Appointment",
-      Detail: "Regular health check-up",
-      StartDate: "2024-06-20",
-      EndDate: "2024-06-20",
-      LeaveType: "Sick",
-      Requester: "emily.davis@company.com",
-      Status: "pending",
-      workingDays: 1,
-      Created: "2024-06-18T09:15:00Z",
-      Modified: "2024-06-18T09:15:00Z",
-      ModifiedBy: "emily.davis@company.com"
-    }
-  ]);
-
-  const handleCancelLeave = async (request: LeaveRequest) => {
-    if (request.Status === 'approved') {
-      // Restore balance for previously approved leave
-      await balanceService.updateBalanceOnCancellation(request);
-    }
-
-    const updatedRequest = {
-      ...request,
-      Status: 'cancelled' as const,
-      Modified: new Date().toISOString(),
-      ModifiedBy: "admin@company.com"
+  const getAuthHeaders = () => {
+    const authToken = localStorage.getItem('auth_token');
+    return {
+      'Authorization': `Bearer ${authToken}`,
+      'Content-Type': 'application/json'
     };
-
-    setRequests(prev => prev.map(r => 
-      r.LeaveID === updatedRequest.LeaveID ? updatedRequest : r
-    ));
-
-    console.log('Leave cancelled:', updatedRequest);
-
-    toast({
-      title: "Leave Cancelled",
-      description: `Leave request for ${request.Requester} has been cancelled.`,
-    });
   };
 
-  const downloadCSV = () => {
-    const headers = [
-      'LeaveID', 'Title', 'Detail', 'StartDate', 'EndDate', 'LeaveType', 
-      'Requester', 'Approver', 'Status', 'WorkingDays', 'Created', 'Modified', 'ModifiedBy'
-    ];
-    
-    const csvContent = [
-      headers.join(','),
-      ...requests.map(request => [
-        request.LeaveID,
-        `"${request.Title}"`,
-        `"${request.Detail}"`,
-        request.StartDate,
-        request.EndDate,
-        request.LeaveType,
-        request.Requester,
-        request.Approver || '',
-        request.Status,
-        request.workingDays,
-        request.Created,
-        request.Modified,
-        request.ModifiedBy || ''
-      ].join(','))
-    ].join('\n');
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${apiConfig.baseURL}/api/leave/requests`, {
+        headers: getAuthHeaders()
+      });
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `leave_requests_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    toast({
-      title: "CSV Downloaded",
-      description: "Leave requests data has been exported successfully.",
-    });
-  };
-
-  const handleEdit = (request: LeaveRequest) => {
-    setEditingId(request.LeaveID);
-    setEditingRequest({ ...request });
-  };
-
-  const handleSave = async () => {
-    if (!editingRequest) return;
-
-    const originalRequest = requests.find(r => r.LeaveID === editingRequest.LeaveID);
-    if (!originalRequest) return;
-
-    // Check if status changed from pending to approved
-    const statusChangedToApproved = originalRequest.Status === 'pending' && editingRequest.Status === 'approved';
-    
-    // Check if status changed from approved to something else
-    const statusChangedFromApproved = originalRequest.Status === 'approved' && editingRequest.Status !== 'approved';
-
-    const updatedRequest = {
-      ...editingRequest,
-      Modified: new Date().toISOString(),
-      ModifiedBy: "admin@company.com"
-    };
-
-    // Update balance based on status change
-    if (statusChangedToApproved) {
-      await balanceService.updateBalanceOnApproval(editingRequest);
-      console.log('Balance updated for approved leave:', editingRequest);
-    } else if (statusChangedFromApproved) {
-      await balanceService.updateBalanceOnCancellation(originalRequest);
-      console.log('Balance restored for status change from approved:', originalRequest);
+      if (response.ok) {
+        const data = await response.json();
+        setRequests(data.requests || []);
+      } else {
+        throw new Error('Failed to fetch requests');
+      }
+    } catch (error) {
+      console.error('Error fetching requests:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load leave requests",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    setRequests(prev => prev.map(r => 
-      r.LeaveID === updatedRequest.LeaveID ? updatedRequest : r
-    ));
-
-    console.log('Updated request:', updatedRequest);
-
-    toast({
-      title: "Request Updated",
-      description: statusChangedToApproved 
-        ? "Leave request approved and balance updated successfully." 
-        : "Leave request has been successfully updated.",
-    });
-
-    setEditingId(null);
-    setEditingRequest(null);
   };
 
-  const handleCancel = () => {
-    setEditingId(null);
-    setEditingRequest(null);
+  useEffect(() => {
+    fetchRequests();
+  }, []);
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'approved': return 'default';
+      case 'rejected': return 'destructive';
+      case 'pending': return 'secondary';
+      default: return 'outline';
+    }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return <Badge variant="default" className="bg-lime-600">Approved</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">Rejected</Badge>;
-      case 'pending':
-        return <Badge variant="secondary">Pending</Badge>;
-      case 'cancelled':
-        return <Badge variant="outline">Cancelled</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
+  const getLeaveTypeBadgeVariant = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'annual': return 'default';
+      case 'sick': return 'secondary';
+      case 'maternity': return 'outline';
+      case 'study': return 'outline';
+      default: return 'outline';
     }
   };
 
@@ -207,182 +94,165 @@ export const AdminAllRequests = () => {
           <h2 className="text-2xl font-bold text-gray-900">All Leave Requests</h2>
           <p className="text-gray-600">View and manage all employee leave requests</p>
         </div>
-        <Button onClick={downloadCSV} variant="outline">
-          <Download className="h-4 w-4 mr-2" />
-          Download CSV
+        <Button 
+          onClick={() => setShowBulkUpload(true)}
+          variant="outline"
+        >
+          <Upload className="h-4 w-4 mr-2" />
+          Bulk Upload
         </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <div className="bg-blue-100 p-2 rounded-lg">
+                <FileText className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Total Requests</p>
+                <p className="text-2xl font-bold text-gray-900">{requests.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <div className="bg-green-100 p-2 rounded-lg">
+                <Calendar className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Approved</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {requests.filter(r => r.Status === 'approved').length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <div className="bg-yellow-100 p-2 rounded-lg">
+                <User className="h-5 w-5 text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Pending</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {requests.filter(r => r.Status === 'pending').length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <div className="bg-red-100 p-2 rounded-lg">
+                <FileText className="h-5 w-5 text-red-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Rejected</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {requests.filter(r => r.Status === 'rejected').length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Leave Requests</CardTitle>
-          <CardDescription>All leave requests across the organization</CardDescription>
+          <CardTitle>All Leave Requests</CardTitle>
+          <CardDescription>Complete history of leave requests across the organization</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          {loading ? (
+            <div className="text-center py-4">Loading requests...</div>
+          ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Leave ID</TableHead>
+                  <TableHead>Employee</TableHead>
                   <TableHead>Title</TableHead>
-                  <TableHead>Detail</TableHead>
-                  <TableHead>Start Date</TableHead>
-                  <TableHead>End Date</TableHead>
-                  <TableHead>Leave Type</TableHead>
-                  <TableHead>Requester</TableHead>
-                  <TableHead>Approver</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Dates</TableHead>
+                  <TableHead>Days</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Working Days</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Modified</TableHead>
-                  <TableHead>Modified By</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>Approver</TableHead>
+                  <TableHead>Submitted</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {requests.map((request) => (
                   <TableRow key={request.LeaveID}>
-                    <TableCell className="font-medium">{request.LeaveID}</TableCell>
+                    <TableCell className="font-medium">{request.Requester}</TableCell>
                     <TableCell>
-                      {editingId === request.LeaveID ? (
-                        <Input
-                          value={editingRequest?.Title || ''}
-                          onChange={(e) => setEditingRequest(prev => prev ? {...prev, Title: e.target.value} : null)}
-                          className="w-full"
-                        />
-                      ) : (
-                        request.Title
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {editingId === request.LeaveID ? (
-                        <Textarea
-                          value={editingRequest?.Detail || ''}
-                          onChange={(e) => setEditingRequest(prev => prev ? {...prev, Detail: e.target.value} : null)}
-                          className="w-full min-w-[200px]"
-                        />
-                      ) : (
-                        <div className="max-w-[200px] truncate" title={request.Detail}>
-                          {request.Detail}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {editingId === request.LeaveID ? (
-                        <Input
-                          type="date"
-                          value={editingRequest?.StartDate || ''}
-                          onChange={(e) => setEditingRequest(prev => prev ? {...prev, StartDate: e.target.value} : null)}
-                        />
-                      ) : (
-                        new Date(request.StartDate).toLocaleDateString()
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {editingId === request.LeaveID ? (
-                        <Input
-                          type="date"
-                          value={editingRequest?.EndDate || ''}
-                          onChange={(e) => setEditingRequest(prev => prev ? {...prev, EndDate: e.target.value} : null)}
-                        />
-                      ) : (
-                        new Date(request.EndDate).toLocaleDateString()
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {editingId === request.LeaveID ? (
-                        <Select
-                          value={editingRequest?.LeaveType || ''}
-                          onValueChange={(value) => setEditingRequest(prev => prev ? {...prev, LeaveType: value} : null)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Annual">Annual</SelectItem>
-                            <SelectItem value="Sick">Sick</SelectItem>
-                            <SelectItem value="Family">Family</SelectItem>
-                            <SelectItem value="Study">Study</SelectItem>
-                            <SelectItem value="Maternity">Maternity</SelectItem>
-                            <SelectItem value="Parental">Parental</SelectItem>
-                            <SelectItem value="Wellness">Wellness</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        request.LeaveType
-                      )}
-                    </TableCell>
-                    <TableCell>{request.Requester}</TableCell>
-                    <TableCell>{request.Approver || '-'}</TableCell>
-                    <TableCell>
-                      {editingId === request.LeaveID ? (
-                        <Select
-                          value={editingRequest?.Status || ''}
-                          onValueChange={(value) => setEditingRequest(prev => prev ? {...prev, Status: value as any} : null)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="approved">Approved</SelectItem>
-                            <SelectItem value="rejected">Rejected</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        getStatusBadge(request.Status)
-                      )}
-                    </TableCell>
-                    <TableCell>{request.workingDays}</TableCell>
-                    <TableCell>
-                      <div className="text-xs">
-                        {new Date(request.Created).toLocaleDateString()}
+                      <div>
+                        <div className="font-medium">{request.Title}</div>
+                        {request.Detail && (
+                          <div className="text-sm text-gray-500 truncate max-w-32">
+                            {request.Detail}
+                          </div>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="text-xs">
-                        {new Date(request.Modified).toLocaleDateString()}
+                      <Badge variant={getLeaveTypeBadgeVariant(request.LeaveType)}>
+                        {request.LeaveType}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        <div>{new Date(request.StartDate).toLocaleDateString()}</div>
+                        <div className="text-gray-500">to {new Date(request.EndDate).toLocaleDateString()}</div>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="text-xs">{request.ModifiedBy || '-'}</div>
+                    <TableCell className="text-center font-medium">
+                      {request.workingDays}
                     </TableCell>
                     <TableCell>
-                      {editingId === request.LeaveID ? (
-                        <div className="flex space-x-2">
-                          <Button size="sm" onClick={handleSave}>
-                            <Save className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={handleCancel}>
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex space-x-2">
-                          <Button size="sm" variant="outline" onClick={() => handleEdit(request)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          {(request.Status === 'approved' || request.Status === 'pending') && (
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => handleCancelLeave(request)}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Ban className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      )}
+                      <Badge variant={getStatusBadgeVariant(request.Status)}>
+                        {request.Status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-600">
+                      {request.Approver || '-'}
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-600">
+                      {new Date(request.Created).toLocaleDateString()}
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </div>
+          )}
         </CardContent>
       </Card>
+
+      <Dialog open={showBulkUpload} onOpenChange={setShowBulkUpload}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Bulk Upload Leave Requests</DialogTitle>
+            <DialogDescription>
+              Upload multiple leave requests via CSV file
+            </DialogDescription>
+          </DialogHeader>
+          <CSVUploader 
+            type="requests" 
+            onUploadComplete={() => {
+              fetchRequests();
+              setShowBulkUpload(false);
+            }} 
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

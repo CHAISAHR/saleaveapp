@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit, Plus, Save } from "lucide-react";
+import { Edit, Plus, Save, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { CSVUploader } from "./admin/CSVUploader";
 
 interface EmployeeBalance {
   BalanceID: number;
@@ -31,6 +32,7 @@ interface EmployeeBalance {
 export const AdminBalanceManager = () => {
   const { toast } = useToast();
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [selectedBalance, setSelectedBalance] = useState<EmployeeBalance | null>(null);
   const [adjustmentComment, setAdjustmentComment] = useState("");
 
@@ -127,10 +129,19 @@ export const AdminBalanceManager = () => {
           <h2 className="text-2xl font-bold text-gray-900">Employee Leave Balances</h2>
           <p className="text-gray-600">View and manage employee leave balances</p>
         </div>
-        <Button variant="outline">
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Employee
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setShowBulkUpload(true)}
+            variant="outline"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Bulk Upload
+          </Button>
+          <Button variant="outline">
+            <Plus className="h-4 w-4 mr-2" />
+            Add New Employee
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -287,6 +298,28 @@ export const AdminBalanceManager = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showBulkUpload} onOpenChange={setShowBulkUpload}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Bulk Upload Leave Balances</DialogTitle>
+            <DialogDescription>
+              Upload multiple employee leave balances via CSV file
+            </DialogDescription>
+          </DialogHeader>
+          <CSVUploader 
+            type="balances" 
+            onUploadComplete={() => {
+              // Refresh balances data here
+              setShowBulkUpload(false);
+              toast({
+                title: "Balances Updated",
+                description: "Leave balances have been refreshed with new data.",
+              });
+            }} 
+          />
         </DialogContent>
       </Dialog>
     </div>
