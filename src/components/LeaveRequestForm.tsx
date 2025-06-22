@@ -17,7 +17,6 @@ interface LeaveRequestFormProps {
 }
 
 export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestFormProps) => {
-  // ... keep existing code (state and handlers)
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [attachments, setAttachments] = useState<FileList | null>(null);
@@ -127,7 +126,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     }));
   };
 
-  // Get today's date in YYYY-MM-DD format for minimum date (allowing past dates now)
+  // Allow historic dates (1 year back) for the minimum date
   const today = new Date();
   const minDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()).toISOString().split('T')[0];
 
