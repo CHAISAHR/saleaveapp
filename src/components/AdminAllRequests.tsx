@@ -44,21 +44,29 @@ export const AdminAllRequests = () => {
   const fetchRequests = async () => {
     try {
       setLoading(true);
+      console.log('Fetching requests from:', `${apiConfig.baseURL}/api/leave/requests`);
+      
       const response = await fetch(`${apiConfig.baseURL}/api/leave/requests`, {
         headers: getAuthHeaders()
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('Requests data received:', data);
         setRequests(data.requests || []);
       } else {
-        throw new Error('Failed to fetch requests');
+        const errorText = await response.text();
+        console.error('Failed to fetch requests:', errorText);
+        throw new Error(`Failed to fetch requests: ${response.status}`);
       }
     } catch (error) {
       console.error('Error fetching requests:', error);
       toast({
         title: "Error",
-        description: "Failed to load leave requests",
+        description: "Failed to load leave requests. Please check if the server is running.",
         variant: "destructive",
       });
     } finally {
@@ -225,6 +233,15 @@ export const AdminAllRequests = () => {
         <CardContent>
           {loading ? (
             <div className="text-center py-4">Loading requests...</div>
+          ) : requests.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <p>No leave requests found. This could mean:</p>
+              <ul className="list-disc list-inside mt-2 text-sm">
+                <li>No requests have been submitted yet</li>
+                <li>The server is not running</li>
+                <li>Database connection issues</li>
+              </ul>
+            </div>
           ) : (
             <Table>
               <TableHeader>
