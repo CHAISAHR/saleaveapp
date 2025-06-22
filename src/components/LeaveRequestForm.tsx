@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,11 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Send, Paperclip } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Calendar, Send, Paperclip, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiConfig } from "@/config/apiConfig";
 
-export const LeaveRequestForm = () => {
+interface LeaveRequestFormProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  currentUser?: any;
+}
+
+export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestFormProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [attachments, setAttachments] = useState<FileList | null>(null);
@@ -92,6 +98,11 @@ export const LeaveRequestForm = () => {
         const fileInput = document.getElementById('attachments') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
         
+        // Close modal if it's a modal
+        if (onClose) {
+          onClose();
+        }
+        
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to submit leave request');
@@ -119,12 +130,22 @@ export const LeaveRequestForm = () => {
   const today = new Date();
   const minDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()).toISOString().split('T')[0];
 
-  return (
+  const formContent = (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />
           Submit Leave Request
+          {onClose && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="ml-auto"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </CardTitle>
         <CardDescription>
           Request time off for annual leave, sick days, or other approved leave types. You can submit requests for past dates if needed.
@@ -236,4 +257,21 @@ export const LeaveRequestForm = () => {
       </CardContent>
     </Card>
   );
+
+  // If isOpen is provided, render as a modal
+  if (isOpen !== undefined) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Submit Leave Request</DialogTitle>
+          </DialogHeader>
+          {formContent}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Otherwise render as a regular component
+  return formContent;
 };
