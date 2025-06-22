@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,21 +45,29 @@ export const AdminAllBalances = () => {
   const fetchBalances = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${apiConfig.baseURL}/api/balance/all`, {
+      console.log('Fetching balances from:', `${apiConfig.endpoints.balance}/`);
+      
+      const response = await fetch(`${apiConfig.endpoints.balance}/`, {
         headers: getAuthHeaders()
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('Balances data received:', data);
         setBalances(data.balances || []);
       } else {
-        throw new Error('Failed to fetch balances');
+        const errorText = await response.text();
+        console.error('Failed to fetch balances:', errorText);
+        throw new Error(`Failed to fetch balances: ${response.status}`);
       }
     } catch (error) {
       console.error('Error fetching balances:', error);
       toast({
         title: "Error",
-        description: "Failed to load employee balances",
+        description: "Failed to load employee balances. Please check if the server is running.",
         variant: "destructive",
       });
     } finally {
@@ -200,6 +207,15 @@ export const AdminAllBalances = () => {
         <CardContent>
           {loading ? (
             <div className="text-center py-4">Loading balances...</div>
+          ) : balances.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <p>No employee balances found. This could mean:</p>
+              <ul className="list-disc list-inside mt-2 text-sm">
+                <li>No balances have been created yet</li>
+                <li>The server is not running</li>
+                <li>Database connection issues</li>
+              </ul>
+            </div>
           ) : (
             <Table>
               <TableHeader>
