@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,18 @@ export const AdminAllBalances = () => {
   const [loading, setLoading] = useState(false);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
 
+  // Helper function to safely convert to number
+  const safeNumber = (value: any): number => {
+    if (value === null || value === undefined || value === '') return 0;
+    const num = typeof value === 'string' ? parseFloat(value) : Number(value);
+    return isNaN(num) ? 0 : num;
+  };
+
+  // Helper function to safely format numbers
+  const safeToFixed = (value: any, decimals: number = 1): string => {
+    return safeNumber(value).toFixed(decimals);
+  };
+
   const getAuthHeaders = () => {
     const authToken = localStorage.getItem('auth_token');
     return {
@@ -57,7 +70,22 @@ export const AdminAllBalances = () => {
       if (response.ok) {
         const data = await response.json();
         console.log('Balances data received:', data);
-        setBalances(data.balances || []);
+        
+        // Sanitize the data to ensure all numeric fields are proper numbers
+        const sanitizedBalances = (data.balances || []).map((balance: any) => ({
+          ...balance,
+          Broughtforward: safeNumber(balance.Broughtforward),
+          Annual: safeNumber(balance.Annual),
+          AnnualUsed: safeNumber(balance.AnnualUsed),
+          Forfeited: safeNumber(balance.Forfeited),
+          Annual_leave_adjustments: safeNumber(balance.Annual_leave_adjustments),
+          SickUsed: safeNumber(balance.SickUsed),
+          FamilyUsed: safeNumber(balance.FamilyUsed),
+          StudyUsed: safeNumber(balance.StudyUsed),
+          Current_leave_balance: safeNumber(balance.Current_leave_balance)
+        }));
+        
+        setBalances(sanitizedBalances);
       } else {
         const errorText = await response.text();
         console.error('Failed to fetch balances:', errorText);
@@ -102,15 +130,15 @@ export const AdminAllBalances = () => {
         balance.EmployeeEmail,
         balance.Department,
         balance.Year,
-        balance.Broughtforward,
-        balance.Annual,
-        balance.AnnualUsed,
-        balance.Forfeited,
-        balance.Annual_leave_adjustments,
-        balance.SickUsed,
-        balance.FamilyUsed,
-        balance.StudyUsed,
-        balance.Current_leave_balance,
+        safeNumber(balance.Broughtforward),
+        safeNumber(balance.Annual),
+        safeNumber(balance.AnnualUsed),
+        safeNumber(balance.Forfeited),
+        safeNumber(balance.Annual_leave_adjustments),
+        safeNumber(balance.SickUsed),
+        safeNumber(balance.FamilyUsed),
+        safeNumber(balance.StudyUsed),
+        safeNumber(balance.Current_leave_balance),
         balance.Manager || ''
       ])
     ];
@@ -127,8 +155,8 @@ export const AdminAllBalances = () => {
   };
 
   const totalEmployees = balances.length;
-  const totalCurrentBalance = balances.reduce((sum, b) => sum + b.Current_leave_balance, 0);
-  const avgBalance = totalEmployees > 0 ? (totalCurrentBalance / totalEmployees).toFixed(1) : 0;
+  const totalCurrentBalance = balances.reduce((sum, b) => sum + safeNumber(b.Current_leave_balance), 0);
+  const avgBalance = totalEmployees > 0 ? safeToFixed(totalCurrentBalance / totalEmployees) : '0';
 
   return (
     <div className="space-y-6">
@@ -178,7 +206,7 @@ export const AdminAllBalances = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Total Leave Days</p>
-                <p className="text-2xl font-bold text-gray-900">{totalCurrentBalance.toFixed(1)}</p>
+                <p className="text-2xl font-bold text-gray-900">{safeToFixed(totalCurrentBalance)}</p>
               </div>
             </div>
           </CardContent>
@@ -240,18 +268,18 @@ export const AdminAllBalances = () => {
                       </div>
                     </TableCell>
                     <TableCell>{balance.Department}</TableCell>
-                    <TableCell>{balance.Broughtforward}</TableCell>
-                    <TableCell>{balance.Annual}</TableCell>
-                    <TableCell>{balance.AnnualUsed}</TableCell>
+                    <TableCell>{safeNumber(balance.Broughtforward)}</TableCell>
+                    <TableCell>{safeNumber(balance.Annual)}</TableCell>
+                    <TableCell>{safeNumber(balance.AnnualUsed)}</TableCell>
                     <TableCell>
                       <Badge 
-                        variant={balance.Current_leave_balance < 5 ? "destructive" : "default"}
+                        variant={safeNumber(balance.Current_leave_balance) < 5 ? "destructive" : "default"}
                         className="font-medium"
                       >
-                        {balance.Current_leave_balance} days
+                        {safeNumber(balance.Current_leave_balance)} days
                       </Badge>
                     </TableCell>
-                    <TableCell>{balance.SickUsed}</TableCell>
+                    <TableCell>{safeNumber(balance.SickUsed)}</TableCell>
                     <TableCell className="text-sm text-gray-600">
                       {balance.Manager || '-'}
                     </TableCell>
