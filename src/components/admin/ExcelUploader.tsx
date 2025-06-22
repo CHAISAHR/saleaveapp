@@ -77,26 +77,27 @@ export const ExcelUploader: React.FC<ExcelUploaderProps> = ({ type, onUploadComp
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
+        const arrayBuffer = e.target?.result as ArrayBuffer;
+        const uint8Data = new Uint8Array(arrayBuffer);
+        const workbook = XLSX.read(uint8Data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
         
         if (jsonData.length === 0) return;
 
-        const headers = (jsonData[0] as string[]).map(h => h?.toString().trim() || '');
-        const data = jsonData.slice(1).map((row: any, index) => {
+        const headerRow = (jsonData[0] as string[]).map(h => h?.toString().trim() || '');
+        const dataRows = jsonData.slice(1).map((row: any, index) => {
           const rowObj: any = { _rowNumber: index + 2 };
-          headers.forEach((header, i) => {
+          headerRow.forEach((header, i) => {
             const value = row[i];
             rowObj[header] = value === undefined || value === null || value === '' ? null : value.toString();
           });
           return rowObj;
         }).filter(row => Object.values(row).some(val => val !== null && val !== ''));
 
-        setHeaders(headers);
-        setExcelData(data);
+        setHeaders(headerRow);
+        setExcelData(dataRows);
         setUploadResult(null);
       } catch (error) {
         console.error('Excel parsing error:', error);
@@ -141,21 +142,21 @@ export const ExcelUploader: React.FC<ExcelUploaderProps> = ({ type, onUploadComp
         body: JSON.stringify({ data: excelData })
       });
 
-      const result = await response.json();
+      const responseData = await response.json();
       
       if (response.ok) {
-        setUploadResult(result);
+        setUploadResult(responseData);
         toast({
           title: "Upload Complete",
-          description: `Successfully processed ${result.results.successful} records. ${result.results.failed} failed.`,
-          variant: result.results.failed > 0 ? "destructive" : "default",
+          description: `Successfully processed ${responseData.results.successful} records. ${responseData.results.failed} failed.`,
+          variant: responseData.results.failed > 0 ? "destructive" : "default",
         });
         
         if (onUploadComplete) {
           onUploadComplete();
         }
       } else {
-        throw new Error(result.message || 'Upload failed');
+        throw new Error(responseData.message || 'Upload failed');
       }
     } catch (error) {
       console.error('Upload error:', error);
