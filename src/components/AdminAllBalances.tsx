@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { Upload, Download, Users, Calendar, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiConfig } from "@/config/apiConfig";
 import { CSVUploader } from "./admin/CSVUploader";
+import * as XLSX from 'xlsx';
 
 interface EmployeeBalance {
   BalanceID: number;
@@ -72,56 +72,49 @@ export const AdminAllBalances = () => {
   }, []);
 
   const downloadBalances = () => {
-    const csvHeaders = [
-      'Employee Name',
-      'Email',
-      'Department',
-      'Year',
-      'Brought Forward',
-      'Annual Allocated',
-      'Annual Used',
-      'Forfeited',
-      'Adjustments',
-      'Sick Used',
-      'Family Used',
-      'Study Used',
-      'Current Balance',
-      'Manager'
+    const wsData = [
+      [
+        'Employee Name',
+        'Email',
+        'Department',
+        'Year',
+        'Brought Forward',
+        'Annual Allocated',
+        'Annual Used',
+        'Forfeited',
+        'Adjustments',
+        'Sick Used',
+        'Family Used',
+        'Study Used',
+        'Current Balance',
+        'Manager'
+      ],
+      ...balances.map(balance => [
+        balance.EmployeeName,
+        balance.EmployeeEmail,
+        balance.Department,
+        balance.Year,
+        balance.Broughtforward,
+        balance.Annual,
+        balance.AnnualUsed,
+        balance.Forfeited,
+        balance.Annual_leave_adjustments,
+        balance.SickUsed,
+        balance.FamilyUsed,
+        balance.StudyUsed,
+        balance.Current_leave_balance,
+        balance.Manager || ''
+      ])
     ];
 
-    const csvData = balances.map(balance => [
-      balance.EmployeeName,
-      balance.EmployeeEmail,
-      balance.Department,
-      balance.Year,
-      balance.Broughtforward,
-      balance.Annual,
-      balance.AnnualUsed,
-      balance.Forfeited,
-      balance.Annual_leave_adjustments,
-      balance.SickUsed,
-      balance.FamilyUsed,
-      balance.StudyUsed,
-      balance.Current_leave_balance,
-      balance.Manager || ''
-    ]);
-
-    const csvContent = [
-      csvHeaders.join(','),
-      ...csvData.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `employee_balances_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, 'Employee Balances');
+    XLSX.writeFile(wb, `employee_balances_${new Date().toISOString().split('T')[0]}.xlsx`);
 
     toast({
       title: "Download Complete",
-      description: "Employee balances have been downloaded as CSV.",
+      description: "Employee balances have been downloaded as Excel file.",
     });
   };
 
@@ -142,7 +135,7 @@ export const AdminAllBalances = () => {
             variant="outline"
           >
             <Download className="h-4 w-4 mr-2" />
-            Download CSV
+            Download Excel
           </Button>
           <Button 
             onClick={() => setShowBulkUpload(true)}
@@ -258,10 +251,10 @@ export const AdminAllBalances = () => {
           <DialogHeader>
             <DialogTitle>Bulk Upload Employee Balances</DialogTitle>
             <DialogDescription>
-              Upload multiple employee leave balances via CSV file
+              Upload multiple employee leave balances via Excel file
             </DialogDescription>
           </DialogHeader>
-          <CSVUploader 
+          <ExcelUploader 
             type="balances" 
             onUploadComplete={() => {
               fetchBalances();

@@ -8,6 +8,8 @@ import { Upload, Download, FileText, Calendar, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiConfig } from "@/config/apiConfig";
 import { CSVUploader } from "./admin/CSVUploader";
+import { ExcelUploader } from "./admin/ExcelUploader";
+import * as XLSX from 'xlsx';
 
 interface LeaveRequest {
   LeaveID: number;
@@ -17,6 +19,7 @@ interface LeaveRequest {
   EndDate: string;
   LeaveType: string;
   Requester: string;
+  RequesterName?: string;
   Approver?: string;
   Status: string;
   Created: string;
@@ -68,48 +71,41 @@ export const AdminAllRequests = () => {
   }, []);
 
   const downloadRequests = () => {
-    const csvHeaders = [
-      'Employee',
-      'Title',
-      'Detail',
-      'Leave Type',
-      'Start Date',
-      'End Date',
-      'Working Days',
-      'Status',
-      'Approver',
-      'Submitted Date'
+    const wsData = [
+      [
+        'Title',
+        'Employee',
+        'Email',
+        'Leave Type',
+        'Start Date',
+        'End Date',
+        'Working Days',
+        'Status',
+        'Approver',
+        'Created Date'
+      ],
+      ...requests.map(request => [
+        request.Title,
+        request.RequesterName || request.Requester,
+        request.Requester,
+        request.LeaveType,
+        request.StartDate,
+        request.EndDate,
+        request.workingDays || 0,
+        request.Status,
+        request.Approver || '',
+        new Date(request.Created).toLocaleDateString()
+      ])
     ];
 
-    const csvData = requests.map(request => [
-      request.Requester,
-      request.Title,
-      request.Detail || '',
-      request.LeaveType,
-      new Date(request.StartDate).toLocaleDateString(),
-      new Date(request.EndDate).toLocaleDateString(),
-      request.workingDays,
-      request.Status,
-      request.Approver || '',
-      new Date(request.Created).toLocaleDateString()
-    ]);
-
-    const csvContent = [
-      csvHeaders.join(','),
-      ...csvData.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `leave_requests_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, 'Leave Requests');
+    XLSX.writeFile(wb, `leave_requests_${new Date().toISOString().split('T')[0]}.xlsx`);
 
     toast({
       title: "Download Complete",
-      description: "Leave requests have been downloaded as CSV.",
+      description: "Leave requests have been downloaded as Excel file.",
     });
   };
 
@@ -295,10 +291,10 @@ export const AdminAllRequests = () => {
           <DialogHeader>
             <DialogTitle>Bulk Upload Leave Requests</DialogTitle>
             <DialogDescription>
-              Upload multiple leave requests via CSV file
+              Upload multiple leave requests via Excel file
             </DialogDescription>
           </DialogHeader>
-          <CSVUploader 
+          <ExcelUploader 
             type="requests" 
             onUploadComplete={() => {
               fetchRequests();
