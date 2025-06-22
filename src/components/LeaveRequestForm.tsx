@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, Send, Paperclip, X } from "lucide-react";
+import { Calendar, Send, Paperclip, X, Calculator } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiConfig } from "@/config/apiConfig";
 
@@ -20,14 +20,37 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [attachments, setAttachments] = useState<FileList | null>(null);
+  const [calculatedDays, setCalculatedDays] = useState<number>(0);
   
   const [formData, setFormData] = useState({
     title: "",
     detail: "",
     startDate: "",
     endDate: "",
-    leaveType: "annual"
+    leaveType: "Annual",
+    approvalManager: ""
   });
+
+  // Calculate working days between dates
+  const calculateWorkingDays = (startDate: string, endDate: string) => {
+    if (!startDate || !endDate) return 0;
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    let workingDays = 0;
+    
+    const currentDate = new Date(start);
+    while (currentDate <= end) {
+      const dayOfWeek = currentDate.getDay();
+      // Skip weekends (0 = Sunday, 6 = Saturday)
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        workingDays++;
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return workingDays;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +82,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       submitData.append('startDate', formData.startDate);
       submitData.append('endDate', formData.endDate);
       submitData.append('leaveType', formData.leaveType);
+      submitData.append('approvalManager', formData.approvalManager);
 
       // Add attachments if any
       if (attachments) {
@@ -81,7 +105,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         
         toast({
           title: "Leave Request Submitted",
-          description: `Your ${formData.leaveType} leave request has been submitted successfully. Working days: ${result.workingDays}`,
+          description: `Your ${formData.leaveType} leave request has been submitted successfully. Working days: ${result.workingDays || calculatedDays}`,
         });
 
         // Reset form
@@ -90,9 +114,11 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
           detail: "",
           startDate: "",
           endDate: "",
-          leaveType: "annual"
+          leaveType: "Annual",
+          approvalManager: ""
         });
         setAttachments(null);
+        setCalculatedDays(0);
         
         // Reset file input
         const fileInput = document.getElementById('attachments') as HTMLInputElement;
@@ -120,10 +146,23 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        [field]: value
+      };
+      
+      // Recalculate days when dates change
+      if (field === 'startDate' || field === 'endDate') {
+        const days = calculateWorkingDays(
+          field === 'startDate' ? value : updated.startDate,
+          field === 'endDate' ? value : updated.endDate
+        );
+        setCalculatedDays(days);
+      }
+      
+      return updated;
+    });
   };
 
   // Allow historic dates (1 year back) for the minimum date
@@ -172,13 +211,14 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="annual">Annual Leave</SelectItem>
-                  <SelectItem value="sick">Sick Leave</SelectItem>
-                  <SelectItem value="maternity">Maternity Leave</SelectItem>
-                  <SelectItem value="paternity">Paternity Leave</SelectItem>
-                  <SelectItem value="study">Study Leave</SelectItem>
-                  <SelectItem value="compassionate">Compassionate Leave</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="Annual">Annual</SelectItem>
+                  <SelectItem value="Sick">Sick</SelectItem>
+                  <SelectItem value="Maternity">Maternity</SelectItem>
+                  <SelectItem value="Parental">Parental</SelectItem>
+                  <SelectItem value="Family">Family</SelectItem>
+                  <SelectItem value="Adoption">Adoption</SelectItem>
+                  <SelectItem value="Study">Study</SelectItem>
+                  <SelectItem value="Wellness">Wellness</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -208,6 +248,26 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                 required
               />
             </div>
+          </div>
+
+          {/* Working Days Calculation Display */}
+          {calculatedDays > 0 && (
+            <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <Calculator className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-800">
+                Working days requested: {calculatedDays}
+              </span>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="approvalManager">Approval Manager</Label>
+            <Input
+              id="approvalManager"
+              placeholder="Manager email (optional - will use default if empty)"
+              value={formData.approvalManager}
+              onChange={(e) => handleInputChange('approvalManager', e.target.value)}
+            />
           </div>
 
           <div className="space-y-2">
