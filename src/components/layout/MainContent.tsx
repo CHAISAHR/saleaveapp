@@ -44,11 +44,10 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
       case 'user-management':
         return userRole === 'admin' ? <AdminPanel currentUser={currentUser} /> : null;
 
-      case 'admin':
-        return userRole === 'admin' ? <AdminDashboard currentUser={currentUser} activeView="admin" /> : null;
-
       case 'holidays':
         return <HolidayCalendar userRole={userRole} />;
+
+      // Removed the 'admin' case since we removed the admin tab
 
       default:
         return <div>Page not found</div>;

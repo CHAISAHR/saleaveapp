@@ -1,6 +1,5 @@
-
 -- MySQL Database Schema for Leave Management System
--- Updated schema with email-based unique identifiers, negative value support, and gender field
+-- Updated schema with email-based unique identifiers, negative value support, gender field, and file attachments
 
 -- Departments table - stores configurable department names
 CREATE TABLE departments (
@@ -64,6 +63,19 @@ CREATE TABLE leave_taken (
     Created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     Modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     Modified_By VARCHAR(255) NULL
+);
+
+-- Leave attachments table - stores file attachments for leave requests
+CREATE TABLE leave_attachments (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    leave_id INT NOT NULL,
+    filename VARCHAR(255) NOT NULL,
+    original_name VARCHAR(255) NOT NULL,
+    file_data LONGBLOB NOT NULL,
+    file_type VARCHAR(100) NOT NULL,
+    file_size INT NOT NULL,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (leave_id) REFERENCES leave_taken(LeaveID) ON DELETE CASCADE
 );
 
 -- Leave balances table - tracks employee leave balances with monthly accrual (supports negative values with 3 decimal places)
@@ -147,6 +159,7 @@ CREATE INDEX idx_company_holidays_date ON company_holidays(date);
 CREATE INDEX idx_email_notifications_recipient ON email_notifications(recipient_email);
 CREATE INDEX idx_audit_log_table_record ON audit_log(table_name, record_id);
 CREATE INDEX idx_departments_name ON departments(name);
+CREATE INDEX idx_leave_attachments_leave_id ON leave_attachments(leave_id);
 
 -- Insert default departments
 INSERT INTO departments (name, description) VALUES
@@ -220,3 +233,13 @@ FROM leave_taken lt
 LEFT JOIN leave_balances lb ON lt.Requester = lb.EmployeeEmail 
     AND lb.Year = YEAR(CURRENT_DATE)
 WHERE lt.Status = 'pending';
+
+-- User registration email notifications table
+CREATE TABLE user_registration_notifications (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_email VARCHAR(255) NOT NULL,
+    notification_sent BOOLEAN DEFAULT FALSE,
+    sent_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_email) REFERENCES users(email)
+);

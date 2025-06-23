@@ -8,8 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 
 interface AdminDashboardProps {
   currentUser: any;
-  activeView?: 'dashboard' | 'system' | 'admin' | 'balances';
-  onViewChange?: (view: 'dashboard' | 'system' | 'admin' | 'balances') => void;
+  activeView?: 'dashboard' | 'system' | 'balances';
+  onViewChange?: (view: 'dashboard' | 'system' | 'balances') => void;
 }
 
 export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewChange }: AdminDashboardProps) => {
@@ -19,13 +19,17 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
     if (onViewChange) {
       switch (action) {
         case 'holidays':
-          onViewChange('admin');
+          // Holiday management is now in the holidays tab
+          toast({
+            title: "Holiday Management",
+            description: "Please use the Holidays tab to manage company holidays.",
+          });
           break;
         case 'users':
           // Navigate to user management - placeholder for now
           toast({
             title: "User Management",
-            description: "User management feature coming soon.",
+            description: "Please use the User Management tab to manage users.",
           });
           break;
         case 'database':
@@ -45,9 +49,7 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
     return <SystemOverview />;
   }
 
-  if (activeView === 'admin') {
-    return <HolidayManagement />;
-  }
+  // Removed the admin case since we removed that functionality
 
   return (
     <div className="space-y-6">

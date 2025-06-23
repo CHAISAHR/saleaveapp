@@ -70,11 +70,7 @@ export const AppSidebar = ({
         icon: Users,
         label: "User Management"
       });
-      baseItems.splice(5, 0, {
-        value: "admin",
-        icon: Settings,
-        label: "Administration"
-      });
+      // Removed the admin tab since holidays tab covers holiday management
     }
 
     return baseItems;
