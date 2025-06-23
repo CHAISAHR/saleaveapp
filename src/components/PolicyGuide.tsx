@@ -1,102 +1,101 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Clock, Users, AlertCircle, CheckCircle, Calendar } from "lucide-react";
+
 export const PolicyGuide = () => {
-  const leaveTypes = [{
-    type: "Annual Leave",
-    allocation: "20 days per year",
-    accrual: "1.66 days per month",
-    carryOver: "Expires 6 months after leave year end",
-    eligibility: "All permanent employees",
-    requirements: "2 days advance notice for planned leave",
-    icon: Calendar,
-    color: "blue"
-  }, {
-    type: "Sick Leave",
-    allocation: "36 days per year",
-    accrual: "Full allocation at year start",
-    carryOver: "No expiry",
-    eligibility: "All employees from day one",
-    requirements: "Medical certificate required for >1 day",
-    icon: FileText,
-    color: "red"
-  }, {
-    type: "Maternity Leave",
-    allocation: "90 days",
-    accrual: "Available when needed",
-    carryOver: "Must be used within specified period",
-    eligibility: "Female employees",
-    requirements: "Medical certification required",
-    icon: Users,
-    color: "pink"
-  }, {
-    type: "Parental Leave",
-    allocation: "20 days",
-    accrual: "Available when needed",
-    carryOver: "Must be used within 12 months of birth/adoption",
-    eligibility: "All parents",
-    requirements: "Birth/adoption certificate required",
-    icon: Users,
-    color: "green"
-  }, {
-    type: "Family Leave",
-    allocation: "3 days per year",
-    accrual: "Full allocation at year start",
-    carryOver: "No carryover",
-    eligibility: "All permanent employees",
-    requirements: "Documentation may be required",
-    icon: Users,
-    color: "orange"
-  }, {
-    type: "Adoption Leave",
-    allocation: "20 days",
-    accrual: "Available when needed",
-    carryOver: "Must be used within adoption period",
-    eligibility: "Adoptive parents",
-    requirements: "Legal adoption documentation required",
-    icon: Users,
-    color: "purple"
-  }, {
-    type: "Study Leave",
-    allocation: "6 days per year",
-    accrual: "Full allocation at year start",
-    carryOver: "No carryover",
-    eligibility: "Employees with >1 year service",
-    requirements: "Course approval and proof of attendance",
-    icon: FileText,
-    color: "indigo"
-  }, {
-    type: "Wellness Leave",
-    allocation: "2 days per year",
-    accrual: "Full allocation at year start",
-    carryOver: "No carryover",
-    eligibility: "All permanent employees",
-    requirements: "Self-certification acceptable",
-    icon: CheckCircle,
-    color: "teal"
-  }];
-  const applicationProcess = [{
-    step: 1,
-    title: "Submit Request",
-    description: "Use the leave management system to submit your request with all required details.",
-    icon: FileText
-  }, {
-    step: 2,
-    title: "Manager Review",
-    description: "Your direct manager will review the request and may contact you for clarification.",
-    icon: Users
-  }, {
-    step: 3,
-    title: "Approval Decision",
-    description: "You'll receive an email notification with the approval decision and any comments.",
-    icon: CheckCircle
-  }, {
-    step: 4,
-    title: "Calendar Update",
-    description: "Approved leave will be automatically added to team calendars and payroll systems.",
-    icon: Calendar
-  }];
+  const leaveTypes = [
+    {
+      type: "Annual Leave",
+      allocation: "20 days per year",
+      accrual: "1.66 days per month",
+      carryOver: "Expires 6 months after leave year end",
+      eligibility: "All permanent employees",
+      requirements: "2 days advance notice for planned leave",
+      icon: Calendar,
+      color: "blue",
+      description: "7.1 Annual leave - The employee shall be entitled to 20 (twenty) working days' paid leave in respect of each annual leave cycle (January 1st – December 31st of each year) which shall accrue at 1.66 days per month. The employee is not entitled to take leave for which such leave has not been accrued, unless approved by the employer in writing. Accrued annual leave, can only be carried over to the next annual leave cycle for a maximum period of 6 (six) months after which the staff will forfeit it and no payment shall be made. The employee shall not be entitled to take annual leave during any period of notice, after any notice of termination is given by either party in terms of the termination provisions contained this contract."
+    },
+    {
+      type: "Sick Leave",
+      allocation: "36 days per year",
+      accrual: "Full allocation at year start",
+      carryOver: "No expiry",
+      eligibility: "All employees from day one",
+      requirements: "Medical certificate required for >1 day",
+      icon: FileText,
+      color: "red",
+      description: "7.2 Sick Leave - 7.2.1 The employee shall be entitled to the amount of sick leave provided for in terms of the Basic Conditions of Employment Act 75 of 1997 (\"BCEA\"). During the first six (6) months of employment, an employee is entitled to one (1) day's paid sick leave for every twenty-six (26) days worked. 7.2.2 If the employee is absent from work due to illness for 2 (two) consecutive days or more or on 2 (two) occasions within an 8 (eight) week period, the employee is obliged to supply the employer with a medical certificate issued by a medical practitioner setting out the reasons for their absence from work. 7.2.3 It is the employee's duty to notify both the relevant CHAI manager and provincial manager, of their absence."
+    },
+    {
+      type: "Maternity Leave",
+      allocation: "90 days",
+      accrual: "Available when needed",
+      carryOver: "Must be used within specified period",
+      eligibility: "Female employees",
+      requirements: "Medical certification required",
+      icon: Users,
+      color: "pink",
+      description: "7.3 Maternity Leave - Female employees shall, as per the BCEA, be entitled to four (4) consecutive months' maternity leave. A female employee is entitled to three months' paid maternity leave under CHAI's benefit provision. An additional one (1) month of maternity leave will be provided under the provisions of UIF."
+    },
+    {
+      type: "Parental Leave",
+      allocation: "20 days",
+      accrual: "Available when needed",
+      carryOver: "Must be used within 12 months of birth/adoption",
+      eligibility: "All parents",
+      requirements: "Birth/adoption certificate required",
+      icon: Users,
+      color: "green",
+      description: "7.4 Parental Leave - An employee is entitled to 4 (four) weeks per calendar year of unpaid parental leave in the circumstances provided for in the BCEA, as amended. An employee may commence parental leave on— (a) the day that the employee's child is born; or (b) the date— (i) that the adoption order is granted; or (ii) that a child is placed in the care of a prospective adoptive parent by a competent court, pending the finalisation of an adoption order in respect of that child, whichever date occurs first. An employee must notify the employer in writing, unless the employee is unable to do so, of the date on which the employee intends to commence parental leave and return to work after parental leave. Notification to the employer must be given at least 1 (one) month before the employee's child is expected to be born or, if it is not reasonably practicable to do so, as soon as is reasonably practicable."
+    },
+    {
+      type: "Family Leave",
+      allocation: "3 days per year",
+      accrual: "Full allocation at year start",
+      carryOver: "No carryover",
+      eligibility: "All permanent employees",
+      requirements: "Documentation may be required",
+      icon: Users,
+      color: "orange",
+      description: "7.5 Family Responsibility Leave - The employee shall, as per the BCEA, be entitled to three (3) days of Family Responsibility Leave per calendar year."
+    },
+    {
+      type: "Adoption Leave",
+      allocation: "20 days",
+      accrual: "Available when needed",
+      carryOver: "Must be used within adoption period",
+      eligibility: "Adoptive parents",
+      requirements: "Legal adoption documentation required",
+      icon: Users,
+      color: "purple",
+      description: "7.6 Adoption and Commissioning Parental Leave - Employees are entitled to 10 (ten) consecutive weeks of leave, or the parental leave referred to above, if: (a) the employee is a commissioning parent in a surrogate motherhood agreement; or (b) the employee is an adoptive parent of a child who is below the age of 2 (two) years. Any leave taken in terms of this provision shall be in compliance with the BCEA, as amended"
+    },
+    {
+      type: "Study Leave",
+      allocation: "6 days per year",
+      accrual: "Full allocation at year start",
+      carryOver: "No carryover",
+      eligibility: "Employees with >1 year service",
+      requirements: "Course approval and proof of attendance",
+      icon: FileText,
+      color: "indigo",
+      description: "The employee shall be entitled to six (6) days of Study leave per calendar year."
+    },
+    {
+      type: "Wellness Leave",
+      allocation: "2 days per year",
+      accrual: "Full allocation at year start",
+      carryOver: "No carryover",
+      eligibility: "All permanent employees",
+      requirements: "Self-certification acceptable",
+      icon: CheckCircle,
+      color: "teal",
+      description: "The employee shall be entitled to two (2) Wellness days leave per calendar year."
+    }
+  ];
+
   const getColorClasses = (color: string) => {
     const colorMap = {
       blue: "bg-blue-100 text-blue-800 border-blue-200",
@@ -110,187 +109,63 @@ export const PolicyGuide = () => {
     };
     return colorMap[color as keyof typeof colorMap] || colorMap.blue;
   };
-  return <div className="space-y-6">
+
+  return (
+    <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">Leave Policy Guide</h2>
         <p className="text-gray-600">Complete information about leave types, policies, and procedures</p>
       </div>
 
-      <Tabs defaultValue="leave-types" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="leave-types">Leave Types</TabsTrigger>
-          <TabsTrigger value="process">Application Process</TabsTrigger>
-          <TabsTrigger value="policies">Policies & Rules</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="leave-types" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {leaveTypes.map((leave, index) => {
-            const IconComponent = leave.icon;
-            return <Card key={index} className="hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-lg ${getColorClasses(leave.color)}`}>
-                        <IconComponent className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">{leave.type}</CardTitle>
-                        <CardDescription className="font-medium text-gray-700">
-                          {leave.allocation}
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Accrual:</span>
-                        <span className="font-medium">{leave.accrual}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Carry-over:</span>
-                        <span className="font-medium">{leave.carryOver}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Eligibility:</span>
-                        <span className="font-medium">{leave.eligibility}</span>
-                      </div>
-                    </div>
-                    <div className="border-t pt-3">
-                      <p className="text-xs text-gray-600">
-                        <strong>Requirements:</strong> {leave.requirements}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>;
-          })}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="process" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Leave Application Process</CardTitle>
-              <CardDescription>Follow these steps to submit and track your leave requests</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {applicationProcess.map((step, index) => {
-                const IconComponent = step.icon;
-                return <div key={index} className="flex items-start space-x-4">
-                      <div className="flex-shrink-0">
-                        <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
-                          {step.step}
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <IconComponent className="h-5 w-5 text-blue-600" />
-                          <h3 className="text-lg font-semibold text-gray-900">{step.title}</h3>
-                        </div>
-                        <p className="text-gray-600">{step.description}</p>
-                      </div>
-                    </div>;
-              })}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            
-            
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="policies" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {leaveTypes.map((leave, index) => {
+          const IconComponent = leave.icon;
+          return (
+            <Card key={index} className="hover:shadow-md transition-shadow">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span>General Policies</span>
-                </CardTitle>
+                <div className="flex items-center space-x-3">
+                  <div className={`p-2 rounded-lg ${getColorClasses(leave.color)}`}>
+                    <IconComponent className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">{leave.type}</CardTitle>
+                    <CardDescription className="font-medium text-gray-700">
+                      {leave.allocation}
+                    </CardDescription>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-2 text-sm">
-                  <h4 className="font-medium text-gray-900">Eligibility</h4>
-                  <ul className="text-gray-600 space-y-1">
-                    <li>• All permanent employees are entitled to leave benefits</li>
-                    <li>• Employees serving notice are not eligible for annual leave</li>
-                    <li>• Part-time employees receive pro-rated allocations</li>
-                  </ul>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Accrual:</span>
+                    <span className="font-medium">{leave.accrual}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Carry-over:</span>
+                    <span className="font-medium">{leave.carryOver}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Eligibility:</span>
+                    <span className="font-medium">{leave.eligibility}</span>
+                  </div>
                 </div>
-                
-                <div className="space-y-2 text-sm">
-                  <h4 className="font-medium text-gray-900">Approval Authority</h4>
-                  <ul className="text-gray-600 space-y-1">
-                    <li>• Direct manager approval required for all requests</li>
-                    <li>• HR approval needed for extended leave ({'>'}2 weeks)</li>
-                    <li>• CEO approval for sabbaticals</li>
-                  </ul>
+                <div className="border-t pt-3">
+                  <p className="text-xs text-gray-600">
+                    <strong>Requirements:</strong> {leave.requirements}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <AlertCircle className="h-5 w-5 text-yellow-600" />
-                  <span>Important Rules</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="space-y-2 text-sm">
-                  <h4 className="font-medium text-gray-900">Restrictions</h4>
-                  <ul className="text-gray-600 space-y-1">
-                    <li>• No more than 3 consecutive weeks annual leave</li>
-                    <li>• Blackout periods apply during busy seasons</li>
-                    <li>• Maximum 50% of team on leave simultaneously</li>
-                  </ul>
-                </div>
-                
-                <div className="space-y-2 text-sm">
-                  <h4 className="font-medium text-gray-900">Documentation</h4>
-                  <ul className="text-gray-600 space-y-1">
-                    <li>• Medical certificates for sick leave {'>'}1 day</li>
-                    <li>• Birth certificates for parental leave</li>
-                    <li>• Course enrollment for study leave</li>
-                  </ul>
+                <div className="border-t pt-3">
+                  <h4 className="text-sm font-semibold text-gray-800 mb-2">Policy Details:</h4>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    {leave.description}
+                  </p>
                 </div>
               </CardContent>
             </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
-              <CardDescription>Who to contact for leave-related questions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <h4 className="font-semibold text-blue-900">HR Department</h4>
-                  <p className="text-sm text-blue-700 mt-1">Policy questions & complex cases</p>
-                  <p className="text-sm text-blue-600 mt-2">hr@company.com</p>
-                  <p className="text-sm text-blue-600">ext. 1234</p>
-                </div>
-                
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <h4 className="font-semibold text-green-900">Direct Manager</h4>
-                  <p className="text-sm text-green-700 mt-1">Leave approvals & scheduling</p>
-                  <p className="text-sm text-green-600 mt-2">Your manager</p>
-                </div>
-                
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <h4 className="font-semibold text-purple-900">IT Support</h4>
-                  <p className="text-sm text-purple-700 mt-1">System issues & access</p>
-                  <p className="text-sm text-purple-600 mt-2">support@company.com</p>
-                  <p className="text-sm text-purple-600">ext. 5678</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>;
+          );
+        })}
+      </div>
+    </div>
+  );
 };

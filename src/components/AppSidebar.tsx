@@ -51,6 +51,11 @@ export const AppSidebar = ({
         value: "holidays",
         icon: Calendar,
         label: "Holidays"
+      },
+      {
+        value: "about",
+        icon: User,
+        label: "About Leave Types"
       }
     ];
 
@@ -70,7 +75,6 @@ export const AppSidebar = ({
         icon: Users,
         label: "User Management"
       });
-      // Removed the admin tab since holidays tab covers holiday management
     }
 
     return baseItems;
