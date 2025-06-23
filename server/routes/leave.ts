@@ -12,13 +12,8 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
-// Extended AuthRequest interface to include files
-interface AuthRequestWithFiles extends AuthRequest {
-  files?: Express.Multer.File[];
-}
-
 // Submit leave request with file attachments
-router.post('/request', authenticateToken, upload.array('attachments', 10), async (req: AuthRequestWithFiles, res) => {
+router.post('/request', authenticateToken, upload.array('attachments', 10), async (req: AuthRequest & { files?: Express.Multer.File[] }, res) => {
   try {
     const { title, detail, startDate, endDate, leaveType, workingDays } = req.body;
     const requester = req.user!.email;
