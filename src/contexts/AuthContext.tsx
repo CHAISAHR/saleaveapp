@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AccountInfo } from '@azure/msal-browser';
 import { msalInstance, loginRequest } from '@/config/authConfig';
@@ -9,6 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: () => Promise<void>;
   manualLogin: (email: string, password: string) => Promise<void>;
+  mockAdminLogin: () => void;
   manualSignUp: (userData: {
     email: string;
     password: string;
@@ -103,6 +103,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             localStorage.removeItem('manualUser');
           }
         }
+
+        // Check for mock admin login
+        const mockUser = localStorage.getItem('mockUser');
+        if (mockUser && !accounts.length && !authToken) {
+          console.log('[AuthContext] Setting mock user');
+          setUser(JSON.parse(mockUser));
+        }
       } catch (error) {
         console.error('[AuthContext] Auth initialization error:', error);
       } finally {
@@ -122,10 +129,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Clear any manual user data
         localStorage.removeItem('manualUser');
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('mockUser');
       }
     } catch (error) {
       console.error('Login error:', error);
     }
+  };
+
+  const mockAdminLogin = () => {
+    console.log('Mock admin login triggered');
+    
+    // Create a mock admin user
+    const mockAdminAccount: AccountInfo = {
+      homeAccountId: 'mock-admin@company.com',
+      environment: 'mock',
+      tenantId: 'mock-tenant',
+      username: 'admin@company.com',
+      localAccountId: 'mock-admin@company.com',
+      name: 'Admin User',
+      idTokenClaims: {
+        aud: 'mock',
+        iss: 'mock',
+        iat: Date.now() / 1000,
+        exp: (Date.now() / 1000) + 86400, // 24 hours
+        sub: 'mock-admin@company.com',
+        email: 'admin@company.com',
+        role: 'admin',
+        department: 'HR & Ops',
+        given_name: 'Admin',
+        family_name: 'User'
+      }
+    };
+
+    setUser(mockAdminAccount);
+    localStorage.setItem('mockUser', JSON.stringify(mockAdminAccount));
+    localStorage.setItem('auth_token', 'mock-admin-token');
+    
+    console.log('Mock admin login successful');
   };
 
   const manualLogin = async (email: string, password: string) => {
@@ -165,6 +205,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         setUser(userAccount);
         localStorage.setItem('manualUser', JSON.stringify(userAccount));
+        // Clear mock user if it exists
+        localStorage.removeItem('mockUser');
       } else {
         throw new Error(data.message || 'Login failed');
       }
@@ -253,6 +295,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       localStorage.removeItem('manualUser');
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('mockUser');
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
@@ -264,6 +307,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated: !!user,
     login,
     manualLogin,
+    mockAdminLogin,
     manualSignUp,
     resetPassword,
     logout,
