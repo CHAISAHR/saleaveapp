@@ -1,3 +1,4 @@
+
 import express from 'express';
 import multer from 'multer';
 import { executeQuery } from '../config/database';
@@ -13,10 +14,10 @@ const upload = multer({
 });
 
 // Submit leave request with file attachments
-router.post('/request', authenticateToken, upload.array('attachments', 10), async (req: AuthRequest & { files?: Express.Multer.File[] }, res) => {
+router.post('/request', authenticateToken, upload.array('attachments', 10), async (req, res) => {
   try {
     const { title, detail, startDate, endDate, leaveType, workingDays } = req.body;
-    const requester = req.user!.email;
+    const requester = (req as AuthRequest).user!.email;
     const files = req.files as Express.Multer.File[];
 
     const result = await executeQuery(
