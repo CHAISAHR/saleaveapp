@@ -1,6 +1,6 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Clock, Users, AlertCircle, CheckCircle, Calendar } from "lucide-react";
 
@@ -9,10 +9,6 @@ export const PolicyGuide = () => {
     {
       type: "Annual Leave",
       allocation: "20 days per year",
-      accrual: "1.66 days per month",
-      carryOver: "Expires 6 months after leave year end",
-      eligibility: "All permanent employees",
-      requirements: "2 days advance notice for planned leave",
       icon: Calendar,
       color: "blue",
       description: "7.1 Annual leave - The employee shall be entitled to 20 (twenty) working days' paid leave in respect of each annual leave cycle (January 1st – December 31st of each year) which shall accrue at 1.66 days per month. The employee is not entitled to take leave for which such leave has not been accrued, unless approved by the employer in writing. Accrued annual leave, can only be carried over to the next annual leave cycle for a maximum period of 6 (six) months after which the staff will forfeit it and no payment shall be made. The employee shall not be entitled to take annual leave during any period of notice, after any notice of termination is given by either party in terms of the termination provisions contained this contract."
@@ -20,10 +16,6 @@ export const PolicyGuide = () => {
     {
       type: "Sick Leave",
       allocation: "36 days per year",
-      accrual: "Full allocation at year start",
-      carryOver: "No expiry",
-      eligibility: "All employees from day one",
-      requirements: "Medical certificate required for >1 day",
       icon: FileText,
       color: "red",
       description: "7.2 Sick Leave - 7.2.1 The employee shall be entitled to the amount of sick leave provided for in terms of the Basic Conditions of Employment Act 75 of 1997 (\"BCEA\"). During the first six (6) months of employment, an employee is entitled to one (1) day's paid sick leave for every twenty-six (26) days worked. 7.2.2 If the employee is absent from work due to illness for 2 (two) consecutive days or more or on 2 (two) occasions within an 8 (eight) week period, the employee is obliged to supply the employer with a medical certificate issued by a medical practitioner setting out the reasons for their absence from work. 7.2.3 It is the employee's duty to notify both the relevant CHAI manager and provincial manager, of their absence."
@@ -31,10 +23,6 @@ export const PolicyGuide = () => {
     {
       type: "Maternity Leave",
       allocation: "90 days",
-      accrual: "Available when needed",
-      carryOver: "Must be used within specified period",
-      eligibility: "Female employees",
-      requirements: "Medical certification required",
       icon: Users,
       color: "pink",
       description: "7.3 Maternity Leave - Female employees shall, as per the BCEA, be entitled to four (4) consecutive months' maternity leave. A female employee is entitled to three months' paid maternity leave under CHAI's benefit provision. An additional one (1) month of maternity leave will be provided under the provisions of UIF."
@@ -42,10 +30,6 @@ export const PolicyGuide = () => {
     {
       type: "Parental Leave",
       allocation: "20 days",
-      accrual: "Available when needed",
-      carryOver: "Must be used within 12 months of birth/adoption",
-      eligibility: "All parents",
-      requirements: "Birth/adoption certificate required",
       icon: Users,
       color: "green",
       description: "7.4 Parental Leave - An employee is entitled to 4 (four) weeks per calendar year of unpaid parental leave in the circumstances provided for in the BCEA, as amended. An employee may commence parental leave on— (a) the day that the employee's child is born; or (b) the date— (i) that the adoption order is granted; or (ii) that a child is placed in the care of a prospective adoptive parent by a competent court, pending the finalisation of an adoption order in respect of that child, whichever date occurs first. An employee must notify the employer in writing, unless the employee is unable to do so, of the date on which the employee intends to commence parental leave and return to work after parental leave. Notification to the employer must be given at least 1 (one) month before the employee's child is expected to be born or, if it is not reasonably practicable to do so, as soon as is reasonably practicable."
@@ -53,10 +37,6 @@ export const PolicyGuide = () => {
     {
       type: "Family Leave",
       allocation: "3 days per year",
-      accrual: "Full allocation at year start",
-      carryOver: "No carryover",
-      eligibility: "All permanent employees",
-      requirements: "Documentation may be required",
       icon: Users,
       color: "orange",
       description: "7.5 Family Responsibility Leave - The employee shall, as per the BCEA, be entitled to three (3) days of Family Responsibility Leave per calendar year."
@@ -64,10 +44,6 @@ export const PolicyGuide = () => {
     {
       type: "Adoption Leave",
       allocation: "20 days",
-      accrual: "Available when needed",
-      carryOver: "Must be used within adoption period",
-      eligibility: "Adoptive parents",
-      requirements: "Legal adoption documentation required",
       icon: Users,
       color: "purple",
       description: "7.6 Adoption and Commissioning Parental Leave - Employees are entitled to 10 (ten) consecutive weeks of leave, or the parental leave referred to above, if: (a) the employee is a commissioning parent in a surrogate motherhood agreement; or (b) the employee is an adoptive parent of a child who is below the age of 2 (two) years. Any leave taken in terms of this provision shall be in compliance with the BCEA, as amended"
@@ -75,10 +51,6 @@ export const PolicyGuide = () => {
     {
       type: "Study Leave",
       allocation: "6 days per year",
-      accrual: "Full allocation at year start",
-      carryOver: "No carryover",
-      eligibility: "Employees with >1 year service",
-      requirements: "Course approval and proof of attendance",
       icon: FileText,
       color: "indigo",
       description: "The employee shall be entitled to six (6) days of Study leave per calendar year."
@@ -86,10 +58,6 @@ export const PolicyGuide = () => {
     {
       type: "Wellness Leave",
       allocation: "2 days per year",
-      accrual: "Full allocation at year start",
-      carryOver: "No carryover",
-      eligibility: "All permanent employees",
-      requirements: "Self-certification acceptable",
       icon: CheckCircle,
       color: "teal",
       description: "The employee shall be entitled to two (2) Wellness days leave per calendar year."
@@ -136,25 +104,6 @@ export const PolicyGuide = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Accrual:</span>
-                    <span className="font-medium">{leave.accrual}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Carry-over:</span>
-                    <span className="font-medium">{leave.carryOver}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Eligibility:</span>
-                    <span className="font-medium">{leave.eligibility}</span>
-                  </div>
-                </div>
-                <div className="border-t pt-3">
-                  <p className="text-xs text-gray-600">
-                    <strong>Requirements:</strong> {leave.requirements}
-                  </p>
-                </div>
                 <div className="border-t pt-3">
                   <h4 className="text-sm font-semibold text-gray-800 mb-2">Policy Details:</h4>
                   <p className="text-xs text-gray-600 leading-relaxed">
@@ -169,3 +118,4 @@ export const PolicyGuide = () => {
     </div>
   );
 };
+
