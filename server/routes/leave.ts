@@ -3,7 +3,6 @@ import express from 'express';
 import multer from 'multer';
 import { executeQuery } from '../config/database';
 import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
-import { emailService } from '../services/emailService';
 
 const router = express.Router();
 
@@ -14,8 +13,13 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
+// Extended AuthRequest interface to include files
+interface AuthRequestWithFiles extends AuthRequest {
+  files?: Express.Multer.File[];
+}
+
 // Submit leave request with file attachments
-router.post('/request', authenticateToken, upload.array('attachments', 10), async (req: AuthRequest, res) => {
+router.post('/request', authenticateToken, upload.array('attachments', 10), async (req: AuthRequestWithFiles, res) => {
   try {
     const { title, detail, startDate, endDate, leaveType, workingDays } = req.body;
     const requester = req.user!.email;
@@ -40,7 +44,7 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
       }
     }
 
-    // Get manager email and send notifications
+    // Get manager email and send notifications (simplified without email service)
     const managerQuery = await executeQuery(
       'SELECT Manager FROM leave_balances WHERE EmployeeEmail = ? AND Year = ?',
       [requester, new Date().getFullYear()]
@@ -48,16 +52,8 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
 
     const managerEmail = managerQuery[0]?.Manager || 'admin@company.com';
     
-    // Send email notifications
-    await emailService.notifyManagerOfLeaveRequest({
-      title,
-      leaveType,
-      startDate,
-      endDate,
-      workingDays,
-      submittedBy: req.user!.name,
-      description: detail
-    }, managerEmail);
+    // Log notification instead of sending email for now
+    console.log(`Leave request notification would be sent to: ${managerEmail}`);
 
     res.status(201).json({
       success: true,
@@ -97,7 +93,7 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
       params = [req.user!.email, req.user!.email];
     } else {
       // Employee can only see their own requests with attachments
-      query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.Leave Type, 
+      query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
                lt.Requester, lt.Approver, lt.Status, lt.Created, lt.Modified, lt.Modified_By,
                lt.workingDays, COUNT(la.id) as attachment_count
                FROM leave_taken lt 
@@ -126,7 +122,7 @@ router.put('/requests/:id/status', authenticateToken, requireRole(['manager', 'a
       [status, approver || req.user!.email, req.user!.email, id]
     );
 
-    // Get leave request details for email notification
+    // Get leave request details for logging
     const leaveDetails = await executeQuery(
       'SELECT * FROM leave_taken WHERE LeaveID = ?',
       [id]
@@ -134,12 +130,7 @@ router.put('/requests/:id/status', authenticateToken, requireRole(['manager', 'a
 
     if (leaveDetails.length > 0) {
       const leave = leaveDetails[0];
-      
-      if (status === 'approved') {
-        await emailService.notifyEmployeeOfApproval(leave, req.user!.name);
-      } else if (status === 'rejected') {
-        await emailService.notifyEmployeeOfRejection(leave, req.user!.name);
-      }
+      console.log(`Leave request ${status} notification would be sent to: ${leave.Requester}`);
     }
 
     res.json({
@@ -149,6 +140,61 @@ router.put('/requests/:id/status', authenticateToken, requireRole(['manager', 'a
   } catch (error) {
     console.error('Update status error:', error);
     res.status(500).json({ success: false, message: 'Failed to update leave request status' });
+  }
+});
+
+// Automatic forfeit leave endpoint (to be called by cron job or scheduled task)
+router.post('/auto-forfeit', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+  try {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const isAfterJuly31 = currentDate > new Date(currentYear, 6, 31); // July is month 6 (0-indexed)
+
+    if (!isAfterJuly31) {
+      return res.json({
+        success: false,
+        message: 'Automatic forfeit only runs after July 31st'
+      });
+    }
+
+    // Get all balances where brought forward leave should be forfeited
+    const balancesToUpdate = await executeQuery(
+      `SELECT BalanceID, EmployeeName, EmployeeEmail, Broughtforward, AnnualUsed, Forfeited
+       FROM leave_balances 
+       WHERE Year = ? AND (Broughtforward - AnnualUsed - Forfeited) > 0`,
+      [currentYear]
+    );
+
+    let totalForfeited = 0;
+    const updatedEmployees = [];
+
+    for (const balance of balancesToUpdate) {
+      const forfeitAmount = Math.max(0, balance.Broughtforward - balance.AnnualUsed - balance.Forfeited);
+      
+      if (forfeitAmount > 0) {
+        await executeQuery(
+          'UPDATE leave_balances SET Forfeited = Forfeited + ?, Modified = NOW() WHERE BalanceID = ?',
+          [forfeitAmount, balance.BalanceID]
+        );
+        
+        totalForfeited += forfeitAmount;
+        updatedEmployees.push({
+          name: balance.EmployeeName,
+          email: balance.EmployeeEmail,
+          forfeited: forfeitAmount
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Automatically forfeited ${totalForfeited} days of brought forward leave for ${updatedEmployees.length} employees`,
+      totalForfeited,
+      updatedEmployees
+    });
+  } catch (error) {
+    console.error('Auto forfeit error:', error);
+    res.status(500).json({ success: false, message: 'Failed to auto-forfeit leave' });
   }
 });
 

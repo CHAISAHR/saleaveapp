@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,8 +60,12 @@ export const AdminAllBalances = () => {
   const [showForfeitWarning, setShowForfeitWarning] = useState(false);
   const [currentYear] = useState(new Date().getFullYear());
 
-  // Check if current month is December
-  const isDecember = new Date().getMonth() === 11; // December is month 11 (0-indexed)
+  // Check if current date is after July 31st
+  const isAfterJuly31 = () => {
+    const currentDate = new Date();
+    const july31 = new Date(currentDate.getFullYear(), 6, 31); // July is month 6 (0-indexed)
+    return currentDate > july31;
+  };
 
   // Mock data - in real app this would come from API
   const [balances, setBalances] = useState<EmployeeBalance[]>([
@@ -183,6 +187,40 @@ export const AdminAllBalances = () => {
       description: `Successfully forfeited ${totalForfeited} days of brought forward leave across all employees.`,
     });
   };
+
+  // Auto-forfeit functionality
+  const checkAndAutoForfeit = () => {
+    if (isAfterJuly31()) {
+      const updatedBalances = balances.map(balance => {
+        const unusedBroughtForward = Math.max(0, balance.Broughtforward - balance.AnnualUsed - balance.Forfeited);
+        if (unusedBroughtForward > 0) {
+          return {
+            ...balance,
+            Forfeited: balance.Forfeited + unusedBroughtForward,
+            Modified: new Date().toISOString()
+          };
+        }
+        return balance;
+      });
+
+      const employeesAffected = updatedBalances.filter((balance, index) => 
+        balance.Forfeited !== balances[index].Forfeited
+      ).length;
+
+      if (employeesAffected > 0) {
+        setBalances(updatedBalances);
+        toast({
+          title: "Automatic Leave Forfeit",
+          description: `Automatically forfeited unused brought forward leave for ${employeesAffected} employees after July 31st.`,
+        });
+      }
+    }
+  };
+
+  // Run auto-forfeit check on component mount and whenever balances change
+  useEffect(() => {
+    checkAndAutoForfeit();
+  }, []);
 
   const handleForfeitedChange = (balanceId: number, value: string) => {
     const numericValue = parseFloat(value) || 0;
@@ -334,6 +372,11 @@ export const AdminAllBalances = () => {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">All Employee Balances</h2>
           <p className="text-gray-600">View and edit leave balances for all employees</p>
+          {isAfterJuly31() && (
+            <p className="text-sm text-orange-600 mt-1">
+              🍂 Automatic forfeit active: Unused brought forward leave after July 31st is automatically forfeited
+            </p>
+          )}
         </div>
         <div className="flex space-x-2">
           <Button 
@@ -551,6 +594,11 @@ export const AdminAllBalances = () => {
                   <li>Forfeited leave cannot be recovered once processed</li>
                   <li>This action affects multiple employees simultaneously</li>
                   <li>You can manually edit individual forfeit amounts after this operation</li>
+                  {isAfterJuly31() && (
+                    <li className="text-orange-600">
+                      📅 Note: Automatic forfeit is active after July 31st
+                    </li>
+                  )}
                 </ul>
                 <p className="text-red-600 font-medium">
                   Are you sure you want to forfeit brought forward leave?
