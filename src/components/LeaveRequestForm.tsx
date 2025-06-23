@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -195,15 +196,6 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     return selectedLeaveType.balance < workingDays;
   };
 
-  // Check if sick leave requires medical certificate
-  const requiresMedicalCertificate = () => {
-    if (formData.leaveType === 'sick') {
-      const workingDays = calculateWorkingDays();
-      return workingDays > 1;
-    }
-    return false;
-  };
-
   // Check if document attachment is required for sick leave
   const requiresDocumentAttachment = () => {
     if (formData.leaveType === 'sick') {
@@ -297,7 +289,6 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         - Working Days Applied: ${requestData.workingDays}
         - Description: ${requestData.description}
         ${requestData.requiresHRApproval ? '\n⚠️ REQUIRES HR APPROVAL: Insufficient leave balance' : ''}
-        ${requestData.requiresMedicalCert ? '\n📄 REQUIRES: Medical certificate to be forwarded to HR' : ''}
         ${requestData.attachedFiles && requestData.attachedFiles.length > 0 ? `\n📎 ATTACHED DOCUMENTS: ${requestData.attachedFiles.map((f: File) => f.name).join(', ')}` : ''}
         
         Please log into the leave management system to review and approve this request.
@@ -373,7 +364,6 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
 
     const workingDays = calculateWorkingDays();
     const requiresHRApproval = isBalanceInsufficient();
-    const requiresMedicalCert = requiresMedicalCertificate();
     
     const requestData = {
       ...formData,
@@ -382,7 +372,6 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       submittedDate: new Date().toISOString(),
       status: 'pending',
       requiresHRApproval,
-      requiresMedicalCert,
       attachedFiles: attachedFiles.length > 0 ? attachedFiles : undefined
     };
 
@@ -437,10 +426,6 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     
     if (requiresHRApproval) {
       toastMessage += " This request requires HR approval due to insufficient balance.";
-    }
-    
-    if (requiresMedicalCert) {
-      toastMessage += " Please forward medical certificate to HR.";
     }
 
     if (attachedFiles.length > 0) {
@@ -528,7 +513,6 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                     mode="single"
                     selected={formData.startDate}
                     onSelect={(date) => setFormData(prev => ({ ...prev, startDate: date }))}
-                    disabled={(date) => date < new Date()}
                     initialFocus
                   />
                 </PopoverContent>
@@ -552,7 +536,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                     mode="single"
                     selected={formData.endDate}
                     onSelect={(date) => setFormData(prev => ({ ...prev, endDate: date }))}
-                    disabled={(date) => date < (formData.startDate || new Date())}
+                    disabled={(date) => date < (formData.startDate || new Date('1900-01-01'))}
                     initialFocus
                   />
                 </PopoverContent>
@@ -700,16 +684,6 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                   <AlertTriangle className="h-4 w-4 text-orange-600" />
                   <AlertDescription className="text-orange-800">
                     <strong>HR Approval Required:</strong> Your available balance ({selectedLeaveType.balance} days) is less than the requested days ({calculateWorkingDays()} days). This request will be forwarded to HR for final approval after manager approval.
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {/* Medical Certificate Alert */}
-              {requiresMedicalCertificate() && (
-                <Alert className="border-blue-200 bg-blue-50">
-                  <Info className="h-4 w-4 text-blue-600" />
-                  <AlertDescription className="text-blue-800">
-                    <strong>Medical Certificate Required:</strong> For sick leave exceeding 1 day, please forward a medical certificate to HR.
                   </AlertDescription>
                 </Alert>
               )}
