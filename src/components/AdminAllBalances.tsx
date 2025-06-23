@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit, Save, Plus, Download, RotateCcw } from "lucide-react";
+import { Edit, Save, Plus, Download, RotateCcw, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { balanceService } from "@/services/balanceService";
 import { YearRolloverDialog } from "./YearRolloverDialog";
@@ -56,6 +56,8 @@ export const AdminAllBalances = () => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedBalance, setSelectedBalance] = useState<EmployeeBalance | null>(null);
   const [showRolloverDialog, setShowRolloverDialog] = useState(false);
+  const [showRolloverWarning, setShowRolloverWarning] = useState(false);
+  const [showForfeitWarning, setShowForfeitWarning] = useState(false);
   const [currentYear] = useState(new Date().getFullYear());
 
   // Check if current month is December
@@ -145,6 +147,50 @@ export const AdminAllBalances = () => {
 
   const getEmployeeStatus = (balance: EmployeeBalance) => {
     return balanceService.getEmployeeStatus(balance.Contract_termination_date);
+  };
+
+  const handleRolloverWarning = () => {
+    setShowRolloverWarning(true);
+  };
+
+  const confirmRollover = () => {
+    setShowRolloverWarning(false);
+    setShowRolloverDialog(true);
+  };
+
+  const handleForfeitWarning = () => {
+    setShowForfeitWarning(true);
+  };
+
+  const confirmForfeit = () => {
+    setShowForfeitWarning(false);
+    
+    const updatedBalances = balances.map(balance => {
+      const forfeitAmount = Math.max(0, balance.Broughtforward - balance.AnnualUsed);
+      return {
+        ...balance,
+        Forfeited: forfeitAmount,
+        Modified: new Date().toISOString()
+      };
+    });
+
+    setBalances(updatedBalances);
+
+    const totalForfeited = updatedBalances.reduce((sum, balance) => sum + balance.Forfeited, 0);
+    
+    toast({
+      title: "Leave Forfeited",
+      description: `Successfully forfeited ${totalForfeited} days of brought forward leave across all employees.`,
+    });
+  };
+
+  const handleForfeitedChange = (balanceId: number, value: string) => {
+    const numericValue = parseFloat(value) || 0;
+    setBalances(prev => prev.map(balance => 
+      balance.BalanceID === balanceId 
+        ? { ...balance, Forfeited: numericValue, Modified: new Date().toISOString() }
+        : balance
+    ));
   };
 
   const downloadCSV = () => {
@@ -276,12 +322,10 @@ export const AdminAllBalances = () => {
   };
 
   const handleRolloverComplete = () => {
-    // Refresh balances data after rollover
     toast({
       title: "Data Refreshed",
       description: "Employee balances have been updated after rollover.",
     });
-    // In real implementation, this would refetch data from API
   };
 
   return (
@@ -293,14 +337,20 @@ export const AdminAllBalances = () => {
         </div>
         <div className="flex space-x-2">
           <Button 
-            onClick={() => setShowRolloverDialog(true)}
+            onClick={handleRolloverWarning}
             variant="default"
-            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 disabled:hover:bg-gray-400 disabled:cursor-not-allowed"
-            disabled={!isDecember}
-            title={!isDecember ? "Year rollover is only available in December" : "Start year rollover process"}
+            className="bg-orange-600 hover:bg-orange-700"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
             Year Rollover
+          </Button>
+          <Button 
+            onClick={handleForfeitWarning}
+            variant="default"
+            className="bg-red-600 hover:bg-red-700"
+          >
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            Forfeit Leave
           </Button>
           <Button onClick={downloadCSV} variant="outline">
             <Download className="h-4 w-4 mr-2" />
@@ -380,7 +430,15 @@ export const AdminAllBalances = () => {
                     <TableCell>{balance.Annual}</TableCell>
                     <TableCell className="font-medium text-purple-600">{balance.AccumulatedLeave}</TableCell>
                     <TableCell>{balance.AnnualUsed}</TableCell>
-                    <TableCell>{balance.Forfeited}</TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={balance.Forfeited}
+                        onChange={(e) => handleForfeitedChange(balance.BalanceID, e.target.value)}
+                        className="w-20 h-8 text-sm"
+                      />
+                    </TableCell>
                     <TableCell>{balance.Annual_leave_adjustments}</TableCell>
                     <TableCell>{balance.SickBroughtforward}</TableCell>
                     <TableCell>{balance.Sick}</TableCell>
@@ -436,6 +494,82 @@ export const AdminAllBalances = () => {
         </CardContent>
       </Card>
 
+      {/* Year Rollover Warning Dialog */}
+      <Dialog open={showRolloverWarning} onOpenChange={setShowRolloverWarning}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              Confirm Year Rollover
+            </DialogTitle>
+            <DialogDescription>
+              <div className="space-y-3">
+                <p>
+                  <strong>Warning:</strong> Year rollover is a critical operation that will:
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Create new balance records for the next year</li>
+                  <li>Carry forward unused leave balances according to policy</li>
+                  <li>Reset used leave counters to zero</li>
+                  <li>This action affects all employees and cannot be easily undone</li>
+                </ul>
+                <p className="text-red-600 font-medium">
+                  Are you sure you want to proceed with the year rollover?
+                </p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setShowRolloverWarning(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmRollover} className="bg-orange-600 hover:bg-orange-700">
+              Proceed with Rollover
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Forfeit Leave Warning Dialog */}
+      <Dialog open={showForfeitWarning} onOpenChange={setShowForfeitWarning}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Confirm Leave Forfeiture
+            </DialogTitle>
+            <DialogDescription>
+              <div className="space-y-3">
+                <p>
+                  <strong>Warning:</strong> This action will forfeit brought forward leave for all employees where:
+                </p>
+                <p className="font-mono bg-gray-100 p-2 rounded">
+                  (Brought Forward - Annual Used) &gt; 0
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>This will update the "Forfeited" column for affected employees</li>
+                  <li>Forfeited leave cannot be recovered once processed</li>
+                  <li>This action affects multiple employees simultaneously</li>
+                  <li>You can manually edit individual forfeit amounts after this operation</li>
+                </ul>
+                <p className="text-red-600 font-medium">
+                  Are you sure you want to forfeit brought forward leave?
+                </p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setShowForfeitWarning(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmForfeit} className="bg-red-600 hover:bg-red-700">
+              Forfeit Leave
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Balance Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
