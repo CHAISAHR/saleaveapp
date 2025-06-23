@@ -6,7 +6,6 @@ import { AdminAllRequests } from "@/components/AdminAllRequests";
 import { AdminAllBalances } from "@/components/AdminAllBalances";
 import { AdminPanel } from "@/components/AdminPanel";
 import { HolidayCalendar } from "@/components/HolidayCalendar";
-import { About } from "@/components/About";
 
 interface MainContentProps {
   activeTab: string;
@@ -45,11 +44,11 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
       case 'user-management':
         return userRole === 'admin' ? <AdminPanel currentUser={currentUser} /> : null;
 
+      case 'admin':
+        return userRole === 'admin' ? <AdminDashboard currentUser={currentUser} activeView="admin" /> : null;
+
       case 'holidays':
         return <HolidayCalendar userRole={userRole} />;
-
-      case 'about':
-        return <About />;
 
       default:
         return <div>Page not found</div>;

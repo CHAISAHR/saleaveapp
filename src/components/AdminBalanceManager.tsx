@@ -7,10 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit, Plus, Save, Upload, Download } from "lucide-react";
+import { Edit, Plus, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { ExcelUploader } from "./admin/ExcelUploader";
-import * as XLSX from 'xlsx';
 
 interface EmployeeBalance {
   BalanceID: number;
@@ -33,7 +31,6 @@ interface EmployeeBalance {
 export const AdminBalanceManager = () => {
   const { toast } = useToast();
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [selectedBalance, setSelectedBalance] = useState<EmployeeBalance | null>(null);
   const [adjustmentComment, setAdjustmentComment] = useState("");
 
@@ -123,53 +120,6 @@ export const AdminBalanceManager = () => {
     } : null);
   };
 
-  const downloadBalances = () => {
-    const wsData = [
-      [
-        'Employee Name',
-        'Email',
-        'Department',
-        'Year',
-        'Brought Forward',
-        'Annual Allocated',
-        'Annual Used',
-        'Forfeited',
-        'Adjustments',
-        'Sick Used',
-        'Family Used',
-        'Study Used',
-        'Current Balance',
-        'Manager'
-      ],
-      ...balances.map(balance => [
-        balance.EmployeeName,
-        balance.EmployeeEmail,
-        balance.Department,
-        balance.Year,
-        balance.Broughtforward,
-        balance.Annual,
-        balance.AnnualUsed,
-        balance.Forfeited,
-        balance.Annual_leave_adjustments,
-        balance.SickUsed,
-        balance.FamilyUsed,
-        balance.StudyUsed,
-        balance.Current_leave_balance,
-        balance.Manager || ''
-      ])
-    ];
-
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    XLSX.utils.book_append_sheet(wb, ws, 'Leave Balances');
-    XLSX.writeFile(wb, `leave_balances_${new Date().toISOString().split('T')[0]}.xlsx`);
-
-    toast({
-      title: "Download Complete",
-      description: "Leave balances have been downloaded as Excel file.",
-    });
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -177,26 +127,10 @@ export const AdminBalanceManager = () => {
           <h2 className="text-2xl font-bold text-gray-900">Employee Leave Balances</h2>
           <p className="text-gray-600">View and manage employee leave balances</p>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            onClick={downloadBalances}
-            variant="outline"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Download Excel
-          </Button>
-          <Button 
-            onClick={() => setShowBulkUpload(true)}
-            variant="outline"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Bulk Upload
-          </Button>
-          <Button variant="outline">
-            <Plus className="h-4 w-4 mr-2" />
-            Add New Employee
-          </Button>
-        </div>
+        <Button variant="outline">
+          <Plus className="h-4 w-4 mr-2" />
+          Add New Employee
+        </Button>
       </div>
 
       <Card>
@@ -353,28 +287,6 @@ export const AdminBalanceManager = () => {
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showBulkUpload} onOpenChange={setShowBulkUpload}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Bulk Upload Leave Balances</DialogTitle>
-            <DialogDescription>
-              Upload multiple employee leave balances via Excel file
-            </DialogDescription>
-          </DialogHeader>
-          <ExcelUploader 
-            type="balances" 
-            onUploadComplete={() => {
-              // Refresh balances data here
-              setShowBulkUpload(false);
-              toast({
-                title: "Balances Updated",
-                description: "Leave balances have been refreshed with new data.",
-              });
-            }} 
-          />
         </DialogContent>
       </Dialog>
     </div>

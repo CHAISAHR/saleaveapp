@@ -45,7 +45,6 @@
     "@types/bcryptjs": "^3.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
-    "@types/multer": "^1.4.13",
     "@types/nodemailer": "^6.4.17",
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
@@ -71,7 +70,6 @@
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.3",
-    "xlsx": "^0.18.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {

@@ -16,7 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, Settings, Database, LogOut, User, Info } from "lucide-react";
+import { Calendar, Users, Settings, Database, LogOut, User } from "lucide-react";
 
 interface AppSidebarProps {
   currentUser: any;
@@ -51,11 +51,6 @@ export const AppSidebar = ({
         value: "holidays",
         icon: Calendar,
         label: "Holidays"
-      },
-      {
-        value: "about",
-        icon: Info,
-        label: "About"
       }
     ];
 
@@ -74,6 +69,11 @@ export const AppSidebar = ({
         value: "user-management",
         icon: Users,
         label: "User Management"
+      });
+      baseItems.splice(5, 0, {
+        value: "admin",
+        icon: Settings,
+        label: "Administration"
       });
     }
 

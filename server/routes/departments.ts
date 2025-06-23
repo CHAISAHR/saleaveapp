@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
   try {
     // Since there might not be a departments table yet, return default departments
     const defaultDepartments = [
-      { id: 1, name: 'HR & Ops', is_active: true},
+      { id: 1, name: 'Hr & Ops', is_active: true},
       { id: 2, name: 'Access to Medicines', is_active: true},
       { id: 3, name: 'Finance',is_active: true },
       { id: 4, name: 'Assistive Technologies',is_active: true},
@@ -19,8 +19,7 @@ router.get('/', async (req, res) => {
       { id: 8, name: 'Cancer',is_active: true},
       { id: 9, name: 'Global',is_active: true},
       { id: 10, name: 'FCDO',is_active: true},
-      { id: 11, name: 'Malaria',is_active: true},
-      { id: 12, name: 'Other',is_active: true}
+      { id: 11, name: 'Other',is_active: true}
       ];
 
     res.json({ 

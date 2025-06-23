@@ -9,8 +9,6 @@ import balanceRoutes from './routes/balance';
 import holidayRoutes from './routes/holiday';
 import rolloverRoutes from './routes/rollover';
 import departmentRoutes from './routes/departments';
-import externalRoutes from './routes/external';
-import bulkUploadRoutes from './routes/bulk-upload';
 
 // Load environment variables
 dotenv.config();
@@ -39,8 +37,6 @@ app.use('/api/balance', balanceRoutes);
 app.use('/api/holiday', holidayRoutes);
 app.use('/api/rollover', rolloverRoutes);
 app.use('/api/departments', departmentRoutes);
-app.use('/api/external', externalRoutes); // External API endpoints
-app.use('/api/bulk-upload', bulkUploadRoutes); // Bulk upload endpoints
 
 // Health check
 app.get('/health', (req, res) => {

@@ -33,20 +33,6 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // Check if department exists, if not create it
-    const existingDepartments = await executeQuery(
-      'SELECT name FROM departments WHERE name = ?',
-      [department]
-    );
-
-    if (existingDepartments.length === 0) {
-      console.log(`Department "${department}" doesn't exist, creating it...`);
-      await executeQuery(
-        'INSERT INTO departments (name, description, is_active) VALUES (?, ?, TRUE)',
-        [department, `${department} department`]
-      );
-    }
-
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -77,17 +63,8 @@ router.post('/register', async (req, res) => {
       message: 'User registered successfully',
       userId: result.insertId
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Registration error:', error);
-    
-    // Provide more specific error messages
-    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid department selected. Please choose a valid department.' 
-      });
-    }
-    
     res.status(500).json({ success: false, message: 'Registration failed' });
   }
 });
