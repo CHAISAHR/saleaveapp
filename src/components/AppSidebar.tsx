@@ -55,7 +55,7 @@ export const AppSidebar = ({
       {
         value: "about",
         icon: User,
-        label: "About Leave Types"
+        label: "About"
       }
     ];
 
