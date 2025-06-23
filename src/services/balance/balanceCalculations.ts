@@ -13,6 +13,53 @@ export class BalanceCalculations {
     return termDate < today;
   }
 
+  // Calculate prorated monthly accumulation based on employee start date
+  static calculateProratedAccumulationFromStartDate(startDate: string, currentYear: number = new Date().getFullYear()): number {
+    const start = new Date(startDate);
+    const startYear = start.getFullYear();
+    
+    // If employee started before current year, use full year accumulation
+    if (startYear < currentYear) {
+      return this.calculateMonthlyAccumulation();
+    }
+    
+    // If employee started in current year, calculate from start date
+    if (startYear === currentYear) {
+      const startMonth = start.getMonth() + 1; // 1-based month
+      const startDay = start.getDate();
+      const currentMonth = new Date().getMonth() + 1;
+      
+      let totalAccumulation = 0;
+      
+      // Calculate for each month from start month to current month
+      for (let month = startMonth; month <= currentMonth; month++) {
+        if (month === startMonth) {
+          // First month: prorate based on days worked
+          const daysInStartMonth = new Date(currentYear, startMonth, 0).getDate();
+          const daysWorked = daysInStartMonth - startDay + 1;
+          const monthlyRate = 1.667;
+          const dailyRate = monthlyRate / daysInStartMonth;
+          totalAccumulation += dailyRate * daysWorked;
+        } else {
+          // Full months
+          totalAccumulation += 1.667;
+        }
+      }
+      
+      console.log(`Prorated accumulation for employee starting ${startDate}:`, {
+        startMonth,
+        startDay,
+        currentMonth,
+        totalAccumulation: totalAccumulation.toFixed(2)
+      });
+      
+      return Number(totalAccumulation.toFixed(1));
+    }
+    
+    // If employee starts in future, no accumulation yet
+    return 0;
+  }
+
   // Calculate monthly accumulation for annual leave (1.667 per month up to current month)
   static calculateMonthlyAccumulation(currentMonth: number = new Date().getMonth() + 1, terminationDate?: string): number {
     // If termination date has passed, use accumulation up to termination date only
@@ -58,15 +105,21 @@ export class BalanceCalculations {
     return Number(totalAccumulation.toFixed(1));
   }
 
-  // Calculate current annual leave balance using AccumulatedLeave
-  static calculateAnnualLeaveBalance(balance: EmployeeBalance): number {
+  // Calculate current annual leave balance using AccumulatedLeave with prorated start date consideration
+  static calculateAnnualLeaveBalance(balance: EmployeeBalance, employeeStartDate?: string): number {
     if (balance.Contract_termination_date && this.hasTerminationDatePassed(balance.Contract_termination_date)) {
       return this.calculateTerminationBalance(balance, balance.Contract_termination_date);
     }
     
+    // Use prorated accumulation if employee start date is provided
+    let accumulatedLeave = balance.AccumulatedLeave;
+    if (employeeStartDate) {
+      accumulatedLeave = this.calculateProratedAccumulationFromStartDate(employeeStartDate, balance.Year);
+    }
+    
     return Number((
       balance.Broughtforward + 
-      balance.AccumulatedLeave - 
+      accumulatedLeave - 
       balance.AnnualUsed - 
       balance.Forfeited - 
       balance.Annual_leave_adjustments
@@ -92,10 +145,10 @@ export class BalanceCalculations {
   }
 
   // Calculate current balance based on leave type
-  static calculateCurrentBalance(balance: EmployeeBalance, leaveType: string = 'annual'): number {
+  static calculateCurrentBalance(balance: EmployeeBalance, leaveType: string = 'annual', employeeStartDate?: string): number {
     switch (leaveType.toLowerCase()) {
       case 'annual':
-        return this.calculateAnnualLeaveBalance(balance);
+        return this.calculateAnnualLeaveBalance(balance, employeeStartDate);
       case 'sick':
         return this.calculateOtherLeaveBalance(36, balance.SickUsed);
       case 'maternity':
@@ -111,14 +164,14 @@ export class BalanceCalculations {
       case 'mentalhealth':
         return this.calculateOtherLeaveBalance(2, balance.MentalhealthUsed);
       default:
-        return this.calculateAnnualLeaveBalance(balance);
+        return this.calculateAnnualLeaveBalance(balance, employeeStartDate);
     }
   }
 
   // Get all leave balances for an employee
-  static getAllLeaveBalances(balance: EmployeeBalance) {
+  static getAllLeaveBalances(balance: EmployeeBalance, employeeStartDate?: string) {
     return {
-      annual: this.calculateAnnualLeaveBalance(balance),
+      annual: this.calculateAnnualLeaveBalance(balance, employeeStartDate),
       sick: this.calculateOtherLeaveBalance(36, balance.SickUsed),
       maternity: this.calculateOtherLeaveBalance(90, balance.MaternityUsed),
       parental: this.calculateOtherLeaveBalance(20, balance.ParentalUsed),

@@ -27,6 +27,7 @@ export interface EmployeeBalance {
   Manager: string;
   Contract_termination_date?: string;
   termination_balance?: number;
+  Start_date?: string; // Employee start date for prorated calculations
 }
 
 export interface LeaveRequest {
@@ -52,12 +53,16 @@ class BalanceService {
     return BalanceCalculations.calculateMonthlyAccumulation(currentMonth, terminationDate);
   }
 
+  calculateProratedAccumulationFromStartDate(startDate: string, currentYear: number = new Date().getFullYear()): number {
+    return BalanceCalculations.calculateProratedAccumulationFromStartDate(startDate, currentYear);
+  }
+
   calculateProRatedAccumulation(terminationDate: string): number {
     return BalanceCalculations.calculateProRatedAccumulation(terminationDate);
   }
 
-  calculateAnnualLeaveBalance(balance: EmployeeBalance): number {
-    return BalanceCalculations.calculateAnnualLeaveBalance(balance);
+  calculateAnnualLeaveBalance(balance: EmployeeBalance, employeeStartDate?: string): number {
+    return BalanceCalculations.calculateAnnualLeaveBalance(balance, employeeStartDate);
   }
 
   calculateTerminationBalance(balance: EmployeeBalance, terminationDate: string): number {
@@ -68,12 +73,12 @@ class BalanceService {
     return BalanceCalculations.calculateOtherLeaveBalance(yearlyAllocation, used);
   }
 
-  calculateCurrentBalance(balance: EmployeeBalance, leaveType: string = 'annual'): number {
-    return BalanceCalculations.calculateCurrentBalance(balance, leaveType);
+  calculateCurrentBalance(balance: EmployeeBalance, leaveType: string = 'annual', employeeStartDate?: string): number {
+    return BalanceCalculations.calculateCurrentBalance(balance, leaveType, employeeStartDate);
   }
 
-  getAllLeaveBalances(balance: EmployeeBalance) {
-    return BalanceCalculations.getAllLeaveBalances(balance);
+  getAllLeaveBalances(balance: EmployeeBalance, employeeStartDate?: string) {
+    return BalanceCalculations.getAllLeaveBalances(balance, employeeStartDate);
   }
 
   // Delegation methods for validations

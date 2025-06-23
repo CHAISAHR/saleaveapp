@@ -387,7 +387,7 @@ export const HolidayCalendar = ({
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Holiday Calendar</h2>
-          <p className="text-gray-600">Public holidays and office closure dates for 2025</p>
+          <p className="text-gray-600">Public holidays and office closure dates</p>
         </div>
         <div className="flex space-x-2">
           {userRole === 'admin' && (
