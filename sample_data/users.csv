@@ -1,0 +1,5 @@
+
+email,name,department,gender,role,hire_date,manager_email,contract_termination_date,is_active
+john.doe@company.com,John Doe,Finance,male,employee,2023-01-15,sarah.manager@company.com,NULL,1
+jane.smith@company.com,Jane Smith,Ops Team,female,manager,2022-03-10,NULL,NULL,1
+mike.wilson@company.com,Mike Wilson,Access to Medicines,male,employee,2024-06-01,jane.smith@company.com,2024-12-31,1
