@@ -163,7 +163,7 @@ CREATE INDEX idx_leave_attachments_leave_id ON leave_attachments(leave_id);
 
 -- Insert default departments
 INSERT INTO departments (name, description) VALUES
-('Ops Team', 'HR department managing personnel and policies'),
+('HR & Ops', 'HR department managing personnel and policies'),
 ('Access to Medicines', 'IT department managing technology and systems'),
 ('Finance', 'Finance department managing company finances'),
 ('Assistive Technology', 'AT team'),
