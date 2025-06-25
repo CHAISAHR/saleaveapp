@@ -271,6 +271,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Password reset requested for:', email);
       
+      if (!email || !email.includes('@')) {
+        throw new Error('Please enter a valid email address');
+      }
+      
       const response = await makeApiRequest(`${apiConfig.endpoints.auth}/reset-password`, {
         method: 'POST',
         body: JSON.stringify({ email })
@@ -281,9 +285,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!data.success) {
         throw new Error(data.message || 'Password reset failed');
       }
-    } catch (error) {
+      
+      console.log('Password reset request successful for:', email);
+    } catch (error: any) {
       console.error('Password reset error:', error);
-      throw error;
+      
+      // Provide user-friendly error messages
+      if (error.message.includes('HTTP error! status: 500')) {
+        throw new Error('Server error. Please try again later or contact support.');
+      } else if (error.message.includes('Failed to fetch')) {
+        throw new Error('Network error. Please check your connection and try again.');
+      } else {
+        throw new Error(error.message || 'Password reset failed. Please try again.');
+      }
     }
   };
 

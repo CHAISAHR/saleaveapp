@@ -1,4 +1,3 @@
-
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -142,7 +141,18 @@ router.post('/login', async (req, res) => {
 // Password reset request
 router.post('/reset-password', async (req, res) => {
   try {
+    console.log('Password reset request received');
     const { email } = req.body;
+
+    if (!email) {
+      console.log('Password reset failed: No email provided');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email address is required' 
+      });
+    }
+
+    console.log(`Password reset requested for email: ${email}`);
 
     // Check if user exists
     const users = await executeQuery(
@@ -150,7 +160,10 @@ router.post('/reset-password', async (req, res) => {
       [email]
     );
 
+    console.log(`Found ${users.length} users for email: ${email}`);
+
     if (users.length === 0) {
+      console.log(`No active user found for email: ${email}`);
       // Don't reveal if email exists or not for security
       return res.json({ 
         success: true, 
@@ -163,15 +176,30 @@ router.post('/reset-password', async (req, res) => {
     // 2. Store it in the database with expiration
     // 3. Send an email with the reset link
     
-    console.log(`Password reset requested for user: ${users[0].email}`);
+    const user = users[0];
+    console.log(`Password reset request processed for user: ${user.name} (${user.email})`);
+    
+    // For now, just log that the reset was requested
+    // In production, you would integrate with an email service like:
+    // - SendGrid
+    // - AWS SES
+    // - Nodemailer with SMTP
     
     res.json({
       success: true,
       message: 'If this email is registered, you will receive a password reset link'
     });
-  } catch (error) {
-    console.error('Password reset error:', error);
-    res.status(500).json({ success: false, message: 'Password reset request failed' });
+  } catch (error: any) {
+    console.error('Password reset error details:', {
+      error: error.message,
+      stack: error.stack,
+      request: req.body
+    });
+    
+    res.status(500).json({ 
+      success: false, 
+      message: 'Password reset request failed. Please try again later.' 
+    });
   }
 });
 

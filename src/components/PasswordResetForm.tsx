@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Mail } from 'lucide-react';
+import { ArrowLeft, Mail, AlertCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface PasswordResetFormProps {
   onBack: () => void;
@@ -14,11 +15,34 @@ interface PasswordResetFormProps {
 export const PasswordResetForm: React.FC<PasswordResetFormProps> = ({ onBack, onResetRequest }) => {
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onResetRequest(email);
-    setIsSubmitted(true);
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await onResetRequest(email);
+      setIsSubmitted(true);
+      toast({
+        title: "Reset Link Sent",
+        description: `If an account exists for ${email}, you will receive a password reset link.`,
+      });
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      const errorMessage = error.message || 'Failed to send reset email. Please try again.';
+      setError(errorMessage);
+      toast({
+        title: "Reset Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isSubmitted) {
@@ -55,6 +79,12 @@ export const PasswordResetForm: React.FC<PasswordResetFormProps> = ({ onBack, on
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-red-600" />
+              <span className="text-sm text-red-700">{error}</span>
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="reset-email">Email</Label>
             <Input
@@ -66,12 +96,13 @@ export const PasswordResetForm: React.FC<PasswordResetFormProps> = ({ onBack, on
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
-          <Button type="submit" className="w-full">
-            Send Reset Link
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? 'Sending...' : 'Send Reset Link'}
           </Button>
-          <Button onClick={onBack} variant="outline" className="w-full">
+          <Button onClick={onBack} variant="outline" className="w-full" disabled={isLoading}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Sign In
           </Button>
