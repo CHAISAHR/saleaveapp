@@ -22,13 +22,13 @@ router.get('/', authenticateToken, requireRole(['admin']), async (req: AuthReque
 router.put('/:id', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
-    const { name, email, department, role, manager_email } = req.body;
+    const { name, email, department, role, manager_email, hire_date } = req.body;
 
     // Validate required fields
-    if (!name || !email || !department) {
+    if (!name || !email || !department || !hire_date) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Name, email, and department are required' 
+        message: 'Name, email, department, and hire date are required' 
       });
     }
 
@@ -53,9 +53,10 @@ router.put('/:id', authenticateToken, requireRole(['admin']), async (req: AuthRe
          department = ?, 
          role = ?, 
          manager_email = ?, 
+         hire_date = ?,
          updated_at = NOW() 
        WHERE id = ?`,
-      [name, email, department, role, manager_email || null, id]
+      [name, email, department, role, manager_email || null, hire_date, id]
     );
 
     // Also update leave_balances table to keep it in sync

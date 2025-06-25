@@ -72,7 +72,8 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
     email: "",
     department: "",
     role: "employee",
-    manager_email: ""
+    manager_email: "",
+    hire_date: ""
   });
 
   // Check if we have a valid token
@@ -325,14 +326,15 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
       email: user.email,
       department: user.department,
       role: user.role,
-      manager_email: user.manager_email || ""
+      manager_email: user.manager_email || "",
+      hire_date: user.hire_date.split('T')[0] // Convert to YYYY-MM-DD format
     });
     setShowEditForm(true);
   };
 
   // Handle updating user information
   const handleUpdateUser = async () => {
-    if (!editingUser || !editUser.name || !editUser.email || !editUser.department) {
+    if (!editingUser || !editUser.name || !editUser.email || !editUser.department || !editUser.hire_date) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -353,11 +355,6 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
     try {
       setLoading(true);
       
-      // Note: This would require a backend endpoint to update user info
-      // For now, we'll update the local state and show a message
-      // In a real implementation, you'd call an API endpoint like:
-      // await fetch(`${apiConfig.endpoints.users}/${editingUser.id}`, { method: 'PUT', ... })
-      
       const response = await fetch(`${apiConfig.endpoints.users}/${editingUser.id}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
@@ -366,7 +363,8 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
           email: editUser.email,
           department: editUser.department,
           role: editUser.role,
-          manager_email: editUser.manager_email
+          manager_email: editUser.manager_email,
+          hire_date: editUser.hire_date
         })
       });
 
@@ -380,7 +378,8 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                 email: editUser.email, 
                 department: editUser.department,
                 role: editUser.role as 'employee' | 'manager' | 'admin',
-                manager_email: editUser.manager_email || undefined
+                manager_email: editUser.manager_email || undefined,
+                hire_date: editUser.hire_date
               } 
             : user
         ));
@@ -691,6 +690,16 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                     placeholder="john.smith@company.com"
                     value={editUser.email}
                     onChange={(e) => setEditUser(prev => ({ ...prev, email: e.target.value }))}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-hire-date">Hire Date *</Label>
+                  <Input
+                    id="edit-hire-date"
+                    type="date"
+                    value={editUser.hire_date}
+                    onChange={(e) => setEditUser(prev => ({ ...prev, hire_date: e.target.value }))}
                   />
                 </div>
 
