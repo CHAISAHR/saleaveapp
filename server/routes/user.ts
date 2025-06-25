@@ -1,4 +1,3 @@
-
 import express from 'express';
 import { executeQuery } from '../config/database';
 import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
@@ -16,6 +15,63 @@ router.get('/', authenticateToken, requireRole(['admin']), async (req: AuthReque
   } catch (error) {
     console.error('Get users error:', error);
     res.status(500).json({ success: false, message: 'Failed to get users' });
+  }
+});
+
+// Update user information (admin only)
+router.put('/:id', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, department, role, manager_email } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !department) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Name, email, and department are required' 
+      });
+    }
+
+    // Check if email is already taken by another user
+    const existingUsers = await executeQuery(
+      'SELECT id FROM users WHERE email = ? AND id != ?',
+      [email, id]
+    );
+
+    if (existingUsers.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email is already taken by another user' 
+      });
+    }
+
+    // Update user information
+    await executeQuery(
+      `UPDATE users SET 
+         name = ?, 
+         email = ?, 
+         department = ?, 
+         role = ?, 
+         manager_email = ?, 
+         updated_at = NOW() 
+       WHERE id = ?`,
+      [name, email, department, role, manager_email || null, id]
+    );
+
+    // Also update leave_balances table to keep it in sync
+    await executeQuery(
+      `UPDATE leave_balances SET 
+         EmployeeName = ?, 
+         EmployeeEmail = ?, 
+         Department = ? 
+       WHERE EmployeeEmail = (SELECT email FROM users WHERE id = ?)`,
+      [name, email, department, id]
+    );
+
+    res.json({ success: true, message: 'User updated successfully' });
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update user' });
   }
 });
 
@@ -56,4 +112,3 @@ router.put('/:id/manager', authenticateToken, requireRole(['admin']), async (req
 });
 
 export default router;
-

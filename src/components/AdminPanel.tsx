@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,6 +42,8 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [showUserForm, setShowUserForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,6 +51,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
 
   console.log('AdminPanel state:', { 
     showUserForm, 
+    showEditForm,
     usersCount: users.length, 
     departmentsCount: departments.length, 
     loading, 
@@ -62,6 +64,14 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
     department: "",
     role: "employee",
     password: "",
+    manager_email: ""
+  });
+
+  const [editUser, setEditUser] = useState({
+    name: "",
+    email: "",
+    department: "",
+    role: "employee",
     manager_email: ""
   });
 
@@ -302,6 +312,97 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
           variant: "destructive",
         });
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle editing user
+  const handleEditUser = (user: User) => {
+    setEditingUser(user);
+    setEditUser({
+      name: user.name,
+      email: user.email,
+      department: user.department,
+      role: user.role,
+      manager_email: user.manager_email || ""
+    });
+    setShowEditForm(true);
+  };
+
+  // Handle updating user information
+  const handleUpdateUser = async () => {
+    if (!editingUser || !editUser.name || !editUser.email || !editUser.department) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!hasValidToken()) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to update users.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Note: This would require a backend endpoint to update user info
+      // For now, we'll update the local state and show a message
+      // In a real implementation, you'd call an API endpoint like:
+      // await fetch(`${apiConfig.endpoints.users}/${editingUser.id}`, { method: 'PUT', ... })
+      
+      const response = await fetch(`${apiConfig.endpoints.users}/${editingUser.id}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          name: editUser.name,
+          email: editUser.email,
+          department: editUser.department,
+          role: editUser.role,
+          manager_email: editUser.manager_email
+        })
+      });
+
+      if (response.ok) {
+        // Update local state
+        setUsers(prev => prev.map(user => 
+          user.id === editingUser.id 
+            ? { 
+                ...user, 
+                name: editUser.name, 
+                email: editUser.email, 
+                department: editUser.department,
+                role: editUser.role as 'employee' | 'manager' | 'admin',
+                manager_email: editUser.manager_email || undefined
+              } 
+            : user
+        ));
+
+        setShowEditForm(false);
+        setEditingUser(null);
+
+        toast({
+          title: "User Updated",
+          description: `${editUser.name}'s information has been updated.`,
+        });
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update user');
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update user information",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -562,6 +663,98 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
             </Dialog>
           </div>
 
+          {/* Edit User Dialog */}
+          <Dialog open={showEditForm} onOpenChange={setShowEditForm}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit User</DialogTitle>
+                <DialogDescription>
+                  Update user information and settings.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">Full Name *</Label>
+                  <Input
+                    id="edit-name"
+                    placeholder="e.g., John Smith"
+                    value={editUser.name}
+                    onChange={(e) => setEditUser(prev => ({ ...prev, name: e.target.value }))}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email">Email Address *</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    placeholder="john.smith@company.com"
+                    value={editUser.email}
+                    onChange={(e) => setEditUser(prev => ({ ...prev, email: e.target.value }))}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-department">Department *</Label>
+                    <Select value={editUser.department} onValueChange={(value) => setEditUser(prev => ({ ...prev, department: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {activeDepartments.map((dept) => (
+                          <SelectItem key={dept.id} value={dept.name}>
+                            {dept.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-role">Role</Label>
+                    <Select value={editUser.role} onValueChange={(value) => setEditUser(prev => ({ ...prev, role: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="employee">Employee</SelectItem>
+                        <SelectItem value="manager">Manager</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-manager">Manager (Optional)</Label>
+                  <Select value={editUser.manager_email || "none"} onValueChange={(value) => setEditUser(prev => ({ ...prev, manager_email: value === "none" ? "" : value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a manager" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Manager</SelectItem>
+                      {managers.filter(m => m.email !== editingUser?.email).map((manager) => (
+                        <SelectItem key={manager.id} value={manager.email}>
+                          {manager.name} ({manager.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setShowEditForm(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleUpdateUser} disabled={loading}>
+                    {loading ? "Updating..." : "Update User"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardContent className="p-4">
@@ -674,14 +867,23 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                           {new Date(user.hire_date).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDeleteUser(user.id, user.name)}
-                            disabled={user.email === currentUser.email}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditUser(user)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeleteUser(user.id, user.name)}
+                              disabled={user.email === currentUser.email}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
