@@ -144,7 +144,7 @@ export const AdminAllBalances = () => {
     return balanceService.calculateAnnualLeaveBalance(balance);
   };
 
-  // Updated termination balance calculation with correct logic
+  // Updated termination balance calculation using new formula
   const calculateTerminationBalance = (balance: EmployeeBalance) => {
     if (!balance.Contract_termination_date) return null;
     
@@ -855,7 +855,7 @@ export const AdminAllBalances = () => {
                 <div className="text-xs text-blue-600 mt-2 space-y-1">
                   <p>Current Balance Formula: Brought Forward + Accumulated Leave - Annual Used - Forfeited - Adjustments</p>
                   {selectedBalance.Contract_termination_date && (
-                    <p>Termination Balance Formula: Current Annual Balance + Prorated Accumulated Leave (to termination date)</p>
+                    <p>Termination Balance Formula: Brought Forward - Annual Used - Forfeited - Adjustments + Accumulated Leave (days worked/total days in year * 20)</p>
                   )}
                   {selectedBalance.Contract_termination_date && balanceService.hasTerminationDatePassed(selectedBalance.Contract_termination_date) && (
                     <p className="text-orange-600">Note: Termination date has passed - using prorated accumulation for termination balance</p>

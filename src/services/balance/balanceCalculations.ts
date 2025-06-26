@@ -37,6 +37,36 @@ export class BalanceCalculations {
     return Number(accumulated.toFixed(1));
   }
 
+  // Calculate accumulated leave at termination date based on days worked in the year
+  static calculateAccumulatedLeaveAtTerminationDate(terminationDate: string): number {
+    const termDate = new Date(terminationDate);
+    const year = termDate.getFullYear();
+    
+    // Get first day of the year
+    const yearStart = new Date(year, 0, 1);
+    
+    // Get last day of the year
+    const yearEnd = new Date(year, 11, 31);
+    
+    // Calculate days from beginning of year to termination date
+    const daysFromYearStart = Math.floor((termDate.getTime() - yearStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    
+    // Calculate total days in the termination year
+    const totalDaysInYear = Math.floor((yearEnd.getTime() - yearStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    
+    // Calculate accumulated leave: 20 * (days worked / total days in year)
+    const accumulatedLeave = 20 * (daysFromYearStart / totalDaysInYear);
+    
+    console.log(`AccumulatedLeave at termination date ${terminationDate}:`, {
+      year,
+      daysFromYearStart,
+      totalDaysInYear,
+      accumulatedLeave: Number(accumulatedLeave.toFixed(1))
+    });
+    
+    return Number(accumulatedLeave.toFixed(1));
+  }
+
   // Calculate accumulated leave at end of previous month for termination calculations
   static calculateAccumulatedLeaveAtEndOfPreviousMonth(terminationDate: string): number {
     const termDate = new Date(terminationDate);
@@ -105,76 +135,31 @@ export class BalanceCalculations {
     return currentBalance;
   }
 
-  // Calculate annual leave balance at end of previous month (for termination calculations)
-  static calculateAnnualLeaveBalanceAtEndOfPreviousMonth(balance: EmployeeBalance, terminationDate: string): number {
-    // Get accumulated leave at end of previous month
-    const accumulatedAtEndOfPreviousMonth = this.calculateAccumulatedLeaveAtEndOfPreviousMonth(terminationDate);
+  // Calculate termination balance using new formula
+  static calculateTerminationBalance(balance: EmployeeBalance, terminationDate: string): number {
+    // Get accumulated leave at termination date based on days worked
+    const accumulatedAtTermination = this.calculateAccumulatedLeaveAtTerminationDate(terminationDate);
     
-    const balanceAtEndOfPreviousMonth = Number((
-      balance.Broughtforward + 
-      accumulatedAtEndOfPreviousMonth - 
+    // New formula: Brought Forward - Annual Used - Forfeited - Adjustments + Accumulated Leave at termination
+    const terminationBalance = Number((
+      balance.Broughtforward - 
       balance.AnnualUsed - 
       balance.Forfeited - 
-      balance.Annual_leave_adjustments
+      balance.Annual_leave_adjustments + 
+      accumulatedAtTermination
     ).toFixed(1));
 
-    console.log(`Annual leave balance at end of previous month for ${balance.EmployeeName}:`, {
+    console.log(`Termination balance calculation for ${balance.EmployeeName}:`, {
+      terminationDate,
       broughtforward: balance.Broughtforward,
-      accumulatedAtEndOfPreviousMonth,
       annualUsed: balance.AnnualUsed,
       forfeited: balance.Forfeited,
       adjustments: balance.Annual_leave_adjustments,
-      balanceAtEndOfPreviousMonth,
-      terminationDate
+      accumulatedAtTermination,
+      terminationBalance
     });
-
-    return balanceAtEndOfPreviousMonth;
-  }
-
-  // Calculate termination balance with corrected logic
-  static calculateTerminationBalance(balance: EmployeeBalance, terminationDate: string): number {
-    const termDate = new Date(terminationDate);
-    const year = termDate.getFullYear();
-    const month = termDate.getMonth() + 1; // 1-based month
-    const day = termDate.getDate();
     
-    // Get the last day of the termination month
-    const lastDayOfMonth = new Date(year, month, 0).getDate();
-    
-    let terminationBalance: number;
-    
-    if (day === lastDayOfMonth) {
-      // Termination is on the last day of the month
-      // Use current annual leave balance (which includes full accumulated leave for that month)
-      terminationBalance = this.calculateAnnualLeaveBalance(balance);
-      
-      console.log(`Termination on last day of month for ${balance.EmployeeName}:`, {
-        terminationDate,
-        day,
-        lastDayOfMonth,
-        terminationBalance,
-        note: 'Using current annual leave balance (end of month)'
-      });
-    } else {
-      // Termination is during the month
-      // Use balance at end of previous month + prorated amount
-      const balanceAtEndOfPreviousMonth = this.calculateAnnualLeaveBalanceAtEndOfPreviousMonth(balance, terminationDate);
-      const proratedAmount = this.calculateTerminationProration(terminationDate);
-      
-      terminationBalance = balanceAtEndOfPreviousMonth + proratedAmount;
-      
-      console.log(`Termination during month for ${balance.EmployeeName}:`, {
-        terminationDate,
-        day,
-        lastDayOfMonth,
-        balanceAtEndOfPreviousMonth,
-        proratedAmount,
-        terminationBalance: Number(terminationBalance.toFixed(1)),
-        note: 'Using previous month balance + prorated'
-      });
-    }
-    
-    return Number(terminationBalance.toFixed(1));
+    return terminationBalance;
   }
 
   // Legacy methods for backward compatibility
