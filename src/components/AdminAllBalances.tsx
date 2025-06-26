@@ -144,9 +144,17 @@ export const AdminAllBalances = () => {
     return balanceService.calculateAnnualLeaveBalance(balance);
   };
 
+  // Updated termination balance calculation to match the specified formula
   const calculateTerminationBalance = (balance: EmployeeBalance) => {
     if (!balance.Contract_termination_date) return null;
-    return balanceService.calculateTerminationBalance(balance, balance.Contract_termination_date);
+    
+    // Calculate prorated accumulated leave to termination date
+    const proratedAccumulation = balanceService.calculateProRatedAccumulation(balance.Contract_termination_date);
+    
+    // Formula: Brought Forward + Accumulated Leave (prorated to termination date) - Annual Used - Forfeited - Adjustments
+    const terminationBalance = balance.Broughtforward + proratedAccumulation - balance.AnnualUsed - balance.Forfeited - balance.Annual_leave_adjustments;
+    
+    return Number(terminationBalance.toFixed(1));
   };
 
   const getEmployeeStatus = (balance: EmployeeBalance) => {
@@ -311,7 +319,7 @@ export const AdminAllBalances = () => {
     // Calculate new current balance using the updated formula
     const newCurrentBalance = calculateCurrentBalance(selectedBalance);
     
-    // Calculate termination balance if termination date is set
+    // Calculate termination balance if termination date is set using the corrected formula
     const newTerminationBalance = calculateTerminationBalance(selectedBalance);
 
     // Update status based on termination date
@@ -650,6 +658,7 @@ export const AdminAllBalances = () => {
                   <Input
                     value={selectedBalance.Department}
                     onChange={(e) => handleFieldChange('Department', e.target.value)}
+                    placeholder="Enter department name"
                   />
                 </div>
                 <div className="space-y-2">
@@ -772,6 +781,7 @@ export const AdminAllBalances = () => {
                     <Input
                       value={selectedBalance.Manager}
                       onChange={(e) => handleFieldChange('Manager', e.target.value)}
+                      placeholder="Enter manager email"
                     />
                   </div>
                   <div className="space-y-2">
@@ -816,15 +826,15 @@ export const AdminAllBalances = () => {
                     Employee Status: {getEmployeeStatus(selectedBalance)}
                   </p>
                 </div>
-                <p className="text-xs text-blue-600 mt-2">
-                  Formula: Brought Forward + Accumulated Leave - Annual Used - Forfeited - Adjustments
-                  {selectedBalance.Contract_termination_date && balanceService.hasTerminationDatePassed(selectedBalance.Contract_termination_date) && (
-                    <>
-                      <br />
-                      <span className="text-orange-600">Note: Termination date has passed - using termination balance instead of current accumulation</span>
-                    </>
+                <div className="text-xs text-blue-600 mt-2 space-y-1">
+                  <p>Current Balance Formula: Brought Forward + Accumulated Leave - Annual Used - Forfeited - Adjustments</p>
+                  {selectedBalance.Contract_termination_date && (
+                    <p>Termination Balance Formula: Brought Forward + Accumulated Leave (prorated to termination date) - Annual Used - Forfeited - Adjustments</p>
                   )}
-                </p>
+                  {selectedBalance.Contract_termination_date && balanceService.hasTerminationDatePassed(selectedBalance.Contract_termination_date) && (
+                    <p className="text-orange-600">Note: Termination date has passed - using prorated accumulation for termination balance</p>
+                  )}
+                </div>
               </div>
 
               <div className="flex justify-end space-x-2">
