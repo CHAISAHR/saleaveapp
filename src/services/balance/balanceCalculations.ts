@@ -37,7 +37,7 @@ export class BalanceCalculations {
     return Number(accumulated.toFixed(1));
   }
 
-  // Calculate accumulated leave at termination date based on days worked in the year
+  // Calculate accumulated leave at termination date based on calendar days from beginning of year
   static calculateAccumulatedLeaveAtTerminationDate(terminationDate: string): number {
     const termDate = new Date(terminationDate);
     const year = termDate.getFullYear();
@@ -48,19 +48,19 @@ export class BalanceCalculations {
     // Get last day of the year
     const yearEnd = new Date(year, 11, 31);
     
-    // Calculate days from beginning of year to termination date
-    const daysFromYearStart = Math.floor((termDate.getTime() - yearStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    // Calculate calendar days from beginning of year to termination date
+    const calendarDaysFromYearStart = Math.floor((termDate.getTime() - yearStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     
-    // Calculate total days in the termination year
-    const totalDaysInYear = Math.floor((yearEnd.getTime() - yearStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    // Calculate total calendar days in the termination year
+    const totalCalendarDaysInYear = Math.floor((yearEnd.getTime() - yearStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     
-    // Calculate accumulated leave: 20 * (days worked / total days in year)
-    const accumulatedLeave = 20 * (daysFromYearStart / totalDaysInYear);
+    // Calculate accumulated leave: 20 * (calendar days from start of year / total calendar days in year)
+    const accumulatedLeave = 20 * (calendarDaysFromYearStart / totalCalendarDaysInYear);
     
     console.log(`AccumulatedLeave at termination date ${terminationDate}:`, {
       year,
-      daysFromYearStart,
-      totalDaysInYear,
+      calendarDaysFromYearStart,
+      totalCalendarDaysInYear,
       accumulatedLeave: Number(accumulatedLeave.toFixed(1))
     });
     
