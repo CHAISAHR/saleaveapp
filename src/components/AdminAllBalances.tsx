@@ -144,15 +144,25 @@ export const AdminAllBalances = () => {
     return balanceService.calculateAnnualLeaveBalance(balance);
   };
 
-  // Updated termination balance calculation to match the specified formula
+  // Updated termination balance calculation: Current Annual Balance + Prorated Accumulated Leave
   const calculateTerminationBalance = (balance: EmployeeBalance) => {
     if (!balance.Contract_termination_date) return null;
+    
+    // Get current annual balance
+    const currentBalance = calculateCurrentBalance(balance);
     
     // Calculate prorated accumulated leave to termination date
     const proratedAccumulation = balanceService.calculateProRatedAccumulation(balance.Contract_termination_date);
     
-    // Formula: Brought Forward + Accumulated Leave (prorated to termination date) - Annual Used - Forfeited - Adjustments
-    const terminationBalance = balance.Broughtforward + proratedAccumulation - balance.AnnualUsed - balance.Forfeited - balance.Annual_leave_adjustments;
+    // Termination balance = Current Annual Balance + Prorated Accumulated Leave
+    const terminationBalance = currentBalance + proratedAccumulation;
+    
+    console.log(`Termination balance calculation for ${balance.EmployeeName}:`, {
+      currentBalance,
+      proratedAccumulation,
+      terminationBalance,
+      terminationDate: balance.Contract_termination_date
+    });
     
     return Number(terminationBalance.toFixed(1));
   };
@@ -235,6 +245,22 @@ export const AdminAllBalances = () => {
     setBalances(prev => prev.map(balance => 
       balance.BalanceID === balanceId 
         ? { ...balance, Forfeited: numericValue, Modified: new Date().toISOString() }
+        : balance
+    ));
+  };
+
+  const handleDepartmentChange = (balanceId: number, value: string) => {
+    setBalances(prev => prev.map(balance => 
+      balance.BalanceID === balanceId 
+        ? { ...balance, Department: value, Modified: new Date().toISOString() }
+        : balance
+    ));
+  };
+
+  const handleManagerChange = (balanceId: number, value: string) => {
+    setBalances(prev => prev.map(balance => 
+      balance.BalanceID === balanceId 
+        ? { ...balance, Manager: value, Modified: new Date().toISOString() }
         : balance
     ));
   };
@@ -457,6 +483,7 @@ export const AdminAllBalances = () => {
                   <TableHead>Termination Balance</TableHead>
                   <TableHead>Comment</TableHead>
                   <TableHead>Adjustment Comments</TableHead>
+                  <TableHead>Manager</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -466,7 +493,14 @@ export const AdminAllBalances = () => {
                     <TableCell className="font-medium">{balance.BalanceID}</TableCell>
                     <TableCell>{balance.EmployeeName}</TableCell>
                     <TableCell>{balance.EmployeeEmail}</TableCell>
-                    <TableCell>{balance.Department}</TableCell>
+                    <TableCell>
+                      <Input
+                        value={balance.Department}
+                        onChange={(e) => handleDepartmentChange(balance.BalanceID, e.target.value)}
+                        className="w-24 h-8 text-sm"
+                        placeholder="Dept"
+                      />
+                    </TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         getEmployeeStatus(balance) === 'Inactive' 
@@ -527,6 +561,14 @@ export const AdminAllBalances = () => {
                       <div className="max-w-[100px] truncate" title={balance.Annual_leave_adjustment_comments}>
                         {balance.Annual_leave_adjustment_comments || '-'}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={balance.Manager}
+                        onChange={(e) => handleManagerChange(balance.BalanceID, e.target.value)}
+                        className="w-32 h-8 text-sm"
+                        placeholder="Manager email"
+                      />
                     </TableCell>
                     <TableCell>
                       <Button
@@ -829,7 +871,7 @@ export const AdminAllBalances = () => {
                 <div className="text-xs text-blue-600 mt-2 space-y-1">
                   <p>Current Balance Formula: Brought Forward + Accumulated Leave - Annual Used - Forfeited - Adjustments</p>
                   {selectedBalance.Contract_termination_date && (
-                    <p>Termination Balance Formula: Brought Forward + Accumulated Leave (prorated to termination date) - Annual Used - Forfeited - Adjustments</p>
+                    <p>Termination Balance Formula: Current Annual Balance + Prorated Accumulated Leave (to termination date)</p>
                   )}
                   {selectedBalance.Contract_termination_date && balanceService.hasTerminationDatePassed(selectedBalance.Contract_termination_date) && (
                     <p className="text-orange-600">Note: Termination date has passed - using prorated accumulation for termination balance</p>
