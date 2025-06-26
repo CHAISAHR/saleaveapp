@@ -144,24 +144,32 @@ export const AdminAllBalances = () => {
     return balanceService.calculateAnnualLeaveBalance(balance);
   };
 
-  // Updated termination balance calculation: Current Annual Balance + Prorated Accumulated Leave
+  // Updated termination balance calculation: Annual leave balance + 1.667 * (Day/Days in month)
   const calculateTerminationBalance = (balance: EmployeeBalance) => {
     if (!balance.Contract_termination_date) return null;
     
     // Get current annual balance
     const currentBalance = calculateCurrentBalance(balance);
     
-    // Calculate prorated accumulated leave to termination date
-    const proratedAccumulation = balanceService.calculateProRatedAccumulation(balance.Contract_termination_date);
+    // Calculate prorated amount for termination: 1.667 * (Day/Days in month)
+    const termDate = new Date(balance.Contract_termination_date);
+    const day = termDate.getDate();
+    const year = termDate.getFullYear();
+    const month = termDate.getMonth() + 1;
+    const lastDayOfMonth = new Date(year, month, 0).getDate();
     
-    // Termination balance = Current Annual Balance + Prorated Accumulated Leave
-    const terminationBalance = currentBalance + proratedAccumulation;
+    const proratedAmount = 1.667 * (day / lastDayOfMonth);
+    
+    // Termination balance = Current Annual Balance + Prorated Amount
+    const terminationBalance = currentBalance + proratedAmount;
     
     console.log(`Termination balance calculation for ${balance.EmployeeName}:`, {
       currentBalance,
-      proratedAccumulation,
-      terminationBalance,
-      terminationDate: balance.Contract_termination_date
+      terminationDate: balance.Contract_termination_date,
+      day,
+      lastDayOfMonth,
+      proratedAmount: proratedAmount.toFixed(3),
+      terminationBalance: terminationBalance.toFixed(1)
     });
     
     return Number(terminationBalance.toFixed(1));
