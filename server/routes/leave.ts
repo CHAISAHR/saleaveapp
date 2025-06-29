@@ -1,8 +1,8 @@
-
 import express from 'express';
 import multer from 'multer';
 import { executeQuery } from '../config/database';
 import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
+import { emailService } from '../services/emailService';
 
 const router = express.Router();
 
@@ -39,7 +39,7 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
       }
     }
 
-    // Get manager email and send notifications (simplified without email service)
+    // Get manager email and send notifications
     const managerQuery = await executeQuery(
       'SELECT Manager FROM leave_balances WHERE EmployeeEmail = ? AND Year = ?',
       [requester, new Date().getFullYear()]
@@ -47,8 +47,19 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
 
     const managerEmail = managerQuery[0]?.Manager || 'admin@company.com';
     
-    // Log notification instead of sending email for now
-    console.log(`Leave request notification would be sent to: ${managerEmail}`);
+    // Send email notification to manager
+    const leaveRequest = {
+      title,
+      description: detail,
+      startDate,
+      endDate,
+      leaveType,
+      workingDays,
+      submittedBy: requester
+    };
+
+    await emailService.notifyManagerOfLeaveRequest(leaveRequest, managerEmail);
+    console.log(`Email notification sent to manager: ${managerEmail}`);
 
     res.status(201).json({
       success: true,
@@ -110,14 +121,14 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
 router.put('/requests/:id/status', authenticateToken, requireRole(['manager', 'admin']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
-    const { status, approver } = req.body;
+    const { status, approver, reason } = req.body;
 
     await executeQuery(
       'UPDATE leave_taken SET Status = ?, Approver = ?, Modified = NOW(), Modified_By = ? WHERE LeaveID = ?',
       [status, approver || req.user!.email, req.user!.email, id]
     );
 
-    // Get leave request details for logging
+    // Get leave request details for email notification
     const leaveDetails = await executeQuery(
       'SELECT * FROM leave_taken WHERE LeaveID = ?',
       [id]
@@ -125,7 +136,16 @@ router.put('/requests/:id/status', authenticateToken, requireRole(['manager', 'a
 
     if (leaveDetails.length > 0) {
       const leave = leaveDetails[0];
-      console.log(`Leave request ${status} notification would be sent to: ${leave.Requester}`);
+      const approverName = req.user!.email;
+
+      // Send email notification based on status
+      if (status === 'approved') {
+        await emailService.notifyEmployeeOfApproval(leave, approverName);
+        console.log(`Approval email notification sent to: ${leave.Requester}`);
+      } else if (status === 'rejected') {
+        await emailService.notifyEmployeeOfRejection(leave, approverName, reason);
+        console.log(`Rejection email notification sent to: ${leave.Requester}`);
+      }
     }
 
     res.json({
