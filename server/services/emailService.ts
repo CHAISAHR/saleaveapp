@@ -14,6 +14,7 @@ export interface EmailNotification {
 
 class EmailService {
   private transporter: nodemailer.Transporter;
+  private readonly ADMIN_EMAIL = 'admin@company.com';
 
   constructor() {
     // Initialize email transporter
@@ -54,7 +55,8 @@ class EmailService {
         HR Team
         Leave Management System
       `,
-      notification_type: 'user_registration'
+      notification_type: 'user_registration',
+      cc_email: this.ADMIN_EMAIL
     };
 
     await this.sendEmail(notification);
@@ -65,7 +67,7 @@ class EmailService {
     const notification: EmailNotification = {
       recipient_email: managerEmail,
       sender_email: process.env.SMTP_USER || 'noreply@company.com',
-      cc_email: 'admin@company.com', // Copy admin
+      cc_email: this.ADMIN_EMAIL,
       subject: `New Leave Request: ${leaveRequest.title}`,
       message: `
         Hello,
@@ -97,6 +99,7 @@ class EmailService {
     const notification: EmailNotification = {
       recipient_email: leaveRequest.Requester || leaveRequest.employeeEmail,
       sender_email: process.env.SMTP_USER || 'noreply@company.com',
+      cc_email: this.ADMIN_EMAIL,
       subject: `Leave Request Approved: ${leaveRequest.Title || leaveRequest.title}`,
       message: `
         Hello,
@@ -127,6 +130,7 @@ class EmailService {
     const notification: EmailNotification = {
       recipient_email: leaveRequest.Requester || leaveRequest.employeeEmail,
       sender_email: process.env.SMTP_USER || 'noreply@company.com',
+      cc_email: this.ADMIN_EMAIL,
       subject: `Leave Request Rejected: ${leaveRequest.Title || leaveRequest.title}`,
       message: `
         Hello,
