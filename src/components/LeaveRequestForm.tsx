@@ -28,6 +28,11 @@ interface CompanyHoliday {
   office_status: string;
 }
 
+interface PublicHoliday {
+  date: Date;
+  name: string;
+}
+
 export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestFormProps) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -44,14 +49,46 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
 
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [companyHolidays, setCompanyHolidays] = useState<CompanyHoliday[]>([]);
+  const [publicHolidays, setPublicHolidays] = useState<PublicHoliday[]>([]);
+  const [holidaysLoading, setHolidaysLoading] = useState(false);
 
-  // Fetch company holidays on component mount
+  // Get public holidays for the current year (in production, this should come from API)
+  const getPublicHolidays = (year: number): PublicHoliday[] => {
+    return [
+      { date: new Date(year, 0, 1), name: "New Year's Day" },
+      { date: new Date(year, 2, 21), name: "Human Rights Day" },
+      { date: new Date(year, 3, 18), name: "Good Friday" },
+      { date: new Date(year, 3, 21), name: "Family Day" },
+      { date: new Date(year, 3, 27), name: "Freedom Day" },
+      { date: new Date(year, 4, 1), name: "Workers' Day" },
+      { date: new Date(year, 5, 16), name: "Youth Day" },
+      { date: new Date(year, 7, 9), name: "National Women's Day" },
+      { date: new Date(year, 8, 24), name: "Heritage Day" },
+      { date: new Date(year, 11, 16), name: "Day of Reconciliation" },
+      { date: new Date(year, 11, 25), name: "Christmas Day" },
+      { date: new Date(year, 11, 26), name: "Day of Goodwill" },
+    ];
+  };
+
+  // Fetch both company holidays and set public holidays when component opens
   useEffect(() => {
-    const fetchHolidays = async () => {
+    const fetchAllHolidays = async () => {
+      if (!isOpen) return;
+      
+      console.log('[LeaveRequestForm] Fetching all holidays...');
+      setHolidaysLoading(true);
+      
       try {
+        // Set public holidays for current year
+        const currentYear = new Date().getFullYear();
+        const publicHols = getPublicHolidays(currentYear);
+        setPublicHolidays(publicHols);
+        console.log('[LeaveRequestForm] Set public holidays:', publicHols.length);
+
+        // Fetch company holidays
         const authToken = localStorage.getItem('auth_token');
         if (!authToken) {
-          console.warn('No auth token available for holiday fetch');
+          console.warn('[LeaveRequestForm] No auth token available for holiday fetch');
           return;
         }
 
@@ -64,19 +101,19 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         
         if (response.ok) {
           const data = await response.json();
-          console.log('Fetched company holidays:', data.holidays?.length || 0);
+          console.log('[LeaveRequestForm] Fetched company holidays:', data.holidays?.length || 0);
           setCompanyHolidays(data.holidays || []);
         } else {
-          console.warn('Failed to fetch holidays:', response.status);
+          console.warn('[LeaveRequestForm] Failed to fetch company holidays:', response.status);
         }
       } catch (error) {
-        console.error('Failed to fetch holidays:', error);
+        console.error('[LeaveRequestForm] Failed to fetch holidays:', error);
+      } finally {
+        setHolidaysLoading(false);
       }
     };
     
-    if (isOpen) {
-      fetchHolidays();
-    }
+    fetchAllHolidays();
   }, [isOpen]);
 
   // Mock list of available managers - in real app this would come from API
@@ -147,22 +184,6 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     }
   ];
 
-  // South African public holidays for 2025
-  const publicHolidays = [
-    new Date(2025, 0, 1),   // New Year's Day
-    new Date(2025, 2, 21),  // Human Rights Day
-    new Date(2025, 3, 18),  // Good Friday
-    new Date(2025, 3, 21),  // Family Day
-    new Date(2025, 3, 27),  // Freedom Day
-    new Date(2025, 4, 1),   // Workers' Day
-    new Date(2025, 5, 16),  // Youth Day
-    new Date(2025, 7, 9),   // National Women's Day
-    new Date(2025, 8, 24),  // Heritage Day
-    new Date(2025, 11, 16), // Day of Reconciliation
-    new Date(2025, 11, 25), // Christmas Day
-    new Date(2025, 11, 26), // Day of Goodwill
-  ];
-
   const selectedLeaveType = leaveTypes.find(type => type.value === formData.leaveType);
 
   const isWeekend = (date: Date) => {
@@ -172,9 +193,9 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
 
   const isPublicHoliday = (date: Date) => {
     return publicHolidays.some(holiday => 
-      holiday.getDate() === date.getDate() &&
-      holiday.getMonth() === date.getMonth() &&
-      holiday.getFullYear() === date.getFullYear()
+      holiday.date.getDate() === date.getDate() &&
+      holiday.date.getMonth() === date.getMonth() &&
+      holiday.date.getFullYear() === date.getFullYear()
     );
   };
 
@@ -488,6 +509,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
           <DialogTitle>Submit Leave Request</DialogTitle>
           <DialogDescription>
             Fill out the form below to request time off. Your manager will be notified automatically.
+            {holidaysLoading && " (Loading latest holidays...)"}
           </DialogDescription>
         </DialogHeader>
 
@@ -752,6 +774,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                   <div className="text-xs text-green-600 bg-green-100 p-2 rounded mt-2">
                     Working days exclude weekends, South African public holidays, and company holidays. 
                     {formData.isHalfDay && " Half-day requests count as 0.5 days per working day selected."}
+                    {holidaysLoading && " Holiday data is being updated..."}
                   </div>
                 </div>
               </CardContent>

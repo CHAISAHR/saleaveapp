@@ -13,33 +13,47 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
+// Helper function to get public holidays (should be stored in database in production)
+const getPublicHolidays = async (year: number): Promise<Date[]> => {
+  // In production, this should fetch from a public_holidays table
+  // For now, returning South African public holidays for the specified year
+  return [
+    new Date(year, 0, 1),   // New Year's Day
+    new Date(year, 2, 21),  // Human Rights Day
+    new Date(year, 3, 18),  // Good Friday (approximate - should be calculated)
+    new Date(year, 3, 21),  // Family Day (approximate - should be calculated)
+    new Date(year, 3, 27),  // Freedom Day
+    new Date(year, 4, 1),   // Workers' Day
+    new Date(year, 5, 16),  // Youth Day
+    new Date(year, 7, 9),   // National Women's Day
+    new Date(year, 8, 24),  // Heritage Day
+    new Date(year, 11, 16), // Day of Reconciliation
+    new Date(year, 11, 25), // Christmas Day
+    new Date(year, 11, 26), // Day of Goodwill
+  ];
+};
+
 // Helper function to calculate working days excluding weekends, public holidays, and company holidays
 const calculateWorkingDaysServer = async (startDate: string, endDate: string): Promise<number> => {
   const start = new Date(startDate);
   const end = new Date(endDate);
   
-  // Get company holidays for the year
-  const year = start.getFullYear();
-  const companyHolidays = await executeQuery(
-    'SELECT date FROM company_holidays WHERE YEAR(date) = ?',
-    [year]
-  );
+  // Get company holidays for the year range
+  const startYear = start.getFullYear();
+  const endYear = end.getFullYear();
+  const years = startYear === endYear ? [startYear] : [startYear, endYear];
   
-  // South African public holidays for 2025 (should be dynamic in production)
-  const publicHolidays = [
-    new Date(2025, 0, 1),   // New Year's Day
-    new Date(2025, 2, 21),  // Human Rights Day
-    new Date(2025, 3, 18),  // Good Friday
-    new Date(2025, 3, 21),  // Family Day
-    new Date(2025, 3, 27),  // Freedom Day
-    new Date(2025, 4, 1),   // Workers' Day
-    new Date(2025, 5, 16),  // Youth Day
-    new Date(2025, 7, 9),   // National Women's Day
-    new Date(2025, 8, 24),  // Heritage Day
-    new Date(2025, 11, 16), // Day of Reconciliation
-    new Date(2025, 11, 25), // Christmas Day
-    new Date(2025, 11, 26), // Day of Goodwill
-  ];
+  // Fetch company holidays for all relevant years
+  const companyHolidaysPromises = years.map(year => 
+    executeQuery('SELECT date FROM company_holidays WHERE YEAR(date) = ?', [year])
+  );
+  const companyHolidaysResults = await Promise.all(companyHolidaysPromises);
+  const companyHolidays = companyHolidaysResults.flat();
+  
+  // Get public holidays for all relevant years
+  const publicHolidaysPromises = years.map(year => getPublicHolidays(year));
+  const publicHolidaysResults = await Promise.all(publicHolidaysPromises);
+  const publicHolidays = publicHolidaysResults.flat();
 
   const isWeekend = (date: Date) => {
     const day = date.getDay();
@@ -83,7 +97,7 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
     const requester = (req as AuthRequest).user!.email;
     const files = req.files as Express.Multer.File[];
 
-    // Recalculate working days on server to ensure accuracy with latest company holidays
+    // Recalculate working days on server to ensure accuracy with latest holidays
     const calculatedWorkingDays = await calculateWorkingDaysServer(startDate, endDate);
     console.log(`Working days calculation: Client=${workingDays}, Server=${calculatedWorkingDays}`);
 
