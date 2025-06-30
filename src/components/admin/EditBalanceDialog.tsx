@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +34,7 @@ interface EmployeeBalance {
   Study: number;
   StudyUsed: number;
   Mentalhealth: number;
-  MentalhealthUsed: number;
+  WellnessUsed: number; // Updated from MentalhealthUsed
   PowerAppsId?: string;
   Current_leave_balance: number;
   Leave_balance_previous_month: number;
@@ -192,7 +193,7 @@ export const EditBalanceDialog = ({
                 { key: 'Maternity', usedKey: 'MaternityUsed', label: 'Maternity Leave' },
                 { key: 'Parental', usedKey: 'ParentalUsed', label: 'Parental Leave' },
                 { key: 'Adoption', usedKey: 'AdoptionUsed', label: 'Adoption Leave' },
-                { key: 'Mentalhealth', usedKey: 'MentalhealthUsed', label: 'Mental Health Leave' }
+                { key: 'Mentalhealth', usedKey: 'WellnessUsed', label: 'Wellness Leave' }
               ].map(({ key, usedKey, label }) => (
                 <div key={key} className="space-y-2">
                   <Label>{label}</Label>

@@ -34,7 +34,7 @@ interface EmployeeBalance {
   Study: number;
   StudyUsed: number;
   Mentalhealth: number;
-  MentalhealthUsed: number;
+  WellnessUsed: number; // Updated from MentalhealthUsed
   PowerAppsId?: string;
   Current_leave_balance: number;
   Leave_balance_previous_month: number;
@@ -92,7 +92,7 @@ export const AdminAllBalances = () => {
       Study: 6,
       StudyUsed: 0,
       Mentalhealth: 2,
-      MentalhealthUsed: 0,
+      WellnessUsed: 0, // Updated from MentalhealthUsed
       PowerAppsId: "PA001",
       Current_leave_balance: 17,
       Leave_balance_previous_month: 15.5,
@@ -126,7 +126,7 @@ export const AdminAllBalances = () => {
       Study: 6,
       StudyUsed: 2,
       Mentalhealth: 2,
-      MentalhealthUsed: 0,
+      WellnessUsed: 0, // Updated from MentalhealthUsed
       PowerAppsId: "PA002",
       Current_leave_balance: 11,
       Leave_balance_previous_month: 13.5,
@@ -251,7 +251,7 @@ export const AdminAllBalances = () => {
       'Broughtforward', 'Annual', 'AccumulatedLeave', 'AnnualUsed', 'Forfeited', 'Annual_leave_adjustments',
       'SickBroughtforward', 'Sick', 'SickUsed', 'Maternity', 'MaternityUsed',
       'Parental', 'ParentalUsed', 'Family', 'FamilyUsed', 'Adoption', 'AdoptionUsed',
-      'Study', 'StudyUsed', 'Mentalhealth', 'MentalhealthUsed', 'PowerAppsId',
+      'Study', 'StudyUsed', 'Mentalhealth', 'WellnessUsed', 'PowerAppsId',
       'Current_leave_balance', 'Leave_balance_previous_month', 'Contract_termination_date',
       'termination_balance', 'Comment', 'Annual_leave_adjustment_comments', 'Manager', 'Modified'
     ];
@@ -285,7 +285,7 @@ export const AdminAllBalances = () => {
         balance.Study,
         balance.StudyUsed,
         balance.Mentalhealth,
-        balance.MentalhealthUsed,
+        balance.WellnessUsed,
         balance.PowerAppsId || '',
         calculateCurrentBalance(balance),
         balance.Leave_balance_previous_month,
@@ -361,7 +361,7 @@ export const AdminAllBalances = () => {
       'Broughtforward', 'Annual', 'AccumulatedLeave', 'AnnualUsed', 'Forfeited', 'Annual_leave_adjustments',
       'SickBroughtforward', 'Sick', 'SickUsed', 'Maternity', 'MaternityUsed',
       'Parental', 'ParentalUsed', 'Family', 'FamilyUsed', 'Adoption', 'AdoptionUsed',
-      'Study', 'StudyUsed', 'Mentalhealth', 'MentalhealthUsed', 'termination_balance',
+      'Study', 'StudyUsed', 'Mentalhealth', 'WellnessUsed', 'termination_balance',
       'Current_leave_balance', 'Leave_balance_previous_month', 'Year'
     ];
 
