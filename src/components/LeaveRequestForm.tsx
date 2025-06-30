@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +20,14 @@ interface LeaveRequestFormProps {
   currentUser: any;
 }
 
+interface CompanyHoliday {
+  id: number;
+  name: string;
+  date: string;
+  type: string;
+  office_status: string;
+}
+
 export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestFormProps) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -36,24 +43,41 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
   });
 
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-  const [companyHolidays, setCompanyHolidays] = useState<Date[]>([]);
+  const [companyHolidays, setCompanyHolidays] = useState<CompanyHoliday[]>([]);
 
   // Fetch company holidays on component mount
-  useState(() => {
+  useEffect(() => {
     const fetchHolidays = async () => {
       try {
-        const response = await fetch('/api/holiday');
+        const authToken = localStorage.getItem('auth_token');
+        if (!authToken) {
+          console.warn('No auth token available for holiday fetch');
+          return;
+        }
+
+        const response = await fetch('/api/holiday', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
         if (response.ok) {
           const data = await response.json();
-          const holidays = data.holidays.map((h: any) => new Date(h.date));
-          setCompanyHolidays(holidays);
+          console.log('Fetched company holidays:', data.holidays?.length || 0);
+          setCompanyHolidays(data.holidays || []);
+        } else {
+          console.warn('Failed to fetch holidays:', response.status);
         }
       } catch (error) {
         console.error('Failed to fetch holidays:', error);
       }
     };
-    fetchHolidays();
-  });
+    
+    if (isOpen) {
+      fetchHolidays();
+    }
+  }, [isOpen]);
 
   // Mock list of available managers - in real app this would come from API
   const availableManagers = [
@@ -155,13 +179,16 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
   };
 
   const isCompanyHoliday = (date: Date) => {
-    return companyHolidays.some(holiday => 
-      holiday.getDate() === date.getDate() &&
-      holiday.getMonth() === date.getMonth() &&
-      holiday.getFullYear() === date.getFullYear()
-    );
+    return companyHolidays.some(holiday => {
+      const holidayDate = new Date(holiday.date);
+      return holidayDate.getDate() === date.getDate() &&
+             holidayDate.getMonth() === date.getMonth() &&
+             holidayDate.getFullYear() === date.getFullYear();
+    });
   };
 
+  // CONFIRMED FORMULA: Working days calculation excludes weekends, public holidays, and company holidays
+  // For half-day requests, we subtract 0.5 from the total working days
   const calculateWorkingDays = () => {
     if (!formData.startDate || !formData.endDate) return 0;
 
@@ -169,6 +196,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     const currentDate = new Date(formData.startDate);
     const endDate = new Date(formData.endDate);
 
+    // Iterate through each day in the range (inclusive)
     while (currentDate <= endDate) {
       if (!isWeekend(currentDate) && !isPublicHoliday(currentDate) && !isCompanyHoliday(currentDate)) {
         workingDays++;

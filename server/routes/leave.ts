@@ -13,6 +13,69 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
+// Helper function to calculate working days excluding weekends, public holidays, and company holidays
+const calculateWorkingDaysServer = async (startDate: string, endDate: string): Promise<number> => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  // Get company holidays for the year
+  const year = start.getFullYear();
+  const companyHolidays = await executeQuery(
+    'SELECT date FROM company_holidays WHERE YEAR(date) = ?',
+    [year]
+  );
+  
+  // South African public holidays for 2025 (should be dynamic in production)
+  const publicHolidays = [
+    new Date(2025, 0, 1),   // New Year's Day
+    new Date(2025, 2, 21),  // Human Rights Day
+    new Date(2025, 3, 18),  // Good Friday
+    new Date(2025, 3, 21),  // Family Day
+    new Date(2025, 3, 27),  // Freedom Day
+    new Date(2025, 4, 1),   // Workers' Day
+    new Date(2025, 5, 16),  // Youth Day
+    new Date(2025, 7, 9),   // National Women's Day
+    new Date(2025, 8, 24),  // Heritage Day
+    new Date(2025, 11, 16), // Day of Reconciliation
+    new Date(2025, 11, 25), // Christmas Day
+    new Date(2025, 11, 26), // Day of Goodwill
+  ];
+
+  const isWeekend = (date: Date) => {
+    const day = date.getDay();
+    return day === 0 || day === 6; // Sunday or Saturday
+  };
+
+  const isPublicHoliday = (date: Date) => {
+    return publicHolidays.some(holiday => 
+      holiday.getDate() === date.getDate() &&
+      holiday.getMonth() === date.getMonth() &&
+      holiday.getFullYear() === date.getFullYear()
+    );
+  };
+
+  const isCompanyHoliday = (date: Date) => {
+    return companyHolidays.some((holiday: any) => {
+      const holidayDate = new Date(holiday.date);
+      return holidayDate.getDate() === date.getDate() &&
+             holidayDate.getMonth() === date.getMonth() &&
+             holidayDate.getFullYear() === date.getFullYear();
+    });
+  };
+
+  let workingDays = 0;
+  const currentDate = new Date(start);
+
+  while (currentDate <= end) {
+    if (!isWeekend(currentDate) && !isPublicHoliday(currentDate) && !isCompanyHoliday(currentDate)) {
+      workingDays++;
+    }
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return workingDays;
+};
+
 // Submit leave request with file attachments
 router.post('/request', authenticateToken, upload.array('attachments', 10), async (req, res) => {
   try {
@@ -20,10 +83,14 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
     const requester = (req as AuthRequest).user!.email;
     const files = req.files as Express.Multer.File[];
 
+    // Recalculate working days on server to ensure accuracy with latest company holidays
+    const calculatedWorkingDays = await calculateWorkingDaysServer(startDate, endDate);
+    console.log(`Working days calculation: Client=${workingDays}, Server=${calculatedWorkingDays}`);
+
     const result = await executeQuery(
       `INSERT INTO leave_taken (Title, Detail, StartDate, EndDate, LeaveType, Requester, Status, Created, workingDays) 
        VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW(), ?)`,
-      [title, detail, startDate, endDate, leaveType, requester, workingDays]
+      [title, detail, startDate, endDate, leaveType, requester, calculatedWorkingDays]
     );
 
     const leaveId = result.insertId;
@@ -54,7 +121,7 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
       startDate,
       endDate,
       leaveType,
-      workingDays,
+      workingDays: calculatedWorkingDays,
       submittedBy: requester
     };
 
@@ -64,7 +131,8 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
     res.status(201).json({
       success: true,
       message: 'Leave request submitted successfully',
-      leaveId: leaveId
+      leaveId: leaveId,
+      calculatedWorkingDays: calculatedWorkingDays
     });
   } catch (error) {
     console.error('Leave request error:', error);

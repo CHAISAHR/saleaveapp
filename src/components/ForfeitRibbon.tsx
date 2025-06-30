@@ -8,9 +8,20 @@ interface ForfeitRibbonProps {
 }
 
 export const ForfeitRibbon = ({ broughtForward, annualUsed }: ForfeitRibbonProps) => {
+  // CONFIRMED FORMULA: Days to forfeit = Brought Forward - Annual Used (cannot be negative)
   const daysToForfeit = Math.max(0, broughtForward - annualUsed);
   
-  if (daysToForfeit === 0) {
+  // Check if current date is between January 1st and July 31st
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const january1st = new Date(currentYear, 0, 1); // January 1st
+  const july31st = new Date(currentYear, 6, 31); // July 31st
+  
+  // Only show ribbon from January 1st to July 31st
+  const shouldShowRibbon = currentDate >= january1st && currentDate <= july31st;
+  
+  // Don't render if no days to forfeit or if outside visibility period
+  if (daysToForfeit === 0 || !shouldShowRibbon) {
     return null;
   }
 
