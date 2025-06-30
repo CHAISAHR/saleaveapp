@@ -38,8 +38,7 @@ export class BalanceValidations {
       case 'study':
         return BalanceCalculations.calculateOtherLeaveBalance(6, balance.StudyUsed) >= requestedDays;
       case 'wellness':
-      case 'mentalhealth':
-        return BalanceCalculations.calculateOtherLeaveBalance(2, balance.MentalhealthUsed) >= requestedDays;
+        return BalanceCalculations.calculateOtherLeaveBalance(2, balance.WellnessUsed) >= requestedDays;
       case 'maternity':
         return BalanceCalculations.calculateOtherLeaveBalance(90, balance.MaternityUsed) >= requestedDays;
       case 'parental':

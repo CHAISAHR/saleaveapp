@@ -47,8 +47,8 @@ export class CurrentBalanceCalculations {
         return this.calculateOtherLeaveBalance(20, balance.AdoptionUsed);
       case 'study':
         return this.calculateOtherLeaveBalance(6, balance.StudyUsed);
-      case 'mentalhealth':
-        return this.calculateOtherLeaveBalance(2, balance.MentalhealthUsed);
+      case 'wellness':
+        return this.calculateOtherLeaveBalance(2, balance.WellnessUsed);
       default:
         return this.calculateAnnualLeaveBalance(balance, employeeStartDate);
     }
@@ -64,7 +64,7 @@ export class CurrentBalanceCalculations {
       family: this.calculateOtherLeaveBalance(3, balance.FamilyUsed),
       adoption: this.calculateOtherLeaveBalance(20, balance.AdoptionUsed),
       study: this.calculateOtherLeaveBalance(6, balance.StudyUsed),
-      wellness: this.calculateOtherLeaveBalance(2, balance.MentalhealthUsed)
+      wellness: this.calculateOtherLeaveBalance(2, balance.WellnessUsed)
     };
   }
 }

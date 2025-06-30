@@ -1,5 +1,4 @@
 
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Clock, Users, AlertCircle, CheckCircle, Calendar } from "lucide-react";
@@ -118,4 +117,3 @@ export const PolicyGuide = () => {
     </div>
   );
 };
-

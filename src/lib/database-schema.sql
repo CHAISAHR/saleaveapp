@@ -1,3 +1,4 @@
+
 -- MySQL Database Schema for Leave Management System
 -- Updated schema with email-based unique identifiers, negative value support, gender field, and file attachments
 
@@ -105,8 +106,8 @@ CREATE TABLE leave_balances (
     AdoptionUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
     Study DECIMAL(8,3) DEFAULT 6, -- Allows negative values for adjustments
     StudyUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
-    Mentalhealth DECIMAL(8,3) DEFAULT 2, -- Allows negative values for adjustments
-    MentalhealthUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
+    Wellness DECIMAL(8,3) DEFAULT 2, -- Renamed from Mentalhealth, allows negative values for adjustments
+    WellnessUsed DECIMAL(8,3) DEFAULT 0, -- Renamed from MentalhealthUsed, allows negative values for adjustments
     __PowerAppsId__ VARCHAR(255) NULL,
     Current_leave_balance DECIMAL(8,3) GENERATED ALWAYS AS (
         Broughtforward + AccumulatedLeave - AnnualUsed - Forfeited - Annual_leave_adjustments
