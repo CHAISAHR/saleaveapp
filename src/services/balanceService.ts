@@ -1,4 +1,3 @@
-
 import { BalanceCalculations } from './balance/balanceCalculations';
 import { BalanceApiClient } from './balance/balanceApiClient';
 import { BalanceValidations } from './balance/balanceValidations';
@@ -17,12 +16,11 @@ export interface EmployeeBalance {
   Forfeited: number;
   Annual_leave_adjustments: number;
   SickUsed: number;
-  MaternityUsed: number;
   ParentalUsed: number;
   FamilyUsed: number;
   AdoptionUsed: number;
   StudyUsed: number;
-  WellnessUsed: number; // Renamed from MentalhealthUsed
+  WellnessUsed: number; // Wellness leave used
   Current_leave_balance: number;
   Manager: string;
   Contract_termination_date?: string;

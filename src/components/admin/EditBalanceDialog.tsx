@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -190,10 +189,9 @@ export const EditBalanceDialog = ({
                 { key: 'Sick', usedKey: 'SickUsed', label: 'Sick Leave' },
                 { key: 'Family', usedKey: 'FamilyUsed', label: 'Family Leave' },
                 { key: 'Study', usedKey: 'StudyUsed', label: 'Study Leave' },
-                { key: 'Maternity', usedKey: 'MaternityUsed', label: 'Maternity Leave' },
                 { key: 'Parental', usedKey: 'ParentalUsed', label: 'Parental Leave' },
                 { key: 'Adoption', usedKey: 'AdoptionUsed', label: 'Adoption Leave' },
-                { key: 'Mentalhealth', usedKey: 'WellnessUsed', label: 'Wellness Leave' }
+                { key: 'Wellness', usedKey: 'WellnessUsed', label: 'Wellness Leave' }
               ].map(({ key, usedKey, label }) => (
                 <div key={key} className="space-y-2">
                   <Label>{label}</Label>

@@ -1,4 +1,3 @@
-
 import { EmployeeBalance } from '../../balanceService';
 
 export class CurrentBalanceCalculations {
@@ -37,8 +36,6 @@ export class CurrentBalanceCalculations {
         return this.calculateAnnualLeaveBalance(balance, employeeStartDate);
       case 'sick':
         return this.calculateOtherLeaveBalance(36, balance.SickUsed);
-      case 'maternity':
-        return this.calculateOtherLeaveBalance(90, balance.MaternityUsed);
       case 'parental':
         return this.calculateOtherLeaveBalance(20, balance.ParentalUsed);
       case 'family':
@@ -59,7 +56,6 @@ export class CurrentBalanceCalculations {
     return {
       annual: this.calculateAnnualLeaveBalance(balance, employeeStartDate),
       sick: this.calculateOtherLeaveBalance(36, balance.SickUsed),
-      maternity: this.calculateOtherLeaveBalance(90, balance.MaternityUsed),
       parental: this.calculateOtherLeaveBalance(20, balance.ParentalUsed),
       family: this.calculateOtherLeaveBalance(3, balance.FamilyUsed),
       adoption: this.calculateOtherLeaveBalance(20, balance.AdoptionUsed),

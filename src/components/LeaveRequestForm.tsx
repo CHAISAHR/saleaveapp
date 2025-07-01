@@ -1,834 +1,503 @@
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import React, { useState, useEffect } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Calendar } from "lucide-react";
+import { DateRange } from "react-day-picker";
+
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { CalendarIcon } from "@/components/ui/calendar";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CalendarIcon, Info, AlertTriangle, Upload, X, FileText, Users } from "lucide-react";
-import { format } from "date-fns";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
+import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { useUser } from "@/hooks/useUser";
+import { balanceService } from "@/services/balanceService";
+import { calculateWorkingDays } from "@/lib/utils";
 
-interface LeaveRequestFormProps {
-  isOpen: boolean;
-  onClose: () => void;
-  currentUser: any;
+const FormSchema = z.object({
+  title: z.string().min(2, {
+    message: "Title must be at least 2 characters.",
+  }),
+  detail: z.string().min(10, {
+    message: "Detail must be at least 10 characters.",
+  }),
+  date: z.object({
+    from: z.date({
+      required_error: "A start date is required.",
+    }),
+    to: z.date({
+      required_error: "A end date is required.",
+    }),
+  }).refine(data => data.to >= data.from, {
+    message: "End date must be after start date",
+    path: ["to"],
+  }),
+  leaveType: z.string({
+    required_error: "Please select a leave type.",
+  }),
+  attachments: z.array(z.instanceof(File)).optional(),
+  terms: z.boolean().refine((val) => val === true, {
+    message: "You must accept the terms and conditions.",
+  }),
+})
+
+interface LeaveType {
+  value: string;
+  label: string;
+  description: string;
+  balance: number;
+  total: number;
 }
 
-interface CompanyHoliday {
-  id: number;
-  name: string;
-  date: string;
-  type: string;
-  office_status: string;
-}
-
-interface PublicHoliday {
-  date: Date;
-  name: string;
-}
-
-export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestFormProps) => {
+export const LeaveRequestForm = () => {
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    leaveType: "",
-    startDate: undefined as Date | undefined,
-    endDate: undefined as Date | undefined,
-    isHalfDay: false,
-    useAlternativeManager: false,
-    alternativeManager: "",
-    alternativeManagerReason: "",
-  });
+  const { user } = useUser();
+  const [balances, setBalances] = useState<{ [key: string]: number } | null>(null);
+  const [workingDays, setWorkingDays] = useState<number>(0);
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-  const [companyHolidays, setCompanyHolidays] = useState<CompanyHoliday[]>([]);
-  const [publicHolidays, setPublicHolidays] = useState<PublicHoliday[]>([]);
-  const [holidaysLoading, setHolidaysLoading] = useState(false);
-
-  // Get public holidays for the current year (in production, this should come from API)
-  const getPublicHolidays = (year: number): PublicHoliday[] => {
-    return [
-      { date: new Date(year, 0, 1), name: "New Year's Day" },
-      { date: new Date(year, 2, 21), name: "Human Rights Day" },
-      { date: new Date(year, 3, 18), name: "Good Friday" },
-      { date: new Date(year, 3, 21), name: "Family Day" },
-      { date: new Date(year, 3, 27), name: "Freedom Day" },
-      { date: new Date(year, 4, 1), name: "Workers' Day" },
-      { date: new Date(year, 5, 16), name: "Youth Day" },
-      { date: new Date(year, 7, 9), name: "National Women's Day" },
-      { date: new Date(year, 8, 24), name: "Heritage Day" },
-      { date: new Date(year, 11, 16), name: "Day of Reconciliation" },
-      { date: new Date(year, 11, 25), name: "Christmas Day" },
-      { date: new Date(year, 11, 26), name: "Day of Goodwill" },
-    ];
-  };
-
-  // Fetch both company holidays and set public holidays when component opens
   useEffect(() => {
-    const fetchAllHolidays = async () => {
-      if (!isOpen) return;
-      
-      console.log('[LeaveRequestForm] Fetching all holidays...');
-      setHolidaysLoading(true);
-      
-      try {
-        // Set public holidays for current year
-        const currentYear = new Date().getFullYear();
-        const publicHols = getPublicHolidays(currentYear);
-        setPublicHolidays(publicHols);
-        console.log('[LeaveRequestForm] Set public holidays:', publicHols.length);
-
-        // Fetch company holidays
-        const authToken = localStorage.getItem('auth_token');
-        if (!authToken) {
-          console.warn('[LeaveRequestForm] No auth token available for holiday fetch');
-          return;
-        }
-
-        const response = await fetch('/api/holiday', {
-          headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json'
+    const fetchBalances = async () => {
+      if (user?.email) {
+        try {
+          const balance = await balanceService.getEmployeeBalance(user.email);
+          if (balance) {
+            const leaveBalances = balanceService.getAllLeaveBalances(balance);
+            setBalances(leaveBalances);
           }
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log('[LeaveRequestForm] Fetched company holidays:', data.holidays?.length || 0);
-          setCompanyHolidays(data.holidays || []);
-        } else {
-          console.warn('[LeaveRequestForm] Failed to fetch company holidays:', response.status);
+        } catch (error) {
+          console.error("Failed to fetch leave balances:", error);
+          toast({
+            variant: "destructive",
+            title: "Failed to fetch leave balances.",
+            description: "Please try again later.",
+          });
         }
-      } catch (error) {
-        console.error('[LeaveRequestForm] Failed to fetch holidays:', error);
-      } finally {
-        setHolidaysLoading(false);
       }
     };
-    
-    fetchAllHolidays();
-  }, [isOpen]);
 
-  // Mock list of available managers - in real app this would come from API
-  const availableManagers = [
-    { email: "john.smith@company.com", name: "John Smith", department: "Operations" },
-    { email: "sarah.jones@company.com", name: "Sarah Jones", department: "HR" },
-    { email: "mike.wilson@company.com", name: "Mike Wilson", department: "Finance" },
-    { email: "lisa.brown@company.com", name: "Lisa Brown", department: "IT" },
-    { email: "david.taylor@company.com", name: "David Taylor", department: "Marketing" },
-  ];
+    fetchBalances();
+  }, [user?.email, toast]);
+
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      title: "",
+      detail: "",
+      date: undefined,
+      leaveType: "",
+      attachments: [],
+      terms: false,
+    },
+  })
+
+  function onSubmit(values: z.infer<typeof FormSchema>) {
+    setIsSubmitting(true);
+    setUploadProgress(0);
+
+    const startDate = values.date?.from.toISOString().split('T')[0];
+    const endDate = values.date?.to.toISOString().split('T')[0];
+    const leaveType = values.leaveType;
+
+    if (!startDate || !endDate) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select a valid date range.",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!leaveType) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select a leave type.",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("title", values.title);
+    formData.append("detail", values.detail);
+    formData.append("startDate", startDate);
+    formData.append("endDate", endDate);
+    formData.append("leaveType", leaveType);
+    formData.append("workingDays", workingDays.toString());
+
+    files.forEach((file) => {
+      formData.append("attachments", file);
+    });
+
+    fetch("/api/leave/request", {
+      method: "POST",
+      body: formData,
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to submit leave request');
+        }
+        return response.json();
+      })
+      .then((data) => {
+        toast({
+          title: "Success",
+          description: data.message,
+        });
+        form.reset();
+        setFiles([]);
+        setWorkingDays(0);
+      })
+      .catch((error) => {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message,
+        });
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+        setUploadProgress(0);
+      });
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || []);
+    setFiles(selectedFiles);
+  };
 
   const leaveTypes = [
     { 
       value: "annual", 
       label: "Annual Leave", 
-      description: "Vacation and personal time off",
-      balance: 12,
+      description: "Regular vacation days",
+      balance: balances?.annual || 0,
       total: 20
     },
     { 
       value: "sick", 
       label: "Sick Leave", 
-      description: "Medical appointments and illness",
-      balance: 33,
+      description: "Medical leave for illness",
+      balance: balances?.sick || 0,
       total: 36
-    },
-    { 
-      value: "maternity", 
-      label: "Maternity Leave", 
-      description: "Childbirth and recovery period",
-      balance: 90,
-      total: 90
-    },
-    { 
-      value: "parental", 
-      label: "Parental Leave", 
-      description: "Caring for newborn or adopted child",
-      balance: 20,
-      total: 20
     },
     { 
       value: "family", 
       label: "Family Leave", 
-      description: "Caring for family members",
-      balance: 2,
+      description: "Family responsibility leave",
+      balance: balances?.family || 0,
       total: 3
-    },
-    { 
-      value: "adoption", 
-      label: "Adoption Leave", 
-      description: "Adopting a child",
-      balance: 20,
-      total: 20
     },
     { 
       value: "study", 
       label: "Study Leave", 
-      description: "Professional development and training",
-      balance: 4,
+      description: "Educational purposes",
+      balance: balances?.study || 0,
       total: 6
     },
     { 
       value: "wellness", 
       label: "Wellness Leave", 
-      description: "Mental health and wellbeing",
-      balance: 2,
+      description: "Mental health and wellness",
+      balance: balances?.wellness || 0,
       total: 2
+    },
+    { 
+      value: "parental", 
+      label: "Parental Leave", 
+      description: "Parental responsibilities",
+      balance: balances?.parental || 0,
+      total: 20
+    },
+    { 
+      value: "adoption", 
+      label: "Adoption Leave", 
+      description: "Adoption related leave",
+      balance: balances?.adoption || 0,
+      total: 20
     }
   ];
 
-  const selectedLeaveType = leaveTypes.find(type => type.value === formData.leaveType);
+  useEffect(() => {
+    if (form.watch("date")?.from && form.watch("date")?.to) {
+      const start = form.watch("date")?.from.toISOString().split('T')[0];
+      const end = form.watch("date")?.to.toISOString().split('T')[0];
 
-  const isWeekend = (date: Date) => {
-    const day = date.getDay();
-    return day === 0 || day === 6; // Sunday or Saturday
-  };
-
-  const isPublicHoliday = (date: Date) => {
-    return publicHolidays.some(holiday => 
-      holiday.date.getDate() === date.getDate() &&
-      holiday.date.getMonth() === date.getMonth() &&
-      holiday.date.getFullYear() === date.getFullYear()
-    );
-  };
-
-  const isCompanyHoliday = (date: Date) => {
-    return companyHolidays.some(holiday => {
-      const holidayDate = new Date(holiday.date);
-      return holidayDate.getDate() === date.getDate() &&
-             holidayDate.getMonth() === date.getMonth() &&
-             holidayDate.getFullYear() === date.getFullYear();
-    });
-  };
-
-  // CONFIRMED FORMULA: Working days calculation excludes weekends, public holidays, and company holidays
-  // For half-day requests, we subtract 0.5 from the total working days
-  const calculateWorkingDays = () => {
-    if (!formData.startDate || !formData.endDate) return 0;
-
-    let workingDays = 0;
-    const currentDate = new Date(formData.startDate);
-    const endDate = new Date(formData.endDate);
-
-    // Iterate through each day in the range (inclusive)
-    while (currentDate <= endDate) {
-      if (!isWeekend(currentDate) && !isPublicHoliday(currentDate) && !isCompanyHoliday(currentDate)) {
-        workingDays++;
-      }
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    // If it's a half day request, deduct 0.5 from the working days
-    return formData.isHalfDay ? Math.max(0, workingDays - 0.5) : workingDays;
-  };
-
-  const getCalendarDays = () => {
-    if (formData.startDate && formData.endDate) {
-      const timeDiff = formData.endDate.getTime() - formData.startDate.getTime();
-      const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
-      return dayDiff > 0 ? dayDiff : 0;
-    }
-    return 0;
-  };
-
-  // Check if balance is insufficient
-  const isBalanceInsufficient = () => {
-    if (!selectedLeaveType) return false;
-    const workingDays = calculateWorkingDays();
-    return selectedLeaveType.balance < workingDays;
-  };
-
-  // Check if document attachment is required for sick leave
-  const requiresDocumentAttachment = () => {
-    if (formData.leaveType === 'sick') {
-      const workingDays = calculateWorkingDays();
-      return workingDays >= 2;
-    }
-    return false;
-  };
-
-  // Handle file upload
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files) {
-      const newFiles = Array.from(files);
-      const validFiles = newFiles.filter(file => {
-        const isValidType = file.type === 'application/pdf' || 
-                           file.type.startsWith('image/') ||
-                           file.type === 'application/msword' ||
-                           file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-        const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB limit
-        
-        if (!isValidType) {
-          toast({
-            title: "Invalid file type",
-            description: `${file.name} is not a supported file type. Please upload PDF, Word documents, or images.`,
-            variant: "destructive",
+      if (start && end) {
+        calculateWorkingDays(start, end)
+          .then(days => setWorkingDays(days))
+          .catch(error => {
+            console.error("Error calculating working days:", error);
+            toast({
+              variant: "destructive",
+              title: "Error",
+              description: "Failed to calculate working days. Please try again.",
+            });
+            setWorkingDays(0);
           });
-          return false;
-        }
-        
-        if (!isValidSize) {
-          toast({
-            title: "File too large",
-            description: `${file.name} exceeds the 5MB limit.`,
-            variant: "destructive",
-          });
-          return false;
-        }
-        
-        return true;
-      });
-      
-      setAttachedFiles(prev => [...prev, ...validFiles]);
-    }
-  };
-
-  // Remove attached file
-  const removeFile = (index: number) => {
-    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // Format file size
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const sendEmailNotifications = async (requestData: any) => {
-    try {
-      // Determine who to send to - alternative manager or default manager
-      const approverEmail = formData.useAlternativeManager && formData.alternativeManager 
-        ? formData.alternativeManager 
-        : `${currentUser.department.toLowerCase()}.manager@company.com`;
-
-      const approverName = formData.useAlternativeManager && formData.alternativeManager
-        ? availableManagers.find(m => m.email === formData.alternativeManager)?.name || formData.alternativeManager
-        : "Manager";
-      
-      // Send email to approver (manager or alternative manager)
-      const managerEmailData = {
-        to: approverEmail,
-        cc: 'admin@company.com', // Copy admin
-        subject: `New Leave Request - ${requestData.title}`,
-        body: `Dear ${approverName},
-        
-        A new leave request has been submitted and requires your approval:
-        ${formData.useAlternativeManager ? `\n⚠️ ALTERNATIVE APPROVAL: You have been designated as the alternative approver for this request.\nReason: ${formData.alternativeManagerReason}\n` : ''}
-        
-        Employee: ${requestData.submittedBy}
-        Email: ${currentUser.email}
-        Department: ${currentUser.department}
-        
-        Leave Details:
-        - Type: ${selectedLeaveType?.label}
-        - Title: ${requestData.title}
-        - Dates: ${requestData.startDate} to ${requestData.endDate}
-        - Calendar Days: ${getCalendarDays()}
-        - Working Days Applied: ${requestData.workingDays}
-        - Description: ${requestData.description}
-        ${requestData.requiresHRApproval ? '\n⚠️ REQUIRES HR APPROVAL: Insufficient leave balance' : ''}
-        ${requestData.attachedFiles && requestData.attachedFiles.length > 0 ? `\n📎 ATTACHED DOCUMENTS: ${requestData.attachedFiles.map((f: File) => f.name).join(', ')}` : ''}
-        
-        Please log into the leave management system to review and approve this request.
-        
-        Best regards,
-        Leave Management System`
-      };
-
-      console.log('Manager Email:', managerEmailData);
-      
-      // Send confirmation email to employee
-      const employeeEmailData = {
-        to: currentUser.email,
-        subject: `Leave Request Submitted - ${requestData.title}`,
-        body: `Dear ${currentUser.name},
-        
-        Your leave request has been successfully submitted and is pending approval.
-        
-        Request Details:
-        - Type: ${selectedLeaveType?.label}
-        - Dates: ${requestData.startDate} to ${requestData.endDate}
-        - Calendar Days: ${getCalendarDays()}
-        - Working Days Applied: ${requestData.workingDays}
-        - Status: Pending Approval
-        ${formData.useAlternativeManager ? `\n📋 Alternative Approver: ${approverName} (${approverEmail})` : ''}
-        
-        You will receive an email notification once your ${formData.useAlternativeManager ? 'alternative ' : ''}manager reviews your request.
-        
-        Best regards,
-        Leave Management System`
-      };
-
-      console.log('Employee Email:', employeeEmailData);
-      
-    } catch (error) {
-      console.error('Failed to send email notifications:', error);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.title || !formData.leaveType || !formData.startDate || !formData.endDate) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate alternative manager fields if enabled
-    if (formData.useAlternativeManager) {
-      if (!formData.alternativeManager || !formData.alternativeManagerReason.trim()) {
-        toast({
-          title: "Alternative Manager Required",
-          description: "Please select an alternative manager and provide a reason.",
-          variant: "destructive",
-        });
-        return;
       }
     }
-
-    // Check if document attachment is required for sick leave
-    if (requiresDocumentAttachment() && attachedFiles.length === 0) {
-      toast({
-        title: "Document Required",
-        description: "Please attach supporting documents for sick leave of 2 or more days.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const workingDays = calculateWorkingDays();
-    const requiresHRApproval = isBalanceInsufficient();
-    
-    const requestData = {
-      ...formData,
-      workingDays,
-      submittedBy: currentUser.name,
-      submittedDate: new Date().toISOString(),
-      status: 'pending',
-      requiresHRApproval,
-      attachedFiles: attachedFiles.length > 0 ? attachedFiles : undefined
-    };
-
-    console.log("Leave request submitted:", requestData);
-
-    // Send email notifications
-    await sendEmailNotifications(requestData);
-
-    // Submit to API with file attachments
-    try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('detail', formData.description);
-      formDataToSend.append('startDate', formData.startDate!.toISOString());
-      formDataToSend.append('endDate', formData.endDate!.toISOString());
-      formDataToSend.append('leaveType', selectedLeaveType?.label || '');
-      formDataToSend.append('workingDays', workingDays.toString());
-      
-      // Add file attachments
-      attachedFiles.forEach((file, index) => {
-        formDataToSend.append(`attachments`, file);
-      });
-
-      const response = await fetch('/api/leave/request', {
-        method: 'POST',
-        body: formDataToSend,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to submit leave request');
-      }
-
-    } catch (error) {
-      console.error('Failed to submit leave request:', error);
-      toast({
-        title: "Submission Failed",
-        description: "Failed to submit leave request. Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    let toastMessage = `Your ${selectedLeaveType?.label.toLowerCase()} request for ${workingDays} working day${workingDays > 1 ? 's' : ''} has been submitted for approval.`;
-    
-    if (formData.useAlternativeManager) {
-      const altManagerName = availableManagers.find(m => m.email === formData.alternativeManager)?.name || formData.alternativeManager;
-      toastMessage += ` Request sent to alternative manager: ${altManagerName}.`;
-    }
-    
-    if (requiresHRApproval) {
-      toastMessage += " This request requires HR approval due to insufficient balance.";
-    }
-
-    if (attachedFiles.length > 0) {
-      toastMessage += ` ${attachedFiles.length} document${attachedFiles.length > 1 ? 's' : ''} attached.`;
-    }
-
-    toast({
-      title: "Request Submitted",
-      description: toastMessage,
-    });
-
-    // Reset form
-    setFormData({
-      title: "",
-      description: "",
-      leaveType: "",
-      startDate: undefined,
-      endDate: undefined,
-      isHalfDay: false,
-      useAlternativeManager: false,
-      alternativeManager: "",
-      alternativeManagerReason: "",
-    });
-    setAttachedFiles([]);
-    onClose();
-  };
+  }, [form.watch("date")?.from, form.watch("date")?.to, toast]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Submit Leave Request</DialogTitle>
-          <DialogDescription>
-            Fill out the form below to request time off. Your manager will be notified automatically.
-            {holidaysLoading && " (Loading latest holidays...)"}
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <Card className="w-[750px]">
+      <CardContent className="p-12">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="space-y-2">
-              <Label htmlFor="title">Request Title *</Label>
-              <Input
-                id="title"
-                placeholder="e.g., Summer Vacation"
-                value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              />
+              <h2 className="text-2xl font-bold">Leave Request Form</h2>
+              <p className="text-muted-foreground">
+                Submit your leave request with all necessary details.
+              </p>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="leaveType">Leave Type *</Label>
-              <Select value={formData.leaveType} onValueChange={(value) => setFormData(prev => ({ ...prev, leaveType: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select leave type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {leaveTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      <div>
-                        <div className="font-medium">{type.label}</div>
-                        <div className="text-xs text-gray-500">{type.balance} days available</div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Start Date *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.startDate ? format(formData.startDate, "PPP") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={formData.startDate}
-                    onSelect={(date) => setFormData(prev => ({ ...prev, startDate: date }))}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="space-y-2">
-              <Label>End Date *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.endDate ? format(formData.endDate, "PPP") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={formData.endDate}
-                    onSelect={(date) => setFormData(prev => ({ ...prev, endDate: date }))}
-                    disabled={(date) => date < (formData.startDate || new Date('1900-01-01'))}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-3">
-            <Switch
-              id="halfDay"
-              checked={formData.isHalfDay}
-              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isHalfDay: checked }))}
-            />
-            <Label htmlFor="halfDay" className="text-sm font-medium">
-              Half Day Request
-            </Label>
-          </div>
-
-          {/* Alternative Manager Section - Changed to purple theme */}
-          <Card className="border-purple-200 bg-purple-50">
-            <CardHeader className="pb-3">
-              <div className="flex items-center space-x-2">
-                <Users className="h-5 w-5 text-purple-600" />
-                <CardTitle className="text-base text-purple-800">Manager Approval Options</CardTitle>
-              </div>
-              <CardDescription className="text-purple-700">
-                If your regular manager is unavailable, you can assign an alternative manager to approve this request.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <Switch
-                  id="useAlternativeManager"
-                  checked={formData.useAlternativeManager}
-                  onCheckedChange={(checked) => setFormData(prev => ({ 
-                    ...prev, 
-                    useAlternativeManager: checked,
-                    alternativeManager: checked ? prev.alternativeManager : "",
-                    alternativeManagerReason: checked ? prev.alternativeManagerReason : ""
-                  }))}
-                />
-                <Label htmlFor="useAlternativeManager" className="text-sm font-medium text-purple-800">
-                  Use Alternative Manager
-                </Label>
-              </div>
-
-              {formData.useAlternativeManager && (
-                <div className="space-y-4 pl-6 border-l-2 border-purple-300">
-                  <div className="space-y-2">
-                    <Label htmlFor="alternativeManager">Alternative Manager *</Label>
-                    <Select value={formData.alternativeManager || "none"} onValueChange={(value) => setFormData(prev => ({ ...prev, alternativeManager: value === "none" ? "" : value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select alternative manager" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Select a manager</SelectItem>
-                        {availableManagers.map((manager) => (
-                          <SelectItem key={manager.email} value={manager.email}>
-                            <div>
-                              <div className="font-medium">{manager.name}</div>
-                              <div className="text-xs text-gray-500">{manager.department} - {manager.email}</div>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="alternativeManagerReason">Reason for Alternative Manager *</Label>
-                    <Textarea
-                      id="alternativeManagerReason"
-                      placeholder="e.g., Regular manager is on vacation, urgent approval needed, etc."
-                      value={formData.alternativeManagerReason}
-                      onChange={(e) => setFormData(prev => ({ ...prev, alternativeManagerReason: e.target.value }))}
-                      rows={2}
-                    />
-                  </div>
-                </div>
+            <Separator />
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Vacation in Bali" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Give your leave request a relevant title.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Document Upload Section for Sick Leave */}
-          {requiresDocumentAttachment() && (
-            <div className="space-y-3">
-              <Label htmlFor="documents">Supporting Documents *</Label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                <div className="text-center">
-                  <Upload className="mx-auto h-8 w-8 text-gray-400" />
-                  <div className="mt-2">
-                    <Label htmlFor="file-upload" className="cursor-pointer">
-                      <span className="text-sm font-medium text-blue-600 hover:text-blue-500">
-                        Click to upload files
-                      </span>
-                      <Input
-                        id="file-upload"
-                        type="file"
-                        multiple
-                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                        className="hidden"
-                        onChange={handleFileUpload}
-                      />
-                    </Label>
-                    <p className="text-xs text-gray-500 mt-1">
-                      PDF, Word documents, or images (max 5MB each)
+            />
+            <FormField
+              control={form.control}
+              name="detail"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Detail</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Going on a family vacation to Bali. Will be back refreshed!"
+                      className="resize-none"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Explain the reason for your leave request.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-[240px] pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value?.from ? (
+                            field.value.to ? (
+                              `${field.value.from?.toLocaleDateString()} - ${field.value.to?.toLocaleDateString()}`
+                            ) : (
+                              field.value.from?.toLocaleDateString()
+                            )
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <div className="border rounded-md overflow-hidden">
+                        <div className="p-3">
+                          <Calendar
+                            mode="range"
+                            defaultMonth={field.value?.from}
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date < new Date()
+                            }
+                            numberOfMonths={2}
+                            pagedNavigation
+                          />
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  <FormDescription>
+                    Select the start and end dates for your leave.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="leaveType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Leave Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a leave type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {leaveTypes.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Choose the appropriate type of leave.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {form.watch("leaveType") && (
+              <div className="rounded-md border p-4">
+                <div className="flex items-center space-x-4">
+                  <CalendarIcon className="h-8 w-8 text-gray-500" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {leaveTypes.find(type => type.value === form.watch("leaveType"))?.label}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {leaveTypes.find(type => type.value === form.watch("leaveType"))?.description}
                     </p>
                   </div>
                 </div>
+                <Separator className="my-4" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Available Balance</Label>
+                    <div className="space-y-1">
+                      <p className="text-lg font-semibold">
+                        {leaveTypes.find(type => type.value === form.watch("leaveType"))?.balance} days
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Out of {leaveTypes.find(type => type.value === form.watch("leaveType"))?.total} days
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Days Requested</Label>
+                    <div className="space-y-1">
+                      <p className="text-lg font-semibold">
+                        {workingDays} days
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Based on selected date range
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
-
-              {/* Display attached files */}
-              {attachedFiles.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Attached Files:</Label>
-                  {attachedFiles.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
-                      <div className="flex items-center space-x-2">
-                        <FileText className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm text-gray-700">{file.name}</span>
-                        <span className="text-xs text-gray-500">({formatFileSize(file.size)})</span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFile(index)}
-                        className="h-6 w-6 p-0"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+            )}
+            <div>
+              <Label htmlFor="attachments">Attachments (Optional)</Label>
+              <Input
+                type="file"
+                id="attachments"
+                multiple
+                onChange={handleFileChange}
+                className="mt-2"
+              />
+              <FormDescription>
+                Attach any relevant documents (max 5MB per file, 10 files max).
+              </FormDescription>
+              {files.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium">Selected Files:</p>
+                  <ul>
+                    {files.map((file, index) => (
+                      <li key={index} className="text-sm text-gray-700">
+                        {file.name} ({Math.ceil(file.size / 1024)} KB)
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>
-          )}
-
-          {/* Validation Alerts */}
-          {selectedLeaveType && formData.startDate && formData.endDate && (
-            <div className="space-y-3">
-              {/* Insufficient Balance Alert */}
-              {isBalanceInsufficient() && (
-                <Alert className="border-orange-200 bg-orange-50">
-                  <AlertTriangle className="h-4 w-4 text-orange-600" />
-                  <AlertDescription className="text-orange-800">
-                    <strong>HR Approval Required:</strong> Your available balance ({selectedLeaveType.balance} days) is less than the requested days ({calculateWorkingDays()} days). This request will be forwarded to HR for final approval after manager approval.
-                  </AlertDescription>
-                </Alert>
+            <FormField
+              control={form.control}
+              name="terms"
+              render={({ field }) => (
+                <FormItem className="flex items-center space-x-2 rounded-md border p-4">
+                  <FormControl>
+                    <Input
+                      type="checkbox"
+                      checked={field.value}
+                      onChange={(e) => field.onChange(e.target.checked)}
+                    />
+                  </FormControl>
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base font-semibold">
+                      Accept Terms and Conditions
+                    </FormLabel>
+                    <FormDescription>
+                      I agree to the leave policy and understand the implications of
+                      submitting this request.
+                    </FormDescription>
+                  </div>
+                  <FormMessage />
+                </FormItem>
               )}
-
-              {/* Document Attachment Alert */}
-              {requiresDocumentAttachment() && (
-                <Alert className="border-purple-200 bg-purple-50">
-                  <Upload className="h-4 w-4 text-purple-600" />
-                  <AlertDescription className="text-purple-800">
-                    <strong>Document Required:</strong> Please attach supporting documents (medical certificate, doctor's note, etc.) for sick leave of 2 or more days.
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-          )}
-
-          {formData.startDate && formData.endDate && (
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2 text-green-700">
-                    <Info className="h-4 w-4" />
-                    <span className="text-sm font-medium">Leave Days Summary</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-green-600">Calendar Days:</span>
-                      <span className="font-medium text-green-800">{getCalendarDays()} day{getCalendarDays() > 1 ? 's' : ''}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-green-600">Working Days Applied:</span>
-                      <span className="font-medium text-green-800">
-                        {calculateWorkingDays()} day{calculateWorkingDays() > 1 ? 's' : ''}
-                        {formData.isHalfDay && " (Half Day)"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-xs text-green-600 bg-green-100 p-2 rounded mt-2">
-                    Working days exclude weekends, South African public holidays, and company holidays. 
-                    {formData.isHalfDay && " Half-day requests count as 0.5 days per working day selected."}
-                    {holidaysLoading && " Holiday data is being updated..."}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Provide additional details about your leave request..."
-              rows={3}
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
             />
-          </div>
-
-          {selectedLeaveType && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">{selectedLeaveType.label} Information</CardTitle>
-                <CardDescription>{selectedLeaveType.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex justify-between items-center text-sm">
-                  <span>Available Balance:</span>
-                  <span className="font-medium">{selectedLeaveType.balance} of {selectedLeaveType.total} days</span>
-                </div>
-                
-                {selectedLeaveType.value === 'annual' && (
-                  <div className="mt-2 text-xs text-orange-700 bg-orange-50 p-2 rounded">
-                    <strong>Policy Update:</strong> Annual leave must be used within the leave year. Unused leave may be forfeited based on company policy.
-                  </div>
-                )}
-                
-                {selectedLeaveType.value === 'sick' && calculateWorkingDays() > 3 && (
-                  <div className="mt-2 text-xs text-blue-700 bg-blue-50 p-2 rounded">
-                    <strong>Note:</strong> Medical certificate required for sick leave exceeding 3 consecutive working days.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+            <Button type="submit" size="lg" disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit Leave Request"}
             </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-              Submit Request
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-};
+            {uploadProgress > 0 && (
+              <div className="mt-4">
+                <p className="text-sm font-medium">Upload Progress:</p>
+                <Progress value={uploadProgress} />
+                <p className="text-xs text-muted-foreground">
+                  {uploadProgress}%
+                </p>
+              </div>
+            )}
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  )
+}
