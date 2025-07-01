@@ -357,7 +357,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                             <Calendar
                               mode="range"
                               defaultMonth={field.value?.from}
-                              selected={field.value}
+                              selected={field.value as DateRange | undefined}
                               onSelect={field.onChange}
                               disabled={(date) =>
                                 date < new Date()
