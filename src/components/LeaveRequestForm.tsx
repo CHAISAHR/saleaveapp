@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calendar } from "lucide-react";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { DateRange } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon } from "@/components/ui/calendar";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Form,
   FormControl,
@@ -66,7 +66,13 @@ interface LeaveType {
   total: number;
 }
 
-export const LeaveRequestForm = () => {
+interface LeaveRequestFormProps {
+  isOpen: boolean;
+  onClose: () => void;
+  currentUser: any;
+}
+
+export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestFormProps) => {
   const { toast } = useToast();
   const { user } = useUser();
   const [balances, setBalances] = useState<{ [key: string]: number } | null>(null);
@@ -172,6 +178,7 @@ export const LeaveRequestForm = () => {
         form.reset();
         setFiles([]);
         setWorkingDays(0);
+        onClose();
       })
       .catch((error) => {
         toast({
@@ -264,240 +271,249 @@ export const LeaveRequestForm = () => {
     }
   }, [form.watch("date")?.from, form.watch("date")?.to, toast]);
 
+  if (!isOpen) return null;
+
   return (
-    <Card className="w-[750px]">
-      <CardContent className="p-12">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold">Leave Request Form</h2>
-              <p className="text-muted-foreground">
-                Submit your leave request with all necessary details.
-              </p>
-            </div>
-            <Separator />
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Vacation in Bali" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Give your leave request a relevant title.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="detail"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Detail</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Going on a family vacation to Bali. Will be back refreshed!"
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Explain the reason for your leave request.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-[240px] pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value?.from ? (
-                            field.value.to ? (
-                              `${field.value.from?.toLocaleDateString()} - ${field.value.to?.toLocaleDateString()}`
-                            ) : (
-                              field.value.from?.toLocaleDateString()
-                            )
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <div className="border rounded-md overflow-hidden">
-                        <div className="p-3">
-                          <Calendar
-                            mode="range"
-                            defaultMonth={field.value?.from}
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date < new Date()
-                            }
-                            numberOfMonths={2}
-                            pagedNavigation
-                          />
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  <FormDescription>
-                    Select the start and end dates for your leave.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="leaveType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Leave Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a leave type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {leaveTypes.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    Choose the appropriate type of leave.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {form.watch("leaveType") && (
-              <div className="rounded-md border p-4">
-                <div className="flex items-center space-x-4">
-                  <CalendarIcon className="h-8 w-8 text-gray-500" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {leaveTypes.find(type => type.value === form.watch("leaveType"))?.label}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {leaveTypes.find(type => type.value === form.watch("leaveType"))?.description}
-                    </p>
-                  </div>
-                </div>
-                <Separator className="my-4" />
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Available Balance</Label>
-                    <div className="space-y-1">
-                      <p className="text-lg font-semibold">
-                        {leaveTypes.find(type => type.value === form.watch("leaveType"))?.balance} days
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Out of {leaveTypes.find(type => type.value === form.watch("leaveType"))?.total} days
-                      </p>
-                    </div>
-                  </div>
-                  <div>
-                    <Label>Days Requested</Label>
-                    <div className="space-y-1">
-                      <p className="text-lg font-semibold">
-                        {workingDays} days
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Based on selected date range
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div>
-              <Label htmlFor="attachments">Attachments (Optional)</Label>
-              <Input
-                type="file"
-                id="attachments"
-                multiple
-                onChange={handleFileChange}
-                className="mt-2"
-              />
-              <FormDescription>
-                Attach any relevant documents (max 5MB per file, 10 files max).
-              </FormDescription>
-              {files.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-sm font-medium">Selected Files:</p>
-                  <ul>
-                    {files.map((file, index) => (
-                      <li key={index} className="text-sm text-gray-700">
-                        {file.name} ({Math.ceil(file.size / 1024)} KB)
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-            <FormField
-              control={form.control}
-              name="terms"
-              render={({ field }) => (
-                <FormItem className="flex items-center space-x-2 rounded-md border p-4">
-                  <FormControl>
-                    <Input
-                      type="checkbox"
-                      checked={field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
-                    />
-                  </FormControl>
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base font-semibold">
-                      Accept Terms and Conditions
-                    </FormLabel>
-                    <FormDescription>
-                      I agree to the leave policy and understand the implications of
-                      submitting this request.
-                    </FormDescription>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" size="lg" disabled={isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Submit Leave Request"}
-            </Button>
-            {uploadProgress > 0 && (
-              <div className="mt-4">
-                <p className="text-sm font-medium">Upload Progress:</p>
-                <Progress value={uploadProgress} />
-                <p className="text-xs text-muted-foreground">
-                  {uploadProgress}%
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <Card className="w-[750px] max-h-[90vh] overflow-y-auto">
+        <CardContent className="p-12">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold">Leave Request Form</h2>
+                <p className="text-muted-foreground">
+                  Submit your leave request with all necessary details.
                 </p>
               </div>
-            )}
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+              <Separator />
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Vacation in Bali" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Give your leave request a relevant title.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="detail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Detail</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Going on a family vacation to Bali. Will be back refreshed!"
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Explain the reason for your leave request.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-[240px] pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value?.from ? (
+                              field.value.to ? (
+                                `${field.value.from?.toLocaleDateString()} - ${field.value.to?.toLocaleDateString()}`
+                              ) : (
+                                field.value.from?.toLocaleDateString()
+                              )
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <div className="border rounded-md overflow-hidden">
+                          <div className="p-3">
+                            <Calendar
+                              mode="range"
+                              defaultMonth={field.value?.from}
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) =>
+                                date < new Date()
+                              }
+                              numberOfMonths={2}
+                              className="pointer-events-auto"
+                            />
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    <FormDescription>
+                      Select the start and end dates for your leave.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="leaveType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Leave Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a leave type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {leaveTypes.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Choose the appropriate type of leave.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {form.watch("leaveType") && (
+                <div className="rounded-md border p-4">
+                  <div className="flex items-center space-x-4">
+                    <CalendarIcon className="h-8 w-8 text-gray-500" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {leaveTypes.find(type => type.value === form.watch("leaveType"))?.label}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {leaveTypes.find(type => type.value === form.watch("leaveType"))?.description}
+                      </p>
+                    </div>
+                  </div>
+                  <Separator className="my-4" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Available Balance</Label>
+                      <div className="space-y-1">
+                        <p className="text-lg font-semibold">
+                          {leaveTypes.find(type => type.value === form.watch("leaveType"))?.balance} days
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Out of {leaveTypes.find(type => type.value === form.watch("leaveType"))?.total} days
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Days Requested</Label>
+                      <div className="space-y-1">
+                        <p className="text-lg font-semibold">
+                          {workingDays} days
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Based on selected date range
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div>
+                <Label htmlFor="attachments">Attachments (Optional)</Label>
+                <Input
+                  type="file"
+                  id="attachments"
+                  multiple
+                  onChange={handleFileChange}
+                  className="mt-2"
+                />
+                <FormDescription>
+                  Attach any relevant documents (max 5MB per file, 10 files max).
+                </FormDescription>
+                {files.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm font-medium">Selected Files:</p>
+                    <ul>
+                      {files.map((file, index) => (
+                        <li key={index} className="text-sm text-gray-700">
+                          {file.name} ({Math.ceil(file.size / 1024)} KB)
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+              <FormField
+                control={form.control}
+                name="terms"
+                render={({ field }) => (
+                  <FormItem className="flex items-center space-x-2 rounded-md border p-4">
+                    <FormControl>
+                      <Input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                      />
+                    </FormControl>
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base font-semibold">
+                        Accept Terms and Conditions
+                      </FormLabel>
+                      <FormDescription>
+                        I agree to the leave policy and understand the implications of
+                        submitting this request.
+                      </FormDescription>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end space-x-4">
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button type="submit" size="lg" disabled={isSubmitting}>
+                  {isSubmitting ? "Submitting..." : "Submit Leave Request"}
+                </Button>
+              </div>
+              {uploadProgress > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium">Upload Progress:</p>
+                  <Progress value={uploadProgress} />
+                  <p className="text-xs text-muted-foreground">
+                    {uploadProgress}%
+                  </p>
+                </div>
+              )}
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
