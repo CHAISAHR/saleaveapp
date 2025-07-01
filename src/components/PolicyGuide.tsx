@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Clock, Users, AlertCircle, CheckCircle, Calendar } from "lucide-react";
@@ -17,6 +18,13 @@ export const PolicyGuide = () => {
       icon: FileText,
       color: "red",
       description: "7.2 Sick Leave - 7.2.1 The employee shall be entitled to the amount of sick leave provided for in terms of the Basic Conditions of Employment Act 75 of 1997 (\"BCEA\"). During the first six (6) months of employment, an employee is entitled to one (1) day's paid sick leave for every twenty-six (26) days worked. 7.2.2 If the employee is absent from work due to illness for 2 (two) consecutive days or more or on 2 (two) occasions within an 8 (eight) week period, the employee is obliged to supply the employer with a medical certificate issued by a medical practitioner setting out the reasons for their absence from work. 7.2.3 It is the employee's duty to notify both the relevant CHAI manager and provincial manager, of their absence."
+    },
+    {
+      type: "Maternity Leave",
+      allocation: "90 days",
+      icon: Users,
+      color: "pink",
+      description: "7.3 Maternity Leave - Female employees shall, as per the BCEA, be entitled to four (4) consecutive months' maternity leave. A female employee is entitled to three months' paid maternity leave under CHAI's benefit provision. An additional one (1) month of maternity leave will be provided under the provisions of UIF."
     },
     {
       type: "Parental Leave",
@@ -51,7 +59,7 @@ export const PolicyGuide = () => {
       allocation: "2 days per year",
       icon: CheckCircle,
       color: "teal",
-      description: "The employee shall be entitled to two (2) Wellness days leave per calendar year for mental health and wellbeing purposes."
+      description: "The employee shall be entitled to two (2) Wellness days leave per calendar year."
     }
   ];
 

@@ -33,7 +33,7 @@ interface EmployeeBalance {
   Study: number;
   StudyUsed: number;
   Mentalhealth: number;
-  WellnessUsed: number; // Updated from MentalhealthUsed
+  MentalhealthUsed: number;
   PowerAppsId?: string;
   Current_leave_balance: number;
   Leave_balance_previous_month: number;
@@ -189,9 +189,10 @@ export const EditBalanceDialog = ({
                 { key: 'Sick', usedKey: 'SickUsed', label: 'Sick Leave' },
                 { key: 'Family', usedKey: 'FamilyUsed', label: 'Family Leave' },
                 { key: 'Study', usedKey: 'StudyUsed', label: 'Study Leave' },
+                { key: 'Maternity', usedKey: 'MaternityUsed', label: 'Maternity Leave' },
                 { key: 'Parental', usedKey: 'ParentalUsed', label: 'Parental Leave' },
                 { key: 'Adoption', usedKey: 'AdoptionUsed', label: 'Adoption Leave' },
-                { key: 'Wellness', usedKey: 'WellnessUsed', label: 'Wellness Leave' }
+                { key: 'Mentalhealth', usedKey: 'MentalhealthUsed', label: 'Mental Health Leave' }
               ].map(({ key, usedKey, label }) => (
                 <div key={key} className="space-y-2">
                   <Label>{label}</Label>

@@ -1,3 +1,4 @@
+
 import { EmployeeBalance, LeaveRequest } from '../balanceService';
 import { BalanceCalculations } from './balanceCalculations';
 
@@ -38,6 +39,8 @@ export class BalanceValidations {
         return BalanceCalculations.calculateOtherLeaveBalance(6, balance.StudyUsed) >= requestedDays;
       case 'wellness':
         return BalanceCalculations.calculateOtherLeaveBalance(2, balance.WellnessUsed) >= requestedDays;
+      case 'maternity':
+        return BalanceCalculations.calculateOtherLeaveBalance(90, balance.MaternityUsed) >= requestedDays;
       case 'parental':
         return BalanceCalculations.calculateOtherLeaveBalance(20, balance.ParentalUsed) >= requestedDays;
       case 'adoption':
