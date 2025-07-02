@@ -16,7 +16,7 @@ export const EmployeeDashboard = ({
   currentUser,
   activeView = 'requests'
 }: EmployeeDashboardProps) => {
-  // Sample leave balances with forfeit calculation
+  // Sample leave balances with correct units
   const leaveBalances = [{
     type: 'Annual',
     used: 8,
@@ -35,17 +35,17 @@ export const EmployeeDashboard = ({
   }, {
     type: 'Maternity',
     used: 0,
-    total: 90,
-    accrued: 90,
-    unit: 'days',
-    balance: 90
+    total: 3,
+    accrued: 3,
+    unit: 'months',
+    balance: 3
   }, {
     type: 'Parental',
     used: 0,
-    total: 20,
-    accrued: 20,
-    unit: 'days',
-    balance: 20
+    total: 4,
+    accrued: 4,
+    unit: 'weeks',
+    balance: 4
   }, {
     type: 'Family',
     used: 1,
@@ -56,10 +56,10 @@ export const EmployeeDashboard = ({
   }, {
     type: 'Adoption',
     used: 0,
-    total: 20,
-    accrued: 20,
-    unit: 'days',
-    balance: 20
+    total: 4,
+    accrued: 4,
+    unit: 'weeks',
+    balance: 4
   }, {
     type: 'Study',
     used: 2,
