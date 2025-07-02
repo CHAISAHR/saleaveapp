@@ -294,7 +294,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         Please log into the leave management system to review and approve this request.
         
         Best regards,
-        Leave Management System`
+        HR`
       };
 
       console.log('Manager Email:', managerEmailData);
@@ -318,7 +318,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         You will receive an email notification once your ${formData.useAlternativeManager ? 'alternative ' : ''}manager reviews your request.
         
         Best regards,
-        Leave Management System`
+        HR`
       };
 
       console.log('Employee Email:', employeeEmailData);

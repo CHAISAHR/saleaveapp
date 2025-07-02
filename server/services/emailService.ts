@@ -70,7 +70,7 @@ class EmailService {
       cc_email: this.ADMIN_EMAIL,
       subject: `New Leave Request: ${leaveRequest.title}`,
       message: `
-        Hello,
+        Good day,
 
         A new leave request has been submitted and requires your approval:
 
@@ -86,7 +86,7 @@ class EmailService {
         Please log into the system to review and approve this request: ${process.env.FRONTEND_URL}
 
         Best regards,
-        Leave Management System
+        HR
       `,
       notification_type: 'leave_request'
     };
@@ -116,7 +116,7 @@ class EmailService {
         Your leave balance has been automatically updated.
 
         Best regards,
-        Leave Management System
+        HR
       `,
       notification_type: 'leave_approved',
       leave_id: leaveRequest.LeaveID || leaveRequest.id
@@ -147,7 +147,7 @@ class EmailService {
         Please contact your manager if you have any questions.
 
         Best regards,
-        Leave Management System
+        HR
       `,
       notification_type: 'leave_rejected',
       leave_id: leaveRequest.LeaveID || leaveRequest.id

@@ -20,7 +20,7 @@ class EmailService {
       message: `
         Dear ${userName},
 
-        Welcome to the Company Leave Management System!
+        Welcome to the Leave Management System!
 
         Your account has been successfully created and is now active. You can now:
         
@@ -35,7 +35,7 @@ class EmailService {
         
         Best regards,
         HR Team
-        Leave Management System
+        HR
       `,
       notification_type: 'user_registration'
     };
@@ -67,7 +67,7 @@ class EmailService {
         Please log into the system to review and approve this request.
 
         Best regards,
-        Leave Management System
+        HR
       `,
       notification_type: 'leave_request'
     };
@@ -96,7 +96,7 @@ class EmailService {
         Your leave balance has been automatically updated.
 
         Best regards,
-        Leave Management System
+        HR
       `,
       notification_type: 'leave_approved',
       leave_id: leaveRequest.LeaveID || leaveRequest.id
@@ -126,7 +126,7 @@ class EmailService {
         Please contact your manager if you have any questions.
 
         Best regards,
-        Leave Management System
+        HR
       `,
       notification_type: 'leave_rejected',
       leave_id: leaveRequest.LeaveID || leaveRequest.id

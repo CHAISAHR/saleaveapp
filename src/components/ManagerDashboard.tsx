@@ -278,7 +278,7 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
         
         Best regards,
         ${currentUser.name}
-        Leave Management System`);
+        HR`);
       
       // Log the approval to leave_taken table
       const leaveRecord = {
