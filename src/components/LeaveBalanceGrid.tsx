@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ForfeitRibbon } from "@/components/ForfeitRibbon";
@@ -38,13 +39,19 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
     try {
       setLoading(true);
       
-      const response = await fetch(`${apiConfig.endpoints.balance}${userEmail ? `?email=${userEmail}` : ''}`, {
+      const response = await fetch(`${apiConfig.endpoints.balance}${userEmail ? `/${userEmail}` : ''}`, {
         headers: getAuthHeaders()
       });
 
       if (response.ok) {
         const data = await response.json();
-        setLeaveBalances(data.balances || []);
+        // Use the transformed balances from backend if available
+        if (data.balances && data.balances.length > 0) {
+          setLeaveBalances(data.balances);
+        } else {
+          // Fallback to default balances if backend doesn't return structured data
+          setLeaveBalances(getDefaultBalances());
+        }
       } else {
         console.error('Failed to fetch leave balances');
         // Fallback to default balances

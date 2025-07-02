@@ -25,7 +25,78 @@ router.get('/:email', authenticateToken, async (req: AuthRequest, res) => {
       return res.status(404).json({ success: false, message: 'Balance not found' });
     }
 
-    res.json({ success: true, balance: balances[0] });
+    const balance = balances[0];
+    
+    // Transform the balance data to include proper units and structure for frontend
+    const transformedBalances = [
+      {
+        type: 'Annual',
+        used: balance.AnnualUsed,
+        total: balance.Broughtforward + balance.AccumulatedLeave,
+        accrued: balance.AccumulatedLeave,
+        unit: 'days',
+        broughtForward: balance.Broughtforward,
+        balance: balance.Current_leave_balance
+      },
+      {
+        type: 'Sick',
+        used: balance.SickUsed,
+        total: balance.Sick,
+        accrued: balance.Sick,
+        unit: 'days',
+        balance: balance.Sick - balance.SickUsed
+      },
+      {
+        type: 'Maternity',
+        used: balance.MaternityUsed,
+        total: balance.Maternity,
+        accrued: balance.Maternity,
+        unit: 'months',
+        balance: balance.Maternity - balance.MaternityUsed
+      },
+      {
+        type: 'Parental',
+        used: balance.ParentalUsed,
+        total: balance.Parental,
+        accrued: balance.Parental,
+        unit: 'weeks',
+        balance: balance.Parental - balance.ParentalUsed
+      },
+      {
+        type: 'Adoption',
+        used: balance.AdoptionUsed || 0,
+        total: balance.Adoption || 4,
+        accrued: balance.Adoption || 4,
+        unit: 'weeks',
+        balance: (balance.Adoption || 4) - (balance.AdoptionUsed || 0)
+      },
+      {
+        type: 'Family',
+        used: balance.FamilyUsed,
+        total: balance.Family,
+        accrued: balance.Family,
+        unit: 'days',
+        balance: balance.Family - balance.FamilyUsed
+      },
+      {
+        type: 'Study',
+        used: balance.StudyUsed || 0,
+        total: balance.Study || 6,
+        accrued: balance.Study || 6,
+        unit: 'days',
+        balance: (balance.Study || 6) - (balance.StudyUsed || 0)
+      },
+      {
+        type: 'Wellness',
+        used: balance.WellnessUsed || 0,
+        total: balance.Wellness || 2,
+        accrued: balance.Wellness || 2,
+        unit: 'days',
+        balance: (balance.Wellness || 2) - (balance.WellnessUsed || 0)
+      }
+    ];
+
+    res.json({ success: true, balance: balance, balances: transformedBalances });
   } catch (error) {
     console.error('Get balance error:', error);
     res.status(500).json({ success: false, message: 'Failed to get balance' });
@@ -56,6 +127,27 @@ router.put('/update', authenticateToken, requireRole(['manager', 'admin']), asyn
           updateQuery = 'UPDATE leave_balances SET SickUsed = SickUsed - ? WHERE EmployeeEmail = ? AND Year = ?';
         }
         break;
+      case 'maternity':
+        if (action === 'approve') {
+          updateQuery = 'UPDATE leave_balances SET MaternityUsed = MaternityUsed + ? WHERE EmployeeEmail = ? AND Year = ?';
+        } else if (action === 'cancel') {
+          updateQuery = 'UPDATE leave_balances SET MaternityUsed = MaternityUsed - ? WHERE EmployeeEmail = ? AND Year = ?';
+        }
+        break;
+      case 'parental':
+        if (action === 'approve') {
+          updateQuery = 'UPDATE leave_balances SET ParentalUsed = ParentalUsed + ? WHERE EmployeeEmail = ? AND Year = ?';
+        } else if (action === 'cancel') {
+          updateQuery = 'UPDATE leave_balances SET ParentalUsed = ParentalUsed - ? WHERE EmployeeEmail = ? AND Year = ?';
+        }
+        break;
+      case 'adoption':
+        if (action === 'approve') {
+          updateQuery = 'UPDATE leave_balances SET AdoptionUsed = AdoptionUsed + ? WHERE EmployeeEmail = ? AND Year = ?';
+        } else if (action === 'cancel') {
+          updateQuery = 'UPDATE leave_balances SET AdoptionUsed = AdoptionUsed - ? WHERE EmployeeEmail = ? AND Year = ?';
+        }
+        break;
       case 'family':
         if (action === 'approve') {
           updateQuery = 'UPDATE leave_balances SET FamilyUsed = FamilyUsed + ? WHERE EmployeeEmail = ? AND Year = ?';
@@ -63,7 +155,20 @@ router.put('/update', authenticateToken, requireRole(['manager', 'admin']), asyn
           updateQuery = 'UPDATE leave_balances SET FamilyUsed = FamilyUsed - ? WHERE EmployeeEmail = ? AND Year = ?';
         }
         break;
-      // Add other leave types as needed
+      case 'study':
+        if (action === 'approve') {
+          updateQuery = 'UPDATE leave_balances SET StudyUsed = StudyUsed + ? WHERE EmployeeEmail = ? AND Year = ?';
+        } else if (action === 'cancel') {
+          updateQuery = 'UPDATE leave_balances SET StudyUsed = StudyUsed - ? WHERE EmployeeEmail = ? AND Year = ?';
+        }
+        break;
+      case 'wellness':
+        if (action === 'approve') {
+          updateQuery = 'UPDATE leave_balances SET WellnessUsed = WellnessUsed + ? WHERE EmployeeEmail = ? AND Year = ?';
+        } else if (action === 'cancel') {
+          updateQuery = 'UPDATE leave_balances SET WellnessUsed = WellnessUsed - ? WHERE EmployeeEmail = ? AND Year = ?';
+        }
+        break;
     }
 
     if (updateQuery) {
