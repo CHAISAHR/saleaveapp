@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ForfeitRibbon } from "@/components/ForfeitRibbon";
@@ -82,7 +81,7 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
     {
       type: 'Maternity',
       used: 0,
-      total: 3, // 3 months total allocation
+      total: 3,
       accrued: 3,
       unit: 'months',
       balance: 3
@@ -90,7 +89,7 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
     {
       type: 'Parental',
       used: 0,
-      total: 4, // 4 weeks total allocation
+      total: 4,
       accrued: 4,
       unit: 'weeks',
       balance: 4
