@@ -175,11 +175,30 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
   const calculateWorkingDaysForLeave = () => {
     if (!formData.startDate || !formData.endDate || !selectedLeaveType) return 0;
 
-    // For maternity leave (months) and parental/adoption leave (weeks), calculate differently
+    // For maternity leave (months), calculate in decimal months
     if (selectedLeaveType.unit === "months") {
-      const months = (formData.endDate.getFullYear() - formData.startDate.getFullYear()) * 12 + 
-                    (formData.endDate.getMonth() - formData.startDate.getMonth()) + 1;
-      return months; // Return months for maternity leave
+      const startDate = formData.startDate;
+      const endDate = formData.endDate;
+      
+      // Calculate the difference in months more precisely
+      const yearDiff = endDate.getFullYear() - startDate.getFullYear();
+      const monthDiff = endDate.getMonth() - startDate.getMonth();
+      const dayDiff = endDate.getDate() - startDate.getDate();
+      
+      // Total months including partial months
+      let totalMonths = yearDiff * 12 + monthDiff;
+      
+      // Add partial month based on days
+      if (dayDiff > 0) {
+        // Get days in the end month to calculate the fraction
+        const daysInEndMonth = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0).getDate();
+        const daysFraction = (dayDiff + 1) / daysInEndMonth; // +1 to include the end date
+        totalMonths += daysFraction;
+      } else if (dayDiff === 0) {
+        totalMonths += 1; // Include the full month when start and end are on same day
+      }
+      
+      return Math.round(totalMonths * 10) / 10; // Round to 1 decimal place
     }
     
     if (selectedLeaveType.unit === "weeks") {
