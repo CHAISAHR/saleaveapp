@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Clock, Users, AlertCircle, CheckCircle, Calendar } from "lucide-react";
@@ -21,17 +20,17 @@ export const PolicyGuide = () => {
     },
     {
       type: "Maternity Leave",
-      allocation: "90 days",
+      allocation: "3 months (90 days)",
       icon: Users,
       color: "pink",
-      description: "7.3 Maternity Leave - Female employees shall, as per the BCEA, be entitled to four (4) consecutive months' maternity leave. A female employee is entitled to three months' paid maternity leave under CHAI's benefit provision. An additional one (1) month of maternity leave will be provided under the provisions of UIF."
+      description: "7.3 Maternity Leave - Female employees shall, as per the BCEA, be entitled to three (3) consecutive months' maternity leave. A female employee is entitled to three months' paid maternity leave under CHAI's benefit provision. An additional one (1) month of maternity leave will be provided under the provisions of UIF. Maternity leave is calculated in months, with each month equivalent to approximately 30 calendar days or 22 working days."
     },
     {
       type: "Parental Leave",
-      allocation: "20 days",
+      allocation: "4 weeks (20 days)",
       icon: Users,
       color: "green",
-      description: "7.4 Parental Leave - An employee is entitled to 4 (four) weeks per calendar year of unpaid parental leave in the circumstances provided for in the BCEA, as amended. An employee may commence parental leave on— (a) the day that the employee's child is born; or (b) the date— (i) that the adoption order is granted; or (ii) that a child is placed in the care of a prospective adoptive parent by a competent court, pending the finalisation of an adoption order in respect of that child, whichever date occurs first. An employee must notify the employer in writing, unless the employee is unable to do so, of the date on which the employee intends to commence parental leave and return to work after parental leave. Notification to the employer must be given at least 1 (one) month before the employee's child is expected to be born or, if it is not reasonably practicable to do so, as soon as is reasonably practicable."
+      description: "7.4 Parental Leave - An employee is entitled to 4 (four) weeks per calendar year of unpaid parental leave in the circumstances provided for in the BCEA, as amended. Parental leave is calculated in weeks, with each week equivalent to 5 working days. An employee may commence parental leave on— (a) the day that the employee's child is born; or (b) the date— (i) that the adoption order is granted; or (ii) that a child is placed in the care of a prospective adoptive parent by a competent court, pending the finalisation of an adoption order in respect of that child, whichever date occurs first. An employee must notify the employer in writing, unless the employee is unable to do so, of the date on which the employee intends to commence parental leave and return to work after parental leave. Notification to the employer must be given at least 1 (one) month before the employee's child is expected to be born or, if it is not reasonably practicable to do so, as soon as is reasonably practicable."
     },
     {
       type: "Family Leave",
@@ -42,10 +41,10 @@ export const PolicyGuide = () => {
     },
     {
       type: "Adoption Leave",
-      allocation: "20 days",
+      allocation: "4 weeks (20 days)",
       icon: Users,
       color: "purple",
-      description: "7.6 Adoption and Commissioning Parental Leave - Employees are entitled to 10 (ten) consecutive weeks of leave, or the parental leave referred to above, if: (a) the employee is a commissioning parent in a surrogate motherhood agreement; or (b) the employee is an adoptive parent of a child who is below the age of 2 (two) years. Any leave taken in terms of this provision shall be in compliance with the BCEA, as amended"
+      description: "7.6 Adoption and Commissioning Parental Leave - Employees are entitled to 4 (four) consecutive weeks of leave, calculated in weeks (equivalent to 20 working days), if: (a) the employee is a commissioning parent in a surrogate motherhood agreement; or (b) the employee is an adoptive parent of a child who is below the age of 2 (two) years. Any leave taken in terms of this provision shall be in compliance with the BCEA, as amended"
     },
     {
       type: "Study Leave",

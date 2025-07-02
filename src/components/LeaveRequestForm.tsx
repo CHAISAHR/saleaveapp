@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +13,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CalendarIcon, Info, AlertTriangle, Upload, X, FileText, Users } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/hooks/useUser";
+import { calculateWorkingDays } from "@/lib/utils";
 
 interface LeaveRequestFormProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ interface LeaveRequestFormProps {
 
 export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestFormProps) => {
   const { toast } = useToast();
+  const { user } = useUser();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -39,7 +41,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
   const [companyHolidays, setCompanyHolidays] = useState<Date[]>([]);
 
   // Fetch company holidays on component mount
-  useState(() => {
+  useEffect(() => {
     const fetchHolidays = async () => {
       try {
         const response = await fetch('/api/holiday');
@@ -53,7 +55,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       }
     };
     fetchHolidays();
-  });
+  }, []);
 
   // Mock list of available managers - in real app this would come from API
   const availableManagers = [
@@ -70,56 +72,64 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       label: "Annual Leave", 
       description: "Vacation and personal time off",
       balance: 12,
-      total: 20
+      total: 20,
+      unit: "days"
     },
     { 
       value: "sick", 
       label: "Sick Leave", 
       description: "Medical appointments and illness",
       balance: 33,
-      total: 36
+      total: 36,
+      unit: "days"
     },
     { 
       value: "maternity", 
       label: "Maternity Leave", 
-      description: "Childbirth and recovery period",
-      balance: 90,
-      total: 90
+      description: "Childbirth and recovery period (for women)",
+      balance: 3,
+      total: 3,
+      unit: "months"
     },
     { 
       value: "parental", 
       label: "Parental Leave", 
       description: "Caring for newborn or adopted child",
-      balance: 20,
-      total: 20
+      balance: 4,
+      total: 4,
+      unit: "weeks"
     },
     { 
       value: "family", 
       label: "Family Leave", 
       description: "Caring for family members",
       balance: 2,
-      total: 3
+      total: 3,
+      unit: "days"
     },
     { 
       value: "adoption", 
       label: "Adoption Leave", 
       description: "Adopting a child",
-      balance: 20,
-      total: 20
+      balance: 4,
+      total: 4,
+      unit: "weeks"
     },
     { 
       value: "study", 
       label: "Study Leave", 
       description: "Professional development and training",
       balance: 4,
-      total: 6
+      total: 6,
+      unit: "days"
     },
     { 
       value: "wellness", 
       label: "Wellness Leave", 
       description: "Mental health and wellbeing",
       balance: 2,
-      total: 2
+      total: 2,
+      unit: "days"
     }
   ];
 
@@ -162,22 +172,24 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     );
   };
 
-  const calculateWorkingDays = () => {
-    if (!formData.startDate || !formData.endDate) return 0;
+  const calculateWorkingDaysForLeave = () => {
+    if (!formData.startDate || !formData.endDate || !selectedLeaveType) return 0;
 
-    let workingDays = 0;
-    const currentDate = new Date(formData.startDate);
-    const endDate = new Date(formData.endDate);
-
-    while (currentDate <= endDate) {
-      if (!isWeekend(currentDate) && !isPublicHoliday(currentDate) && !isCompanyHoliday(currentDate)) {
-        workingDays++;
-      }
-      currentDate.setDate(currentDate.getDate() + 1);
+    // For maternity leave (months) and parental/adoption leave (weeks), calculate differently
+    if (selectedLeaveType.unit === "months") {
+      const months = (formData.endDate.getFullYear() - formData.startDate.getFullYear()) * 12 + 
+                    (formData.endDate.getMonth() - formData.startDate.getMonth()) + 1;
+      return months; // Return months for maternity leave
+    }
+    
+    if (selectedLeaveType.unit === "weeks") {
+      const timeDiff = formData.endDate.getTime() - formData.startDate.getTime();
+      const weeks = Math.ceil(timeDiff / (1000 * 3600 * 24 * 7));
+      return weeks; // Return weeks for parental/adoption leave
     }
 
-    // If it's a half day request, deduct 0.5 from the working days
-    return formData.isHalfDay ? Math.max(0, workingDays - 0.5) : workingDays;
+    // For day-based leave types, calculate working days
+    return calculateWorkingDays(formData.startDate, formData.endDate, publicHolidays, companyHolidays, formData.isHalfDay);
   };
 
   const getCalendarDays = () => {
@@ -192,20 +204,29 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
   // Check if balance is insufficient
   const isBalanceInsufficient = () => {
     if (!selectedLeaveType) return false;
-    const workingDays = calculateWorkingDays();
-    return selectedLeaveType.balance < workingDays;
+    const requestedAmount = calculateWorkingDaysForLeave();
+    return selectedLeaveType.balance < requestedAmount;
   };
 
-  // Check if document attachment is required for sick leave
+  // Get the display text for leave duration based on type
+  const getDisplayDuration = () => {
+    const amount = calculateWorkingDaysForLeave();
+    if (!selectedLeaveType) return "";
+    
+    const unit = selectedLeaveType.unit;
+    const pluralUnit = unit === "day" ? "days" : unit === "week" ? "weeks" : unit === "month" ? "months" : unit;
+    
+    return `${amount} ${amount === 1 ? unit : pluralUnit}`;
+  };
+
   const requiresDocumentAttachment = () => {
     if (formData.leaveType === 'sick') {
-      const workingDays = calculateWorkingDays();
+      const workingDays = calculateWorkingDaysForLeave();
       return workingDays >= 2;
     }
     return false;
   };
 
-  // Handle file upload
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
@@ -242,12 +263,10 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     }
   };
 
-  // Remove attached file
   const removeFile = (index: number) => {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Format file size
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -258,7 +277,6 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
 
   const sendEmailNotifications = async (requestData: any) => {
     try {
-      // Determine who to send to - alternative manager or default manager
       const approverEmail = formData.useAlternativeManager && formData.alternativeManager 
         ? formData.alternativeManager 
         : `${currentUser.department.toLowerCase()}.manager@company.com`;
@@ -267,10 +285,9 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         ? availableManagers.find(m => m.email === formData.alternativeManager)?.name || formData.alternativeManager
         : "Manager";
       
-      // Send email to approver (manager or alternative manager)
       const managerEmailData = {
         to: approverEmail,
-        cc: 'admin@company.com', // Copy admin
+        cc: 'admin@company.com',
         subject: `New Leave Request - ${requestData.title}`,
         body: `Dear ${approverName},
         
@@ -286,7 +303,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         - Title: ${requestData.title}
         - Dates: ${requestData.startDate} to ${requestData.endDate}
         - Calendar Days: ${getCalendarDays()}
-        - Working Days Applied: ${requestData.workingDays}
+        - Duration Applied: ${getDisplayDuration()}
         - Description: ${requestData.description}
         ${requestData.requiresHRApproval ? '\n⚠️ REQUIRES HR APPROVAL: Insufficient leave balance' : ''}
         ${requestData.attachedFiles && requestData.attachedFiles.length > 0 ? `\n📎 ATTACHED DOCUMENTS: ${requestData.attachedFiles.map((f: File) => f.name).join(', ')}` : ''}
@@ -299,7 +316,6 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
 
       console.log('Manager Email:', managerEmailData);
       
-      // Send confirmation email to employee
       const employeeEmailData = {
         to: currentUser.email,
         subject: `Leave Request Submitted - ${requestData.title}`,
@@ -311,7 +327,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         - Type: ${selectedLeaveType?.label}
         - Dates: ${requestData.startDate} to ${requestData.endDate}
         - Calendar Days: ${getCalendarDays()}
-        - Working Days Applied: ${requestData.workingDays}
+        - Duration Applied: ${getDisplayDuration()}
         - Status: Pending Approval
         ${formData.useAlternativeManager ? `\n📋 Alternative Approver: ${approverName} (${approverEmail})` : ''}
         
@@ -340,7 +356,6 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       return;
     }
 
-    // Validate alternative manager fields if enabled
     if (formData.useAlternativeManager) {
       if (!formData.alternativeManager || !formData.alternativeManagerReason.trim()) {
         toast({
@@ -352,7 +367,6 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       }
     }
 
-    // Check if document attachment is required for sick leave
     if (requiresDocumentAttachment() && attachedFiles.length === 0) {
       toast({
         title: "Document Required",
@@ -362,12 +376,12 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       return;
     }
 
-    const workingDays = calculateWorkingDays();
+    const leaveDuration = calculateWorkingDaysForLeave();
     const requiresHRApproval = isBalanceInsufficient();
     
     const requestData = {
       ...formData,
-      workingDays,
+      workingDays: leaveDuration,
       submittedBy: currentUser.name,
       submittedDate: new Date().toISOString(),
       status: 'pending',
@@ -377,10 +391,8 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
 
     console.log("Leave request submitted:", requestData);
 
-    // Send email notifications
     await sendEmailNotifications(requestData);
 
-    // Submit to API with file attachments
     try {
       const formDataToSend = new FormData();
       formDataToSend.append('title', formData.title);
@@ -388,9 +400,8 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       formDataToSend.append('startDate', formData.startDate!.toISOString());
       formDataToSend.append('endDate', formData.endDate!.toISOString());
       formDataToSend.append('leaveType', selectedLeaveType?.label || '');
-      formDataToSend.append('workingDays', workingDays.toString());
+      formDataToSend.append('workingDays', leaveDuration.toString());
       
-      // Add file attachments
       attachedFiles.forEach((file, index) => {
         formDataToSend.append(`attachments`, file);
       });
@@ -417,7 +428,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       return;
     }
 
-    let toastMessage = `Your ${selectedLeaveType?.label.toLowerCase()} request for ${workingDays} working day${workingDays > 1 ? 's' : ''} has been submitted for approval.`;
+    let toastMessage = `Your ${selectedLeaveType?.label.toLowerCase()} request for ${getDisplayDuration()} has been submitted for approval.`;
     
     if (formData.useAlternativeManager) {
       const altManagerName = availableManagers.find(m => m.email === formData.alternativeManager)?.name || formData.alternativeManager;
@@ -437,7 +448,6 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       description: toastMessage,
     });
 
-    // Reset form
     setFormData({
       title: "",
       description: "",
@@ -452,6 +462,8 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     setAttachedFiles([]);
     onClose();
   };
+
+  if (!isOpen) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -486,7 +498,9 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                     <SelectItem key={type.value} value={type.value}>
                       <div>
                         <div className="font-medium">{type.label}</div>
-                        <div className="text-xs text-gray-500">{type.balance} days available</div>
+                        <div className="text-xs text-gray-500">
+                          {type.balance} {type.unit} available
+                        </div>
                       </div>
                     </SelectItem>
                   ))}
@@ -544,18 +558,20 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
-            <Switch
-              id="halfDay"
-              checked={formData.isHalfDay}
-              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isHalfDay: checked }))}
-            />
-            <Label htmlFor="halfDay" className="text-sm font-medium">
-              Half Day Request
-            </Label>
-          </div>
+          {selectedLeaveType?.unit === "days" && (
+            <div className="flex items-center space-x-3">
+              <Switch
+                id="halfDay"
+                checked={formData.isHalfDay}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isHalfDay: checked }))}
+              />
+              <Label htmlFor="halfDay" className="text-sm font-medium">
+                Half Day Request
+              </Label>
+            </div>
+          )}
 
-          {/* Alternative Manager Section - Changed to purple theme */}
+          {/* Alternative Manager Section */}
           <Card className="border-purple-200 bg-purple-50">
             <CardHeader className="pb-3">
               <div className="flex items-center space-x-2">
@@ -620,7 +636,6 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
             </CardContent>
           </Card>
 
-          {/* Document Upload Section for Sick Leave */}
           {requiresDocumentAttachment() && (
             <div className="space-y-3">
               <Label htmlFor="documents">Supporting Documents *</Label>
@@ -648,7 +663,6 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                 </div>
               </div>
 
-              {/* Display attached files */}
               {attachedFiles.length > 0 && (
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Attached Files:</Label>
@@ -675,20 +689,17 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
             </div>
           )}
 
-          {/* Validation Alerts */}
           {selectedLeaveType && formData.startDate && formData.endDate && (
             <div className="space-y-3">
-              {/* Insufficient Balance Alert */}
               {isBalanceInsufficient() && (
                 <Alert className="border-orange-200 bg-orange-50">
                   <AlertTriangle className="h-4 w-4 text-orange-600" />
                   <AlertDescription className="text-orange-800">
-                    <strong>HR Approval Required:</strong> Your available balance ({selectedLeaveType.balance} days) is less than the requested days ({calculateWorkingDays()} days). This request will be forwarded to HR for final approval after manager approval.
+                    <strong>HR Approval Required:</strong> Your available balance ({selectedLeaveType.balance} {selectedLeaveType.unit}) is less than the requested duration ({getDisplayDuration()}). This request will be forwarded to HR for final approval after manager approval.
                   </AlertDescription>
                 </Alert>
               )}
 
-              {/* Document Attachment Alert */}
               {requiresDocumentAttachment() && (
                 <Alert className="border-purple-200 bg-purple-50">
                   <Upload className="h-4 w-4 text-purple-600" />
@@ -706,7 +717,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2 text-green-700">
                     <Info className="h-4 w-4" />
-                    <span className="text-sm font-medium">Leave Days Summary</span>
+                    <span className="text-sm font-medium">Leave Duration Summary</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div className="flex justify-between">
@@ -714,16 +725,18 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                       <span className="font-medium text-green-800">{getCalendarDays()} day{getCalendarDays() > 1 ? 's' : ''}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-green-600">Working Days Applied:</span>
+                      <span className="text-green-600">Duration Applied:</span>
                       <span className="font-medium text-green-800">
-                        {calculateWorkingDays()} day{calculateWorkingDays() > 1 ? 's' : ''}
-                        {formData.isHalfDay && " (Half Day)"}
+                        {getDisplayDuration()}
+                        {formData.isHalfDay && selectedLeaveType?.unit === "days" && " (Half Day)"}
                       </span>
                     </div>
                   </div>
                   <div className="text-xs text-green-600 bg-green-100 p-2 rounded mt-2">
-                    Working days exclude weekends, South African public holidays, and company holidays. 
-                    {formData.isHalfDay && " Half-day requests count as 0.5 days per working day selected."}
+                    {selectedLeaveType?.unit === "days" && "Working days exclude weekends, South African public holidays, and company holidays."}
+                    {selectedLeaveType?.unit === "months" && "Maternity leave is calculated in months (approximately 30 calendar days or 22 working days per month)."}
+                    {selectedLeaveType?.unit === "weeks" && "Parental and adoption leave is calculated in weeks (5 working days per week)."}
+                    {formData.isHalfDay && selectedLeaveType?.unit === "days" && " Half-day requests count as 0.5 days per working day selected."}
                   </div>
                 </div>
               </CardContent>
@@ -750,7 +763,9 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
               <CardContent>
                 <div className="flex justify-between items-center text-sm">
                   <span>Available Balance:</span>
-                  <span className="font-medium">{selectedLeaveType.balance} of {selectedLeaveType.total} days</span>
+                  <span className="font-medium">
+                    {selectedLeaveType.balance} of {selectedLeaveType.total} {selectedLeaveType.unit}
+                  </span>
                 </div>
                 
                 {selectedLeaveType.value === 'annual' && (
@@ -759,7 +774,19 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                   </div>
                 )}
                 
-                {selectedLeaveType.value === 'sick' && calculateWorkingDays() > 3 && (
+                {selectedLeaveType.value === 'maternity' && (
+                  <div className="mt-2 text-xs text-pink-700 bg-pink-50 p-2 rounded">
+                    <strong>Note:</strong> Maternity leave is allocated in months. Each month is equivalent to approximately 30 calendar days or 22 working days.
+                  </div>
+                )}
+
+                {(selectedLeaveType.value === 'parental' || selectedLeaveType.value === 'adoption') && (
+                  <div className="mt-2 text-xs text-green-700 bg-green-50 p-2 rounded">
+                    <strong>Note:</strong> {selectedLeaveType.label} is allocated in weeks. Each week is equivalent to 5 working days.
+                  </div>
+                )}
+                
+                {selectedLeaveType.value === 'sick' && calculateWorkingDaysForLeave() > 3 && (
                   <div className="mt-2 text-xs text-blue-700 bg-blue-50 p-2 rounded">
                     <strong>Note:</strong> Medical certificate required for sick leave exceeding 3 consecutive working days.
                   </div>

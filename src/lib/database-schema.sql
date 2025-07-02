@@ -1,6 +1,7 @@
 
 -- MySQL Database Schema for Leave Management System
 -- Updated schema with email-based unique identifiers, negative value support, gender field, and file attachments
+-- IMPORTANT: Maternity leave is measured in MONTHS, Parental/Adoption leave is measured in WEEKS
 
 -- Departments table - stores configurable department names
 CREATE TABLE departments (
@@ -80,6 +81,10 @@ CREATE TABLE leave_attachments (
 );
 
 -- Leave balances table - tracks employee leave balances with monthly accrual (supports negative values with 3 decimal places)
+-- IMPORTANT UNITS:
+-- Maternity: Stored in MONTHS (3 months for women, 0 for men)
+-- Parental/Adoption: Stored in WEEKS (4 weeks per annum)
+-- All other leave types: Stored in DAYS
 CREATE TABLE leave_balances (
     BalanceID INT PRIMARY KEY AUTO_INCREMENT,
     EmployeeName VARCHAR(255) NOT NULL,
@@ -87,34 +92,34 @@ CREATE TABLE leave_balances (
     Department VARCHAR(100) NOT NULL,
     Status VARCHAR(50) DEFAULT 'Active',
     Year INT NOT NULL,
-    Broughtforward DECIMAL(8,3) DEFAULT 0, -- Increased precision to 3 decimal places, allows negative values
-    Annual DECIMAL(8,3) DEFAULT 0, -- Legacy field for compatibility, allows negative values
-    AccumulatedLeave DECIMAL(8,3) DEFAULT 0, -- Monthly accumulation (1.667 per month), allows negative values
-    AnnualUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
-    Forfeited DECIMAL(8,3) DEFAULT 0, -- Allows negative values for corrections
-    Annual_leave_adjustments DECIMAL(8,3) DEFAULT 0, -- Allows negative values
-    SickBroughtforward DECIMAL(8,3) DEFAULT 0, -- Allows negative values
-    Sick DECIMAL(8,3) DEFAULT 36, -- Annual sick leave allocation, allows negative values
-    SickUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
-    Maternity DECIMAL(8,3) DEFAULT 90, -- Gender-based allocation: 90 for females, 0 for males
-    MaternityUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
-    Parental DECIMAL(8,3) DEFAULT 20, -- Allows negative values for adjustments
-    ParentalUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
-    Family DECIMAL(8,3) DEFAULT 3, -- Allows negative values for adjustments
-    FamilyUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
-    Adoption DECIMAL(8,3) DEFAULT 20, -- Allows negative values for adjustments
-    AdoptionUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
-    Study DECIMAL(8,3) DEFAULT 6, -- Allows negative values for adjustments
-    StudyUsed DECIMAL(8,3) DEFAULT 0, -- Allows negative values for adjustments
-    Wellness DECIMAL(8,3) DEFAULT 2, -- Renamed from Wellness, allows negative values for adjustments
-    WellnessUsed DECIMAL(8,3) DEFAULT 0, -- Renamed from WellnessUsed, allows negative values for adjustments
+    Broughtforward DECIMAL(8,3) DEFAULT 0, -- Days - allows negative values
+    Annual DECIMAL(8,3) DEFAULT 0, -- Days - legacy field for compatibility
+    AccumulatedLeave DECIMAL(8,3) DEFAULT 0, -- Days - monthly accumulation (1.667 per month)
+    AnnualUsed DECIMAL(8,3) DEFAULT 0, -- Days - allows negative values
+    Forfeited DECIMAL(8,3) DEFAULT 0, -- Days - allows negative values
+    Annual_leave_adjustments DECIMAL(8,3) DEFAULT 0, -- Days - allows negative values
+    SickBroughtforward DECIMAL(8,3) DEFAULT 0, -- Days - allows negative values
+    Sick DECIMAL(8,3) DEFAULT 36, -- Days - annual sick leave allocation
+    SickUsed DECIMAL(8,3) DEFAULT 0, -- Days - allows negative values
+    Maternity DECIMAL(8,3) DEFAULT 3, -- MONTHS - 3 for females, 0 for males (gender-based allocation)
+    MaternityUsed DECIMAL(8,3) DEFAULT 0, -- MONTHS - allows negative values
+    Parental DECIMAL(8,3) DEFAULT 4, -- WEEKS - 4 weeks per annum
+    ParentalUsed DECIMAL(8,3) DEFAULT 0, -- WEEKS - allows negative values
+    Family DECIMAL(8,3) DEFAULT 3, -- Days - family responsibility leave
+    FamilyUsed DECIMAL(8,3) DEFAULT 0, -- Days - allows negative values
+    Adoption DECIMAL(8,3) DEFAULT 4, -- WEEKS - 4 weeks (same as parental)
+    AdoptionUsed DECIMAL(8,3) DEFAULT 0, -- WEEKS - allows negative values
+    Study DECIMAL(8,3) DEFAULT 6, -- Days - study leave
+    StudyUsed DECIMAL(8,3) DEFAULT 0, -- Days - allows negative values
+    Wellness DECIMAL(8,3) DEFAULT 2, -- Days - wellness leave
+    WellnessUsed DECIMAL(8,3) DEFAULT 0, -- Days - allows negative values
     __PowerAppsId__ VARCHAR(255) NULL,
     Current_leave_balance DECIMAL(8,3) GENERATED ALWAYS AS (
         Broughtforward + AccumulatedLeave - AnnualUsed - Forfeited - Annual_leave_adjustments
     ) STORED,
-    Leave_balance_previous_month DECIMAL(8,3) DEFAULT 0, -- Allows negative values
+    Leave_balance_previous_month DECIMAL(8,3) DEFAULT 0, -- Days - allows negative values
     Contract_termination_date DATE NULL,
-    termination_balance DECIMAL(8,3) DEFAULT 0, -- Allows negative values
+    termination_balance DECIMAL(8,3) DEFAULT 0, -- Days - allows negative values
     Comment TEXT,
     Annual_leave_adjustment_comments TEXT,
     Manager VARCHAR(255),
@@ -148,6 +153,7 @@ CREATE TABLE audit_log (
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ... keep existing code (indexes, default data inserts)
 -- Create indexes for better performance
 CREATE INDEX idx_users_department ON users(department);
 CREATE INDEX idx_users_manager ON users(manager_email);
@@ -198,10 +204,11 @@ INSERT INTO company_holidays (name, date, type, description, office_status, is_r
 ('Day of Goodwill', '2025-12-26', 'public', 'Day of Goodwill', 'closed', TRUE, 'admin@company.com');
 
 -- Create initial leave balance for admin user
+-- NOTE: Maternity set to 0 for admin (gender-based), Parental and Adoption in weeks
 INSERT INTO leave_balances (
     EmployeeName, EmployeeEmail, Department, Year, 
-    Maternity, AccumulatedLeave
-) VALUES ('System Administrator', 'admin@company.com', 'Ops Team', YEAR(CURRENT_DATE), 0, 20);
+    Maternity, Parental, Adoption, AccumulatedLeave
+) VALUES ('System Administrator', 'admin@company.com', 'Ops Team', YEAR(CURRENT_DATE), 0, 4, 4, 20);
 
 -- Create views for common queries
 CREATE VIEW employee_current_balances AS
@@ -213,6 +220,9 @@ SELECT
     (lb.Sick - lb.SickUsed) as sick_balance,
     (lb.Family - lb.FamilyUsed) as family_balance,
     (lb.Study - lb.StudyUsed) as study_balance,
+    (lb.Maternity - lb.MaternityUsed) as maternity_balance_months,
+    (lb.Parental - lb.ParentalUsed) as parental_balance_weeks,
+    (lb.Adoption - lb.AdoptionUsed) as adoption_balance_weeks,
     lb.Manager
 FROM leave_balances lb
 WHERE lb.Year = YEAR(CURRENT_DATE);
