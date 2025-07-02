@@ -22,7 +22,7 @@ export interface EmployeeBalance {
   FamilyUsed: number;
   AdoptionUsed: number;
   StudyUsed: number;
-  WellnessUsed: number; // Renamed from MentalhealthUsed
+  WellnessUsed: number; // Renamed from WellnessUsed
   Current_leave_balance: number;
   Manager: string;
   Contract_termination_date?: string;

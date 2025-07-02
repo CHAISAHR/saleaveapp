@@ -31,8 +31,8 @@ interface EmployeeBalance {
   AdoptionUsed: number;
   Study: number;
   StudyUsed: number;
-  Mentalhealth: number;
-  MentalhealthUsed: number;
+  Wellness: number;
+  WellnessUsed: number;
   PowerAppsId?: string;
   Current_leave_balance: number;
   Leave_balance_previous_month: number;
@@ -100,8 +100,8 @@ export const AdminAllBalancesTable = ({
                 <TableHead>Adoption Used</TableHead>
                 <TableHead>Study</TableHead>
                 <TableHead>Study Used</TableHead>
-                <TableHead>Mental Health</TableHead>
-                <TableHead>Mental Health Used</TableHead>
+                <TableHead>Wellness</TableHead>
+                <TableHead>Wellness Used</TableHead>
                 <TableHead>PowerApps ID</TableHead>
                 <TableHead>Current Balance</TableHead>
                 <TableHead>Previous Month</TableHead>
@@ -164,8 +164,8 @@ export const AdminAllBalancesTable = ({
                   <TableCell>{balance.AdoptionUsed}</TableCell>
                   <TableCell>{balance.Study}</TableCell>
                   <TableCell>{balance.StudyUsed}</TableCell>
-                  <TableCell>{balance.Mentalhealth}</TableCell>
-                  <TableCell>{balance.MentalhealthUsed}</TableCell>
+                  <TableCell>{balance.Wellness}</TableCell>
+                  <TableCell>{balance.WellnessUsed}</TableCell>
                   <TableCell>{balance.PowerAppsId || '-'}</TableCell>
                   <TableCell className="font-medium text-blue-600">
                     {calculateCurrentBalance(balance)}

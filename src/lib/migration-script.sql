@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS staging_leave_balances (
     FamilyUsed VARCHAR(20),
     AdoptionUsed VARCHAR(20),
     StudyUsed VARCHAR(20),
-    MentalhealthUsed VARCHAR(20),
+    WellnessUsed VARCHAR(20),
     Contract_termination_date VARCHAR(20),
     termination_balance VARCHAR(20),
     Manager VARCHAR(255)
@@ -206,10 +206,10 @@ BEGIN
     INSERT INTO leave_balances (
         EmployeeName, EmployeeEmail, Department, Year,
         Broughtforward, AccumulatedLeave, AnnualUsed, Forfeited, Annual_leave_adjustments,
-        SickUsed, MaternityUsed, ParentalUsed, FamilyUsed, AdoptionUsed, StudyUsed, MentalhealthUsed,
+        SickUsed, MaternityUsed, ParentalUsed, FamilyUsed, AdoptionUsed, StudyUsed, WellnessUsed,
         Contract_termination_date, termination_balance, Manager,
         -- Set gender-based leave allocations
-        Sick, Maternity, Parental, Family, Adoption, Study, Mentalhealth
+        Sick, Maternity, Parental, Family, Adoption, Study, Wellness
     )
     SELECT 
         slb.EmployeeName,
@@ -227,7 +227,7 @@ BEGIN
         CAST(NULLIF(slb.FamilyUsed, '') AS DECIMAL(8,3)),
         CAST(NULLIF(slb.AdoptionUsed, '') AS DECIMAL(8,3)),
         CAST(NULLIF(slb.StudyUsed, '') AS DECIMAL(8,3)),
-        CAST(NULLIF(slb.MentalhealthUsed, '') AS DECIMAL(8,3)),
+        CAST(NULLIF(slb.WellnessUsed, '') AS DECIMAL(8,3)),
         CASE 
             WHEN slb.Contract_termination_date = '' OR slb.Contract_termination_date = 'NULL' THEN NULL
             ELSE STR_TO_DATE(slb.Contract_termination_date, '%Y-%m-%d')
@@ -241,7 +241,7 @@ BEGIN
         3,  -- Family
         20, -- Adoption
         6,  -- Study
-        2   -- Mental health
+        2   -- Wellness
     FROM staging_leave_balances slb
     JOIN users u ON slb.EmployeeEmail = u.email
     ON DUPLICATE KEY UPDATE
@@ -257,7 +257,7 @@ BEGIN
         FamilyUsed = VALUES(FamilyUsed),
         AdoptionUsed = VALUES(AdoptionUsed),
         StudyUsed = VALUES(StudyUsed),
-        MentalhealthUsed = VALUES(MentalhealthUsed),
+        WellnessUsed = VALUES(WellnessUsed),
         Contract_termination_date = VALUES(Contract_termination_date),
         termination_balance = VALUES(termination_balance),
         Manager = VALUES(Manager);

@@ -44,7 +44,7 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
         FamilyUsed: 1,
         AdoptionUsed: 0,
         StudyUsed: 0,
-        MentalhealthUsed: 0,
+        WellnessUsed: 0,
         Current_leave_balance: 17,
         Manager: "sarah.johnson@company.com"
       }
@@ -73,7 +73,7 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
         FamilyUsed: 1,
         AdoptionUsed: 0,
         StudyUsed: 2,
-        MentalhealthUsed: 0,
+        WellnessUsed: 0,
         Current_leave_balance: 11,
         Manager: "sarah.johnson@company.com"
       }
@@ -102,7 +102,7 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
         FamilyUsed: 0,
         AdoptionUsed: 0,
         StudyUsed: 0,
-        MentalhealthUsed: 0,
+        WellnessUsed: 0,
         Current_leave_balance: 20,
         Manager: "sarah.johnson@company.com"
       }
@@ -172,7 +172,7 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
       id: 102,
       employeeName: "Emily Davis",
       employeeEmail: "emily.davis@company.com",
-      title: "Mental Health Day",
+      title: "Wellness Day",
       type: "Wellness",
       startDate: "2024-04-10",
       endDate: "2024-04-10",
@@ -232,8 +232,8 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
       case 'study':
         return 6 - balance.StudyUsed;
       case 'wellness':
-      case 'mentalhealth':
-        return 2 - balance.MentalhealthUsed;
+      case 'Wellness':
+        return 2 - balance.WellnessUsed;
       case 'maternity':
         return 90 - balance.MaternityUsed;
       case 'parental':
@@ -516,7 +516,7 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
                         className="h-2"
                       />
                       <div className="text-xs text-gray-400">
-                        Used: {member.leaveBalance.MentalhealthUsed}
+                        Used: {member.leaveBalance.WellnessUsed}
                       </div>
                     </div>
                   </div>

@@ -69,7 +69,7 @@ router.post('/year-rollover', authenticateToken, requireRole(['admin']), async (
             SickBroughtforward, Sick, SickUsed,
             Maternity, MaternityUsed, Parental, ParentalUsed, 
             Family, FamilyUsed, Adoption, AdoptionUsed,
-            Study, StudyUsed, Mentalhealth, MentalhealthUsed,
+            Study, StudyUsed, Wellness, WellnessUsed,
             Manager, Contract_termination_date, Comment
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, [
@@ -97,8 +97,8 @@ router.post('/year-rollover', authenticateToken, requireRole(['admin']), async (
           0, // Reset AdoptionUsed to 0
           balance.Study, // Reset study allocation
           0, // Reset StudyUsed to 0
-          balance.Mentalhealth, // Reset mental health allocation
-          0, // Reset MentalhealthUsed to 0
+          balance.Wellness, // Reset Wellness allocation
+          0, // Reset WellnessUsed to 0
           balance.Manager,
           balance.Contract_termination_date,
           `Rolled over from ${fromYear}`

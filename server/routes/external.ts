@@ -16,7 +16,7 @@ router.get('/balances/:email', async (req, res) => {
               (Sick - SickUsed) as sick_balance,
               (Family - FamilyUsed) as family_balance,
               (Study - StudyUsed) as study_balance,
-              (Mentalhealth - MentalhealthUsed) as wellness_balance,
+              (Wellness - WellnessUsed) as wellness_balance,
               Contract_termination_date
        FROM leave_balances 
        WHERE EmployeeEmail = ? AND Year = ?`,
@@ -54,7 +54,7 @@ router.get('/balances', async (req, res) => {
                         (Sick - SickUsed) as sick_balance,
                         (Family - FamilyUsed) as family_balance,
                         (Study - StudyUsed) as study_balance,
-                        (Mentalhealth - MentalhealthUsed) as wellness_balance,
+                        (Wellness - WellnessUsed) as wellness_balance,
                         Contract_termination_date
                  FROM leave_balances 
                  WHERE Year = ?`;
