@@ -60,7 +60,7 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
     }
   };
 
-  // Default balances as fallback
+  // Default balances as fallback with correct units
   const getDefaultBalances = (): LeaveBalance[] => [
     {
       type: 'Annual',
@@ -82,18 +82,18 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
     {
       type: 'Maternity',
       used: 0,
-      total: 90,
-      accrued: 90,
-      unit: 'days',
-      balance: 90
+      total: 3, // 3 months total allocation
+      accrued: 3,
+      unit: 'months',
+      balance: 3
     },
     {
       type: 'Parental',
       used: 0,
-      total: 20,
-      accrued: 20,
-      unit: 'days',
-      balance: 20
+      total: 4, // 4 weeks total allocation
+      accrued: 4,
+      unit: 'weeks',
+      balance: 4
     }
   ];
 
@@ -137,7 +137,7 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
               <CardContent className="pt-0">
                 <div className="text-center">
                   <div className="text-3xl font-bold text-lime-700 mb-1 font-mono">{balance.balance}</div>
-                  <div className="text-sm text-gray-500">days available</div>
+                  <div className="text-sm text-gray-500">{balance.unit} available</div>
                 </div>
               </CardContent>
             </Card>
@@ -158,10 +158,12 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <h5 className="font-medium text-gray-900 mb-2">Accrual Rates</h5>
+              <h5 className="font-medium text-gray-900 mb-2">Accrual Rates & Allocations</h5>
               <ul className="space-y-1 text-gray-600">
                 <li>• Annual: 1.667 days per month</li>
-                <li>• Sick: 1 day per month, accumulates to 36 in 3 years.</li>              
+                <li>• Sick: 1 day per month, accumulates to 36 in 3 years</li>
+                <li>• Maternity: 3 months (for eligible employees)</li>
+                <li>• Parental: 4 weeks per annum</li>
               </ul>
             </div>
             <div>
