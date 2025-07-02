@@ -192,7 +192,7 @@ export const EditBalanceDialog = ({
                 { key: 'Maternity', usedKey: 'MaternityUsed', label: 'Maternity Leave' },
                 { key: 'Parental', usedKey: 'ParentalUsed', label: 'Parental Leave' },
                 { key: 'Adoption', usedKey: 'AdoptionUsed', label: 'Adoption Leave' },
-                { key: 'Wellness', usedKey: 'WellnessUsed', label: 'Mental Health Leave' }
+                { key: 'Wellness', usedKey: 'WellnessUsed', label: 'Wellness Leave' }
               ].map(({ key, usedKey, label }) => (
                 <div key={key} className="space-y-2">
                   <Label>{label}</Label>
