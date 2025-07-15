@@ -1,12 +1,11 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AccountInfo } from '@azure/msal-browser';
-import { msalInstance, loginRequest } from '@/config/authConfig';
 import { apiConfig, makeApiRequest } from '@/config/apiConfig';
 
 interface AuthContextType {
   user: AccountInfo | null;
   isAuthenticated: boolean;
-  login: () => Promise<void>;
   manualLogin: (email: string, password: string) => Promise<void>;
   mockAdminLogin: () => void;
   manualSignUp: (userData: {
@@ -41,14 +40,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initializeAuth = async () => {
       console.log('[AuthContext] Initializing authentication...');
       try {
-        await msalInstance.initialize();
-        const accounts = msalInstance.getAllAccounts();
-        console.log('[AuthContext] MSAL accounts found:', accounts.length);
-        if (accounts.length > 0) {
-          console.log('[AuthContext] Setting MSAL user:', accounts[0].username);
-          setUser(accounts[0]);
-        }
-        
         // Check for manually logged in user and validate token
         const authToken = localStorage.getItem('auth_token');
         const manualUser = localStorage.getItem('manualUser');
@@ -56,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('[AuthContext] Manual auth token present:', !!authToken);
         console.log('[AuthContext] Manual user data present:', !!manualUser);
         
-        if (authToken && authToken !== 'mock-jwt-token' && manualUser && !accounts.length) {
+        if (authToken && authToken !== 'mock-jwt-token' && manualUser) {
           console.log('[AuthContext] Validating manual login token...');
           try {
             // Validate token with backend
@@ -106,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Check for mock admin login
         const mockUser = localStorage.getItem('mockUser');
-        if (mockUser && !accounts.length && !authToken) {
+        if (mockUser && !authToken) {
           console.log('[AuthContext] Setting mock user');
           setUser(JSON.parse(mockUser));
         }
@@ -120,21 +111,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     initializeAuth();
   }, []);
-
-  const login = async () => {
-    try {
-      const response = await msalInstance.loginPopup(loginRequest);
-      if (response.account) {
-        setUser(response.account);
-        // Clear any manual user data
-        localStorage.removeItem('manualUser');
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('mockUser');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-    }
-  };
 
   const mockAdminLogin = () => {
     console.log('Mock admin login triggered');
@@ -303,10 +279,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      const accounts = msalInstance.getAllAccounts();
-      if (accounts.length > 0) {
-        await msalInstance.logoutPopup();
-      }
       localStorage.removeItem('manualUser');
       localStorage.removeItem('auth_token');
       localStorage.removeItem('mockUser');
@@ -319,7 +291,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     user,
     isAuthenticated: !!user,
-    login,
     manualLogin,
     mockAdminLogin,
     manualSignUp,
