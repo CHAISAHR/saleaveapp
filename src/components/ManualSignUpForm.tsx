@@ -51,34 +51,43 @@ export const ManualSignUpForm: React.FC<ManualSignUpFormProps> = ({ onSignUp }) 
         } else {
           // Use default departments if backend is not available
           setDepartments([
-      { id: 1, name: 'Hr & Ops', is_active: true},
-      { id: 2, name: 'Access to Medicines', is_active: true},
-      { id: 3, name: 'Finance',is_active: true },
-      { id: 4, name: 'Assistive Technologies',is_active: true},
-      { id: 5, name: 'SHF',is_active: true},
-      { id: 6, name: 'TB',is_active: true},
-      { id: 7, name: 'HIV SS, Prep,& SRMNH',is_active: true},
-      { id: 8, name: 'Cancer',is_active: true},
-      { id: 9, name: 'Global',is_active: true},
-      { id: 10, name: 'FCDO',is_active: true},
-      { id: 11, name: 'Other',is_active: true}
+        { id: 1, name: 'HR & Operations', is_active: true},
+        { id: 2, name: 'Access to Medicines', is_active: true},
+        { id: 3, name: 'Finance', is_active: true},
+        { id: 4, name: 'Assistive Technologies', is_active: true},
+        { id: 5, name: 'SHF',is_active: true},
+        { id: 6, name: 'TB',is_active: true},
+        { id: 7, name: 'HIV Prevention', is_active: true},
+        { id: 8, name: 'Cancer', is_active: true},
+        { id: 9, name: 'Global', is_active: true},
+        { id: 10, name: 'FCDO', is_active: true},
+        { id: 11, name: 'Malaria', is_active: true},
+        { id: 12, name: 'SRMNH', is_active: true},
+        { id: 13, name: 'Pediatric and Adolescent HIV', is_active: true},
+        { id: 14, name: 'Syphilis', is_active: true},
+        { id: 15, name: 'Senior Leadership', is_active: true},
+        { id: 16, name: 'Other', is_active: true}
           ]);
         }
       } catch (error) {
         console.error('Error fetching departments:', error);
         // Use default departments if there's an error
         setDepartments([
-      { id: 1, name: 'Hr & Ops', is_active: true},
-      { id: 2, name: 'Access to Medicines', is_active: true},
-      { id: 3, name: 'Finance',is_active: true },
-      { id: 4, name: 'Assistive Technologies',is_active: true},
-      { id: 5, name: 'SHF',is_active: true},
-      { id: 6, name: 'TB',is_active: true},
-      { id: 7, name: 'HIV SS, Prep,& SRMNH',is_active: true},
-      { id: 8, name: 'Cancer',is_active: true},
-      { id: 9, name: 'Global',is_active: true},
-      { id: 10, name: 'FCDO',is_active: true},
-      { id: 11, name: 'Other',is_active: true}
+        { id: 1, name: 'HR & Operations', is_active: true},
+        { id: 2, name: 'Access to Medicines', is_active: true},
+        { id: 3, name: 'Finance', is_active: true},
+        { id: 4, name: 'Assistive Technologies', is_active: true},
+        { id: 5, name: 'SHF',is_active: true},
+        { id: 6, name: 'TB',is_active: true},
+        { id: 7, name: 'HIV Prevention', is_active: true},
+        { id: 8, name: 'Cancer', is_active: true},
+        { id: 9, name: 'Global', is_active: true},
+        { id: 10, name: 'FCDO', is_active: true},
+        { id: 11, name: 'Malaria', is_active: true},
+        { id: 12, name: 'SRMNH', is_active: true},
+        { id: 13, name: 'Pediatric and Adolescent HIV', is_active: true},
+        { id: 14, name: 'Syphilis', is_active: true},
+        { id: 15, name: 'Other', is_active: true}
         ]);
       }
     };

@@ -170,19 +170,22 @@ CREATE INDEX idx_leave_attachments_leave_id ON leave_attachments(leave_id);
 
 -- Insert default departments
 INSERT INTO departments (name, description) VALUES
-('HR & Ops', 'HR department managing personnel and policies'),
-('Access to Medicines', 'IT department managing technology and systems'),
+('HR & Operations', 'HR department managing personnel and policies'),
+('Access to Medicines', 'Department focused on ensuring the availability and affordability of essential medicines'),
 ('Finance', 'Finance department managing company finances'),
-('Assistive Technology', 'AT team'),
-('HIV SS, Prep, Paeds, SRMNH', 'Self Screening'),
-('FCDO', 'Operations department managing daily activities'),
-('SHF', 'Legal department managing compliance and contracts'),
-('PF', 'Pandemic Fund'),
-('TB', 'Tuberculosis'),
+('Assistive Technologies', 'Team dedicated to assistive technology'),
+('SHF', 'Sanitation and Hygiene Fund, focusing on sanitation and menstrual hygiene'),
+('TB', 'Tuberculosis team'),
+('HIV Prevention', 'Department focused on HIV prevention'),
+('Cancer', 'Cervical Cancer team'),
+('Global', 'Global staff'),
+('FCDO', 'Foreign, Commonwealth & Development Office, a UK government department that combines diplomacy and international development'),
 ('Malaria', 'Malaria team'),
-('SLT', 'Senior Leadership Team'),
-('Cancer', 'Cervical Cancer Team'),
-('Global', 'Global Staff');
+('SRMNH', 'Sexual, Reproductive, Maternal, and Newborn Health department'),
+('Pediatric and Adolescent HIV', 'Department dedicated to pediatric and adolescent HIV'),
+('Syphilis', 'Syphilis team'),
+('Senior Leadership', 'Senior Leadership Team'),
+('Other', 'A general category for other departments or teams');
 
 -- Insert default admin user first
 INSERT INTO users (email, name, department, role, hire_date, password_hash, is_active) VALUES

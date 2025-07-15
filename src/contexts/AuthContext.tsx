@@ -131,7 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sub: 'mock-admin@company.com',
         email: 'admin@company.com',
         role: 'admin',
-        department: 'HR & Ops',
+        department: 'HR & Operations',
         given_name: 'Admin',
         family_name: 'User'
       }

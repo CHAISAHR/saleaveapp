@@ -112,36 +112,43 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
         console.log('Using default departments due to fetch failure');
         // Set default departments if backend is not available
         setDepartments([
-        { id: 1, name: 'HR & Ops', description: 'HR department managing personnel and policies', is_active: true},
+        { id: 1, name: 'HR & Operations', description: 'HR department managing personnel and policies', is_active: true},
         { id: 2, name: 'Access to Medicines', description: 'IT department managing technology and systems', is_active: true},
         { id: 3, name: 'Finance', description: 'Finance department managing company finances', is_active: true},
-        { id: 4, name: 'Assistive Technologies', description: 'AT department', is_active: true},
+        { id: 4, name: 'Assistive Technologies', description: 'Marketing department managing company promotion', is_active: true},
         { id: 5, name: 'SHF', description: 'Sales department managing customer relationships', is_active: true},
         { id: 6, name: 'TB', description: 'Operations department managing daily activities', is_active: true},
-        { id: 7, name: 'HIV SS, Prep,& SRMNH', description: 'HIV team', is_active: true},
+        { id: 7, name: 'HIV Prevention', description: 'HIV team', is_active: true},
         { id: 8, name: 'Cancer', description: 'Cervical Cancer', is_active: true},
         { id: 9, name: 'Global', description: 'Global Team', is_active: true},
         { id: 10, name: 'FCDO', description: 'FCDO', is_active: true},
         { id: 11, name: 'Malaria', description: 'Malaria team', is_active: true},
-        { id: 12, name: 'Other', description: 'Any other team', is_active: true}
+        { id: 12, name: 'SRMNH', description: 'HIV team', is_active: true},
+        { id: 13, name: 'Pediatric and Adolescent HIV', description: 'HIV team', is_active: true},
+        { id: 14, name: 'Syphilis', description: 'HIV team', is_active: true},
+        { id: 15, name: 'Senior Leadership', description: 'Senior Leadership', is_active: true},
+        { id: 16, name: 'Other', description: 'Any other team', is_active: true}
         ]);
       }
     } catch (error) {
       console.error('Error fetching departments:', error);
       // Set default departments
       setDepartments([
-        { id: 1, name: 'HR & Ops', description: 'HR department managing personnel and policies', is_active: true},
+        { id: 1, name: 'HR & Operations', description: 'HR department managing personnel and policies', is_active: true},
         { id: 2, name: 'Access to Medicines', description: 'IT department managing technology and systems', is_active: true},
         { id: 3, name: 'Finance', description: 'Finance department managing company finances', is_active: true},
-        { id: 4, name: 'Assistive Technologies', description: 'AT department', is_active: true},
+        { id: 4, name: 'Assistive Technologies', description: 'Marketing department managing company promotion', is_active: true},
         { id: 5, name: 'SHF', description: 'Sales department managing customer relationships', is_active: true},
         { id: 6, name: 'TB', description: 'Operations department managing daily activities', is_active: true},
-        { id: 7, name: 'HIV SS, Prep,& SRMNH', description: 'HIV team', is_active: true},
+        { id: 7, name: 'HIV Prevention', description: 'HIV team', is_active: true},
         { id: 8, name: 'Cancer', description: 'Cervical Cancer', is_active: true},
         { id: 9, name: 'Global', description: 'Global Team', is_active: true},
         { id: 10, name: 'FCDO', description: 'FCDO', is_active: true},
         { id: 11, name: 'Malaria', description: 'Malaria team', is_active: true},
-        { id: 12, name: 'Other', description: 'Any other team', is_active: true}
+        { id: 12, name: 'SRMNH', description: 'HIV team', is_active: true},
+        { id: 13, name: 'Pediatric and Adolescent HIV', description: 'HIV team', is_active: true},
+        { id: 14, name: 'Syphilis', description: 'HIV team', is_active: true},
+        { id: 15, name: 'Other', description: 'Any other team', is_active: true}
       ]);
     }
   };
