@@ -211,7 +211,7 @@ INSERT INTO company_holidays (name, date, type, description, office_status, is_r
 INSERT INTO leave_balances (
     EmployeeName, EmployeeEmail, Department, Year, 
     Maternity, Parental, Adoption, AccumulatedLeave
-) VALUES ('System Administrator', 'admin@company.com', 'Ops Team', YEAR(CURRENT_DATE), 0, 4, 4, 20);
+) VALUES ('System Administrator', 'chaisahr@clintonhealthaccess.org', 'Ops Team', YEAR(CURRENT_DATE), 0, 4, 4, 20);
 
 -- Create views for common queries
 CREATE VIEW employee_current_balances AS
