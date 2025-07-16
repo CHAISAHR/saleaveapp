@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/useUser";
 import { calculateWorkingDays } from "@/lib/utils";
+import { apiConfig } from "@/config/apiConfig";
 
 interface LeaveRequestFormProps {
   isOpen: boolean;
@@ -44,7 +45,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
   useEffect(() => {
     const fetchHolidays = async () => {
       try {
-        const response = await fetch('/api/holiday');
+        const response = await fetch(`${apiConfig.endpoints.holiday}`);
         if (response.ok) {
           const data = await response.json();
           const holidays = data.holidays.map((h: any) => new Date(h.date));
@@ -425,7 +426,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         formDataToSend.append(`attachments`, file);
       });
 
-      const response = await fetch('/api/leave/request', {
+      const response = await fetch(`${apiConfig.endpoints.leave}/request`, {
         method: 'POST',
         body: formDataToSend,
         headers: {
@@ -434,14 +435,19 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       });
 
       if (!response.ok) {
-        throw new Error('Failed to submit leave request');
+        const errorText = await response.text();
+        console.error('Leave request submission failed:', errorText);
+        throw new Error(`Failed to submit leave request: ${response.status} ${errorText}`);
       }
+
+      const result = await response.json();
+      console.log('Leave request submitted successfully:', result);
 
     } catch (error) {
       console.error('Failed to submit leave request:', error);
       toast({
         title: "Submission Failed",
-        description: "Failed to submit leave request. Please try again.",
+        description: `Failed to submit leave request: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`,
         variant: "destructive",
       });
       return;
