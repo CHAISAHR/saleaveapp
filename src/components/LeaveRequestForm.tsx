@@ -488,6 +488,21 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     onClose();
   };
 
+  // Get default manager info
+  const getDefaultManagerInfo = () => {
+    const defaultManagerEmail = `${currentUser.department.toLowerCase()}.manager@company.com`;
+    // Try to find the manager name from available managers list, otherwise use a formatted name
+    const managerFromList = availableManagers.find(m => m.email === defaultManagerEmail);
+    if (managerFromList) {
+      return { name: managerFromList.name, email: defaultManagerEmail };
+    }
+    // Fallback to formatted name based on department
+    const formattedName = `${currentUser.department} Manager`;
+    return { name: formattedName, email: defaultManagerEmail };
+  };
+
+  const defaultManager = getDefaultManagerInfo();
+
   if (!isOpen) return null;
 
   return (
@@ -604,7 +619,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                 <CardTitle className="text-base text-purple-800">Manager Approval Options</CardTitle>
               </div>
               <CardDescription className="text-purple-700">
-                If your regular manager is unavailable, you can assign an alternative manager to approve this request.
+                Your regular manager is <strong>{defaultManager.name}</strong> ({defaultManager.email}). If your regular manager is unavailable, you can assign an alternative manager to approve this request.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
