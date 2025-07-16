@@ -1,5 +1,7 @@
 
-EmployeeName,EmployeeEmail,Department,Year,Broughtforward,AccumulatedLeave,AnnualUsed,Forfeited,Annual_leave_adjustments,SickUsed,MaternityUsed,ParentalUsed,FamilyUsed,AdoptionUsed,StudyUsed,WellnessUsed,Contract_termination_date,termination_balance,Manager
-John Doe,john.doe@company.com,Finance,2025,5.0,20.0,8.5,0.0,0.0,2.0,0.0,0.0,1.0,0.0,0.0,0.0,NULL,0.0,Sarah Manager
-Jane Smith,jane.smith@company.com,Ops Team,2025,8.5,20.0,12.0,0.0,2.0,1.5,0.0,5.0,0.0,0.0,3.0,1.0,NULL,0.0,NULL
-Mike Wilson,mike.wilson@company.com,Access to Medicines,2025,0.0,10.0,3.0,0.0,0.0,0.5,0.0,0.0,0.0,0.0,0.0,0.0,2024-12-31,7.0,Jane Smith
+EmployeeName,EmployeeEmail,Department,Year,Broughtforward,AnnualUsed,Forfeited,Annual_leave_adjustments,SickUsed,MaternityUsed,ParentalUsed,FamilyUsed,AdoptionUsed,StudyUsed,WellnessUsed,Contract_termination_date,termination_balance,Manager
+System Administrator,admin@company.com,HR & Operations,2025,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,NULL,0.0,NULL
+John Doe,john.doe@company.com,Finance,2025,5.0,8.5,0.0,0.0,2.0,0.0,0.0,1.0,0.0,0.0,0.0,NULL,0.0,Sarah Manager
+Jane Smith,jane.smith@company.com,HR & Operations,2025,8.5,12.0,0.0,2.0,1.5,0.0,0.0,0.0,0.0,3.0,1.0,NULL,0.0,System Administrator
+Mike Wilson,mike.wilson@company.com,Access to Medicines,2025,0.0,3.0,0.0,0.0,0.5,0.0,0.0,0.0,0.0,0.0,0.0,2024-12-31,7.0,Jane Smith
+Sarah Manager,sarah.manager@company.com,Finance,2025,12.0,6.0,0.0,0.0,1.0,0.0,0.0,0.5,0.0,0.0,0.0,NULL,0.0,System Administrator
