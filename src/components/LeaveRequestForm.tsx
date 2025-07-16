@@ -619,7 +619,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                 <CardTitle className="text-base text-purple-800">Manager Approval Options</CardTitle>
               </div>
               <CardDescription className="text-purple-700">
-                Manager: <strong>{defaultManager.name}</strong>. If your regular manager is unavailable, you can assign an alternative manager to approve this request.
+                Manager: <strong>{defaultManager.name}</strong>.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
