@@ -189,7 +189,7 @@ INSERT INTO departments (name, description) VALUES
 
 -- Insert default admin user first
 INSERT INTO users (email, name, department, role, hire_date, password_hash, is_active) VALUES
-('admin@company.com', 'System Administrator', 'Ops Team', 'admin', CURDATE(), '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', TRUE);
+('chaisahr@clintonhealthaccess.org', 'System Administrator', 'HR & Operations Team', 'admin', CURDATE(), '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', TRUE);
 
 -- Insert default South African holidays for 2025 (now that admin user exists)
 INSERT INTO company_holidays (name, date, type, description, office_status, is_recurring, created_by_email) VALUES
