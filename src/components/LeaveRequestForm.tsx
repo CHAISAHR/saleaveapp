@@ -40,6 +40,56 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
 
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [companyHolidays, setCompanyHolidays] = useState<Date[]>([]);
+  const [managerInfo, setManagerInfo] = useState<{ name: string; email: string } | null>(null);
+  const [availableManagers, setAvailableManagers] = useState<any[]>([]);
+
+  // Fetch manager info and available managers on component mount
+  useEffect(() => {
+    const fetchManagerInfo = async () => {
+      try {
+        const authToken = localStorage.getItem('auth_token');
+        if (!authToken) return;
+
+        // Fetch current user's manager info
+        const response = await fetch(`${apiConfig.endpoints.balance}`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const userBalance = data.balances?.find((b: any) => b.EmployeeEmail === currentUser.email);
+          if (userBalance?.Manager) {
+            // Fetch manager details from users endpoint
+            const usersResponse = await fetch(`${apiConfig.endpoints.user}`, {
+              headers: {
+                'Authorization': `Bearer ${authToken}`
+              }
+            });
+            
+            if (usersResponse.ok) {
+              const usersData = await usersResponse.json();
+              const manager = usersData.users?.find((u: any) => u.email === userBalance.Manager);
+              if (manager) {
+                setManagerInfo({ name: manager.name, email: manager.email });
+              }
+              
+              // Set available managers (users with manager or admin role)
+              const managers = usersData.users?.filter((u: any) => 
+                u.role === 'manager' || u.role === 'admin'
+              ) || [];
+              setAvailableManagers(managers);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch manager info:', error);
+      }
+    };
+
+    fetchManagerInfo();
+  }, [currentUser.email]);
 
   // Fetch company holidays on component mount
   useEffect(() => {
@@ -57,15 +107,6 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     };
     fetchHolidays();
   }, []);
-
-  // Mock list of available managers - in real app this would come from API
-  const availableManagers = [
-    { email: "john.smith@company.com", name: "John Smith", department: "Operations" },
-    { email: "sarah.jones@company.com", name: "Sarah Jones", department: "HR" },
-    { email: "mike.wilson@company.com", name: "Mike Wilson", department: "Finance" },
-    { email: "lisa.brown@company.com", name: "Lisa Brown", department: "IT" },
-    { email: "david.taylor@company.com", name: "David Taylor", department: "Marketing" },
-  ];
 
   const leaveTypes = [
     { 
@@ -299,11 +340,11 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     try {
       const approverEmail = formData.useAlternativeManager && formData.alternativeManager 
         ? formData.alternativeManager 
-        : `${currentUser.department.toLowerCase()}.manager@company.com`;
+        : managerInfo?.email;
 
       const approverName = formData.useAlternativeManager && formData.alternativeManager
         ? availableManagers.find(m => m.email === formData.alternativeManager)?.name || formData.alternativeManager
-        : "Manager";
+        : managerInfo?.name || "Manager";
       
       const managerEmailData = {
         to: approverEmail,
@@ -522,30 +563,6 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     onClose();
   };
 
-  // Get default manager info with proper email formatting
-  const getDefaultManagerInfo = () => {
-    // Clean department name: remove spaces, convert to lowercase, handle special characters
-    const cleanDepartment = currentUser.department
-      .toLowerCase()
-      .replace(/\s+/g, '-') // Replace spaces with hyphens
-      .replace(/[^a-z0-9-]/g, '') // Remove special characters except hyphens
-      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
-      .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
-    
-    const defaultManagerEmail = `${cleanDepartment}.manager@company.com`;
-    
-    // Try to find the manager name from available managers list, otherwise use a formatted name
-    const managerFromList = availableManagers.find(m => m.email === defaultManagerEmail);
-    if (managerFromList) {
-      return { name: managerFromList.name, email: defaultManagerEmail };
-    }
-    // Fallback to formatted name based on department
-    const formattedName = `${currentUser.department} Manager`;
-    return { name: formattedName, email: defaultManagerEmail };
-  };
-
-  const defaultManager = getDefaultManagerInfo();
-
   if (!isOpen) return null;
 
   return (
@@ -662,7 +679,11 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                 <CardTitle className="text-base text-purple-800">Manager Approval Options</CardTitle>
               </div>
               <CardDescription className="text-purple-700">
-                Manager: <strong>{defaultManager.name}</strong>.
+                {managerInfo ? (
+                  <>Manager: <strong>{managerInfo.name}</strong> ({managerInfo.email})</>
+                ) : (
+                  "Loading manager information..."
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
