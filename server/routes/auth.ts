@@ -1,3 +1,4 @@
+
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -282,6 +283,96 @@ router.post('/reset-password', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Password reset request failed. Please try again later.' 
+    });
+  }
+});
+
+// Password reset confirmation endpoint
+router.post('/reset-password-confirm', async (req, res) => {
+  try {
+    console.log('Password reset confirmation received');
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      console.log('Password reset confirmation failed: Missing token or password');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Reset token and new password are required' 
+      });
+    }
+
+    if (password.length < 6) {
+      console.log('Password reset confirmation failed: Password too short');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Password must be at least 6 characters long' 
+      });
+    }
+
+    // Verify and decode the reset token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+      console.log('Token verified successfully for user:', decoded.email);
+    } catch (tokenError) {
+      console.error('Token verification failed:', tokenError);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid or expired reset token' 
+      });
+    }
+
+    // Verify token type and user exists
+    if (decoded.type !== 'password_reset') {
+      console.log('Invalid token type:', decoded.type);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid reset token' 
+      });
+    }
+
+    // Check if user still exists and is active
+    const users = await executeQuery(
+      'SELECT id, email, name FROM users WHERE id = ? AND email = ? AND is_active = TRUE',
+      [decoded.userId, decoded.email]
+    );
+
+    if (users.length === 0) {
+      console.log('User not found or inactive:', decoded.email);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User not found or account is inactive' 
+      });
+    }
+
+    const user = users[0];
+    console.log('Updating password for user:', user.name);
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update user's password in database
+    await executeQuery(
+      'UPDATE users SET password_hash = ? WHERE id = ?',
+      [hashedPassword, user.id]
+    );
+
+    console.log('Password updated successfully for user:', user.email);
+
+    res.json({
+      success: true,
+      message: 'Password has been reset successfully'
+    });
+  } catch (error: any) {
+    console.error('Password reset confirmation error:', {
+      error: error.message,
+      stack: error.stack,
+      request: req.body
+    });
+    
+    res.status(500).json({ 
+      success: false, 
+      message: 'Password reset failed. Please try again later.' 
     });
   }
 });

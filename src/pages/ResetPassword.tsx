@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiConfig, makeApiRequest } from '@/config/apiConfig';
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -49,34 +50,47 @@ const ResetPassword = () => {
     setError(null);
 
     try {
-      // For now, we'll just show success since the backend endpoint doesn't exist yet
-      console.log('Password reset would be processed with token:', token);
-      console.log('New password length:', password.length);
+      console.log('Sending password reset confirmation request');
       
-      // TODO: Implement actual password reset API call
-      // const response = await fetch('/api/auth/reset-password-confirm', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ token, password })
-      // });
-      
-      setIsSuccess(true);
-      toast({
-        title: "Password Reset Successful",
-        description: "Your password has been updated successfully.",
+      const response = await makeApiRequest(`${apiConfig.endpoints.auth}/reset-password-confirm`, {
+        method: 'POST',
+        body: JSON.stringify({ token, password })
       });
+
+      const data = await response.json();
       
-      // Redirect to login after 3 seconds
-      setTimeout(() => {
-        navigate('/');
-      }, 3000);
+      if (data.success) {
+        setIsSuccess(true);
+        toast({
+          title: "Password Reset Successful",
+          description: "Your password has been updated successfully.",
+        });
+        
+        // Redirect to login after 3 seconds
+        setTimeout(() => {
+          navigate('/');
+        }, 3000);
+      } else {
+        throw new Error(data.message || 'Password reset failed');
+      }
       
     } catch (error: any) {
       console.error('Password reset error:', error);
-      setError(error.message || 'Failed to reset password. Please try again.');
+      
+      let errorMessage = 'Failed to reset password. Please try again.';
+      
+      if (error.message.includes('Invalid or expired reset token')) {
+        errorMessage = 'This reset link has expired. Please request a new password reset.';
+      } else if (error.message.includes('Password must be at least 6 characters')) {
+        errorMessage = 'Password must be at least 6 characters long.';
+      } else if (error.message.includes('User not found')) {
+        errorMessage = 'User account not found. Please contact support.';
+      }
+      
+      setError(errorMessage);
       toast({
         title: "Reset Failed",
-        description: error.message || 'Failed to reset password. Please try again.',
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
