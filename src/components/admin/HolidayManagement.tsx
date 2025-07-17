@@ -32,14 +32,20 @@ export const HolidayManagement = () => {
   const getAuthHeaders = () => {
     const authToken = localStorage.getItem('auth_token');
     console.log('[HolidayManagement] Getting auth headers, token present:', !!authToken);
+    console.log('[HolidayManagement] Token value:', authToken);
+    
     if (!authToken || authToken === 'null' || authToken === '') {
       console.error('[HolidayManagement] No valid authentication token');
       throw new Error('No valid authentication token');
     }
-    return {
+    
+    const headers = {
       'Authorization': `Bearer ${authToken}`,
       'Content-Type': 'application/json'
     };
+    
+    console.log('[HolidayManagement] Request headers:', headers);
+    return headers;
   };
 
   // Fetch holidays from backend
@@ -48,6 +54,7 @@ export const HolidayManagement = () => {
     
     if (!hasValidToken()) {
       console.warn('[HolidayManagement] No valid token, showing auth required message');
+      setBackendError(true);
       toast({
         title: "Authentication Required",
         description: "Please log in to access holiday management.",
@@ -64,7 +71,6 @@ export const HolidayManagement = () => {
       console.log('[HolidayManagement] Fetching holidays from:', url);
       
       const headers = getAuthHeaders();
-      console.log('[HolidayManagement] Request headers:', headers);
       
       const response = await fetch(url, { headers });
       
@@ -76,10 +82,12 @@ export const HolidayManagement = () => {
         console.log('[HolidayManagement] Successfully fetched holidays:', data.holidays?.length || 0);
         setHolidays(data.holidays || []);
       } else if (response.status === 401) {
-        console.warn('[HolidayManagement] 401 - Session expired');
+        console.warn('[HolidayManagement] 401 - Authentication failed');
+        console.warn('[HolidayManagement] This usually means the token is invalid or expired in production');
+        setBackendError(true);
         toast({
-          title: "Session Expired",
-          description: "Please log in again to continue.",
+          title: "Authentication Failed",
+          description: "Your session has expired or the authentication token is invalid. Please log in again.",
           variant: "destructive",
         });
       } else if (response.status === 403) {
@@ -115,7 +123,7 @@ export const HolidayManagement = () => {
         console.error('[HolidayManagement] Unknown error:', error);
         toast({
           title: "Error",
-          description: "Failed to load holidays",
+          description: "Failed to load holidays. Please try logging in again.",
           variant: "destructive",
         });
       }
