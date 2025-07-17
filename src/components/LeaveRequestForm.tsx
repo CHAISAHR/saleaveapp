@@ -62,7 +62,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
           const userBalance = data.balances?.find((b: any) => b.EmployeeEmail === currentUser.email);
           if (userBalance?.Manager) {
             // Fetch manager details from users endpoint
-            const usersResponse = await fetch(`${apiConfig.endpoints.user}`, {
+            const usersResponse = await fetch(`${apiConfig.endpoints.users}`, {
               headers: {
                 'Authorization': `Bearer ${authToken}`
               }
