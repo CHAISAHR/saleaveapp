@@ -50,7 +50,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         const authToken = localStorage.getItem('auth_token');
         if (!authToken) return;
 
-        // Fetch current user's manager info
+        // Fetch current user's manager info from balance endpoint
         const response = await fetch(`${apiConfig.endpoints.balance}`, {
           headers: {
             'Authorization': `Bearer ${authToken}`
@@ -60,8 +60,9 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         if (response.ok) {
           const data = await response.json();
           const userBalance = data.balances?.find((b: any) => b.EmployeeEmail === currentUser.email);
+          
           if (userBalance?.Manager) {
-            // Fetch manager details from users endpoint
+            // Fetch all users to find manager details
             const usersResponse = await fetch(`${apiConfig.endpoints.users}`, {
               headers: {
                 'Authorization': `Bearer ${authToken}`
@@ -70,9 +71,23 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
             
             if (usersResponse.ok) {
               const usersData = await usersResponse.json();
+              
+              // Find the manager by email in the users table
               const manager = usersData.users?.find((u: any) => u.email === userBalance.Manager);
+              
               if (manager) {
-                setManagerInfo({ name: manager.name, email: manager.email });
+                console.log('Found manager:', manager);
+                setManagerInfo({ 
+                  name: manager.name, 
+                  email: manager.email 
+                });
+              } else {
+                console.log('Manager not found in users table for email:', userBalance.Manager);
+                // Fallback to showing the email if manager not found
+                setManagerInfo({ 
+                  name: userBalance.Manager, 
+                  email: userBalance.Manager 
+                });
               }
               
               // Set available managers (users with manager or admin role)
