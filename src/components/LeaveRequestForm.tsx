@@ -43,60 +43,56 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
   const [managerInfo, setManagerInfo] = useState<{ name: string; email: string } | null>(null);
   const [availableManagers, setAvailableManagers] = useState<any[]>([]);
 
-  // Fetch manager info and available managers on component mount
+  // Fetch manager info based on current user's department
   useEffect(() => {
     const fetchManagerInfo = async () => {
       try {
         const authToken = localStorage.getItem('auth_token');
         if (!authToken) return;
 
-        // Fetch current user's manager info from balance endpoint
-        const response = await fetch(`${apiConfig.endpoints.balance}`, {
+        // Fetch all users to find department manager
+        const usersResponse = await fetch(`${apiConfig.endpoints.users}`, {
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
         });
-
-        if (response.ok) {
-          const data = await response.json();
-          const userBalance = data.balances?.find((b: any) => b.EmployeeEmail === currentUser.email);
+        
+        if (usersResponse.ok) {
+          const usersData = await usersResponse.json();
           
-          if (userBalance?.Manager) {
-            // Fetch all users to find manager details
-            const usersResponse = await fetch(`${apiConfig.endpoints.users}`, {
-              headers: {
-                'Authorization': `Bearer ${authToken}`
-              }
+          // Find managers in the same department as current user
+          const departmentManagers = usersData.users?.filter((u: any) => 
+            u.department === currentUser.department && 
+            (u.role === 'manager' || u.role === 'admin') &&
+            u.email !== currentUser.email // Don't include self
+          ) || [];
+          
+          // Set the first department manager as the default manager
+          if (departmentManagers.length > 0) {
+            const primaryManager = departmentManagers[0];
+            console.log('Found department manager:', primaryManager);
+            setManagerInfo({ 
+              name: primaryManager.name, 
+              email: primaryManager.email 
             });
-            
-            if (usersResponse.ok) {
-              const usersData = await usersResponse.json();
-              
-              // Find the manager by email in the users table
-              const manager = usersData.users?.find((u: any) => u.email === userBalance.Manager);
-              
-              if (manager) {
-                console.log('Found manager:', manager);
-                setManagerInfo({ 
-                  name: manager.name, 
-                  email: manager.email 
-                });
-              } else {
-                console.log('Manager not found in users table for email:', userBalance.Manager);
-                // Fallback to showing the email if manager not found
-                setManagerInfo({ 
-                  name: userBalance.Manager, 
-                  email: userBalance.Manager 
-                });
-              }
-              
-              // Set available managers (users with manager or admin role)
-              const managers = usersData.users?.filter((u: any) => 
-                u.role === 'manager' || u.role === 'admin'
-              ) || [];
-              setAvailableManagers(managers);
+          } else {
+            console.log('No manager found for department:', currentUser.department);
+            // Fallback to admin if no department manager found
+            const adminUsers = usersData.users?.filter((u: any) => u.role === 'admin') || [];
+            if (adminUsers.length > 0) {
+              setManagerInfo({ 
+                name: adminUsers[0].name, 
+                email: adminUsers[0].email 
+              });
             }
           }
+          
+          // Set available managers (all users with manager or admin role)
+          const allManagers = usersData.users?.filter((u: any) => 
+            (u.role === 'manager' || u.role === 'admin') &&
+            u.email !== currentUser.email
+          ) || [];
+          setAvailableManagers(allManagers);
         }
       } catch (error) {
         console.error('Failed to fetch manager info:', error);
@@ -104,7 +100,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     };
 
     fetchManagerInfo();
-  }, [currentUser.email]);
+  }, [currentUser.email, currentUser.department]);
 
   // Fetch company holidays on component mount
   useEffect(() => {
