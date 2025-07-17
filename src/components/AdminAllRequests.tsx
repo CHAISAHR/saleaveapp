@@ -75,7 +75,7 @@ export const AdminAllRequests = () => {
       ...request,
       Status: 'cancelled' as const,
       Modified: new Date().toISOString(),
-      ModifiedBy: "admin@company.com"
+      ModifiedBy: "chaisahr@clintonhealthaccess.org"
     };
 
     setRequests(prev => prev.map(r => 
@@ -151,7 +151,7 @@ export const AdminAllRequests = () => {
     const updatedRequest = {
       ...editingRequest,
       Modified: new Date().toISOString(),
-      ModifiedBy: "admin@company.com"
+      ModifiedBy: "chaisahr@clintonhealthaccess.org"
     };
 
     // Update balance based on status change

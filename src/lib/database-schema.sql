@@ -193,18 +193,18 @@ INSERT INTO users (email, name, department, role, hire_date, password_hash, is_a
 
 -- Insert default South African holidays for 2025 (now that admin user exists)
 INSERT INTO company_holidays (name, date, type, description, office_status, is_recurring, created_by_email) VALUES
-('New Year\'s Day', '2025-01-01', 'public', 'New Year\'s Day', 'closed', TRUE, 'admin@company.com'),
-('Human Rights Day', '2025-03-21', 'public', 'Human Rights Day', 'closed', TRUE, 'admin@company.com'),
-('Good Friday', '2025-04-18', 'public', 'Good Friday', 'closed', FALSE, 'admin@company.com'),
-('Family Day', '2025-04-21', 'public', 'Family Day', 'closed', FALSE, 'admin@company.com'),
-('Freedom Day', '2025-04-27', 'public', 'Freedom Day', 'closed', TRUE, 'admin@company.com'),
-('Workers\' Day', '2025-05-01', 'public', 'Workers\' Day', 'closed', TRUE, 'admin@company.com'),
-('Youth Day', '2025-06-16', 'public', 'Youth Day', 'closed', TRUE, 'admin@company.com'),
-('National Women\'s Day', '2025-08-09', 'public', 'National Women\'s Day', 'closed', TRUE, 'admin@company.com'),
-('Heritage Day', '2025-09-24', 'public', 'Heritage Day', 'closed', TRUE, 'admin@company.com'),
-('Day of Reconciliation', '2025-12-16', 'public', 'Day of Reconciliation', 'closed', TRUE, 'admin@company.com'),
-('Christmas Day', '2025-12-25', 'public', 'Christmas Day', 'closed', TRUE, 'admin@company.com'),
-('Day of Goodwill', '2025-12-26', 'public', 'Day of Goodwill', 'closed', TRUE, 'admin@company.com');
+('New Year\'s Day', '2025-01-01', 'public', 'New Year\'s Day', 'closed', TRUE, 'chaisahr@clintonhealthaccess.org'),
+('Human Rights Day', '2025-03-21', 'public', 'Human Rights Day', 'closed', TRUE, 'chaisahr@clintonhealthaccess.org'),
+('Good Friday', '2025-04-18', 'public', 'Good Friday', 'closed', FALSE, 'chaisahr@clintonhealthaccess.org'),
+('Family Day', '2025-04-21', 'public', 'Family Day', 'closed', FALSE, 'chaisahr@clintonhealthaccess.org'),
+('Freedom Day', '2025-04-27', 'public', 'Freedom Day', 'closed', TRUE, 'chaisahr@clintonhealthaccess.org'),
+('Workers\' Day', '2025-05-01', 'public', 'Workers\' Day', 'closed', TRUE, 'chaisahr@clintonhealthaccess.org'),
+('Youth Day', '2025-06-16', 'public', 'Youth Day', 'closed', TRUE, 'chaisahr@clintonhealthaccess.org'),
+('National Women\'s Day', '2025-08-09', 'public', 'National Women\'s Day', 'closed', TRUE, 'chaisahr@clintonhealthaccess.org'),
+('Heritage Day', '2025-09-24', 'public', 'Heritage Day', 'closed', TRUE, 'chaisahr@clintonhealthaccess.org'),
+('Day of Reconciliation', '2025-12-16', 'public', 'Day of Reconciliation', 'closed', TRUE, 'chaisahr@clintonhealthaccess.org'),
+('Christmas Day', '2025-12-25', 'public', 'Christmas Day', 'closed', TRUE, 'chaisahr@clintonhealthaccess.org'),
+('Day of Goodwill', '2025-12-26', 'public', 'Day of Goodwill', 'closed', TRUE, 'chaisahr@clintonhealthaccess.org');
 
 -- Create initial leave balance for admin user
 -- NOTE: Maternity set to 0 for admin (gender-based), Parental and Adoption in weeks

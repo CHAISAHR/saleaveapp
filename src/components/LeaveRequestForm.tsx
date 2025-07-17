@@ -307,7 +307,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       
       const managerEmailData = {
         to: approverEmail,
-        cc: 'admin@company.com',
+        cc: 'chaisahr@clintonhealthaccess.org',
         subject: `New Leave Request - ${requestData.title}`,
         body: `Dear ${approverName},
         

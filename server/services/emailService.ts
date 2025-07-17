@@ -14,7 +14,7 @@ export interface EmailNotification {
 
 class EmailService {
   private transporter: nodemailer.Transporter;
-  private readonly ADMIN_EMAIL = 'admin@company.com';
+  private readonly ADMIN_EMAIL = 'chaisahr@clintonhealthaccess.org';
   private readonly FROM_EMAIL = process.env.SMTP_USER || 'noreply@company.com';
 
   constructor() {

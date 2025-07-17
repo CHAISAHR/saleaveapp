@@ -45,7 +45,7 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
       [requester, new Date().getFullYear()]
     );
 
-    const managerEmail = managerQuery[0]?.Manager || 'admin@company.com';
+    const managerEmail = managerQuery[0]?.Manager || 'chaisahr@clintonhealthaccess.org';
     
     // Send email notification to manager
     const leaveRequest = {

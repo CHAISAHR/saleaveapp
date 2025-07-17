@@ -117,19 +117,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Create a mock admin user
     const mockAdminAccount: AccountInfo = {
-      homeAccountId: 'mock-admin@company.com',
+      homeAccountId: 'mock-chaisahr@clintonhealthaccess.org',
       environment: 'mock',
       tenantId: 'mock-tenant',
-      username: 'admin@company.com',
-      localAccountId: 'mock-admin@company.com',
+      username: 'chaisahr@clintonhealthaccess.org',
+      localAccountId: 'mock-chaisahr@clintonhealthaccess.org',
       name: 'Admin User',
       idTokenClaims: {
         aud: 'mock',
         iss: 'mock',
         iat: Date.now() / 1000,
         exp: (Date.now() / 1000) + 86400, // 24 hours
-        sub: 'mock-admin@company.com',
-        email: 'admin@company.com',
+        sub: 'mock-chaisahr@clintonhealthaccess.org',
+        email: 'chaisahr@clintonhealthaccess.org',
         role: 'admin',
         department: 'HR & Operations',
         given_name: 'Admin',

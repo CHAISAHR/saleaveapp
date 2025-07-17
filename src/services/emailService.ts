@@ -48,7 +48,7 @@ class EmailService {
     const notification: EmailNotification = {
       recipient_email: managerEmail,
       sender_email: 'noreply@company.com',
-      cc_email: 'admin@company.com', // Copy admin
+      cc_email: 'chaisahr@clintonhealthaccess.org', // Copy admin
       subject: `New Leave Request: ${leaveRequest.title}`,
       message: `
         Hello,
