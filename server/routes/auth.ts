@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { executeQuery } from '../config/database';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { emailService } from '../services/emailService';
 
 const router = express.Router();
 
@@ -242,19 +243,30 @@ router.post('/reset-password', async (req, res) => {
       });
     }
 
-    // In a real application, you would:
-    // 1. Generate a secure reset token
-    // 2. Store it in the database with expiration
-    // 3. Send an email with the reset link
-    
     const user = users[0];
     console.log(`Password reset request processed for user: ${user.name} (${user.email})`);
     
-    // For now, just log that the reset was requested
-    // In production, you would integrate with an email service like:
-    // - SendGrid
-    // - AWS SES
-    // - Nodemailer with SMTP
+    // Generate a secure reset token
+    const resetToken = jwt.sign(
+      { userId: user.id, email: user.email, type: 'password_reset' },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '1h' } // Token expires in 1 hour
+    );
+
+    // In a real application, you would store this token in the database
+    // For now, we'll include it in the email link
+    
+    try {
+      // Send password reset email using the email service
+      await emailService.notifyPasswordReset(user.email, user.name, resetToken);
+      console.log(`Password reset email sent successfully to: ${user.email}`);
+    } catch (emailError) {
+      console.error('Failed to send password reset email:', emailError);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Failed to send reset email. Please try again later.' 
+      });
+    }
     
     res.json({
       success: true,

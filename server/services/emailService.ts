@@ -1,4 +1,3 @@
-
 import nodemailer from 'nodemailer';
 
 // Email notification service for leave requests and approvals
@@ -27,6 +26,36 @@ class EmailService {
         pass: process.env.SMTP_PASS,
       },
     });
+  }
+
+  // Send password reset email
+  async notifyPasswordReset(userEmail: string, userName: string, resetToken: string): Promise<void> {
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    
+    const notification: EmailNotification = {
+      recipient_email: userEmail,
+      sender_email: process.env.SMTP_USER || 'noreply@company.com',
+      subject: 'Password Reset Request - Leave Management System',
+      message: `
+        Dear ${userName},
+
+        You have requested to reset your password for the Leave Management System.
+
+        Please click the link below to reset your password:
+        ${resetUrl}
+
+        This link will expire in 1 hour for security reasons.
+
+        If you did not request this password reset, please ignore this email or contact support if you have concerns.
+
+        Best regards,
+        HR Team
+        Leave Management System
+      `,
+      notification_type: 'user_registration' // Using existing type, or we could add 'password_reset'
+    };
+
+    await this.sendEmail(notification);
   }
 
   // Send welcome email to new user registration
