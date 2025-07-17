@@ -15,6 +15,7 @@ export interface EmailNotification {
 class EmailService {
   private transporter: nodemailer.Transporter;
   private readonly ADMIN_EMAIL = 'admin@company.com';
+  private readonly FROM_EMAIL = process.env.SMTP_USER || 'noreply@company.com';
 
   constructor() {
     // Initialize email transporter
@@ -35,7 +36,7 @@ class EmailService {
     
     const notification: EmailNotification = {
       recipient_email: userEmail,
-      sender_email: process.env.SMTP_USER || 'noreply@company.com',
+      sender_email: this.FROM_EMAIL,
       subject: 'Password Reset Request - Leave Management System',
       message: `
         Dear ${userName},
@@ -63,7 +64,7 @@ class EmailService {
   async notifyUserRegistration(userEmail: string, userName: string): Promise<void> {
     const notification: EmailNotification = {
       recipient_email: userEmail,
-      sender_email: process.env.SMTP_USER || 'noreply@company.com',
+      sender_email: this.FROM_EMAIL,
       subject: 'Welcome to Leave Management System',
       message: `
         Dear ${userName},
@@ -96,7 +97,7 @@ class EmailService {
   async notifyManagerOfLeaveRequest(leaveRequest: any, managerEmail: string): Promise<void> {
     const notification: EmailNotification = {
       recipient_email: managerEmail,
-      sender_email: process.env.SMTP_USER || 'noreply@company.com',
+      sender_email: this.FROM_EMAIL,
       cc_email: this.ADMIN_EMAIL,
       subject: `New Leave Request: ${leaveRequest.title}`,
       message: `
@@ -128,7 +129,7 @@ class EmailService {
   async notifyEmployeeOfApproval(leaveRequest: any, approverName: string): Promise<void> {
     const notification: EmailNotification = {
       recipient_email: leaveRequest.Requester || leaveRequest.employeeEmail,
-      sender_email: process.env.SMTP_USER || 'noreply@company.com',
+      sender_email: this.FROM_EMAIL,
       cc_email: this.ADMIN_EMAIL,
       subject: `Leave Request Approved: ${leaveRequest.Title || leaveRequest.title}`,
       message: `
@@ -159,7 +160,7 @@ class EmailService {
   async notifyEmployeeOfRejection(leaveRequest: any, approverName: string, reason?: string): Promise<void> {
     const notification: EmailNotification = {
       recipient_email: leaveRequest.Requester || leaveRequest.employeeEmail,
-      sender_email: process.env.SMTP_USER || 'noreply@company.com',
+      sender_email: this.FROM_EMAIL,
       cc_email: this.ADMIN_EMAIL,
       subject: `Leave Request Rejected: ${leaveRequest.Title || leaveRequest.title}`,
       message: `
