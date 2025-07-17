@@ -426,17 +426,51 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         formDataToSend.append(`attachments`, file);
       });
 
+      // Get token and validate it exists
+      const authToken = localStorage.getItem('auth_token');
+      console.log('Auth token present:', !!authToken);
+      console.log('Auth token value (first 20 chars):', authToken?.substring(0, 20));
+      
+      if (!authToken || authToken === 'mock-admin-token' || authToken === 'mock-jwt-token') {
+        console.error('Invalid or mock token detected:', authToken);
+        toast({
+          title: "Authentication Error",
+          description: "Please log in again to submit leave requests.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const response = await fetch(`${apiConfig.endpoints.leave}/request`, {
         method: 'POST',
         body: formDataToSend,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          'Authorization': `Bearer ${authToken}`
         }
       });
+
+      console.log('API Response status:', response.status);
+      console.log('API Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Leave request submission failed:', errorText);
+        
+        if (response.status === 403) {
+          toast({
+            title: "Authentication Error",
+            description: "Your session has expired. Please log in again.",
+            variant: "destructive",
+          });
+          // Clear invalid token
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('manualUser');
+          localStorage.removeItem('mockUser');
+          // Optionally redirect to login
+          window.location.reload();
+          return;
+        }
+        
         throw new Error(`Failed to submit leave request: ${response.status} ${errorText}`);
       }
 
@@ -488,9 +522,18 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     onClose();
   };
 
-  // Get default manager info
+  // Get default manager info with proper email formatting
   const getDefaultManagerInfo = () => {
-    const defaultManagerEmail = `${currentUser.department.toLowerCase()}.manager@company.com`;
+    // Clean department name: remove spaces, convert to lowercase, handle special characters
+    const cleanDepartment = currentUser.department
+      .toLowerCase()
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/[^a-z0-9-]/g, '') // Remove special characters except hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+    
+    const defaultManagerEmail = `${cleanDepartment}.manager@company.com`;
+    
     // Try to find the manager name from available managers list, otherwise use a formatted name
     const managerFromList = availableManagers.find(m => m.email === defaultManagerEmail);
     if (managerFromList) {
