@@ -245,32 +245,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetPassword = async (email: string) => {
     try {
-      console.log('Password reset requested for:', email);
+      console.log('[AuthContext] Password reset requested for:', email);
+      console.log('[AuthContext] API endpoint:', `${apiConfig.endpoints.auth}/reset-password`);
       
       if (!email || !email.includes('@')) {
+        console.error('[AuthContext] Invalid email provided:', email);
         throw new Error('Please enter a valid email address');
       }
       
-      const response = await makeApiRequest(`${apiConfig.endpoints.auth}/reset-password`, {
+      const requestBody = JSON.stringify({ email });
+      console.log('[AuthContext] Request body:', requestBody);
+      
+      const requestOptions = {
         method: 'POST',
-        body: JSON.stringify({ email })
-      });
+        body: requestBody
+      };
+      console.log('[AuthContext] Request options:', requestOptions);
+      
+      const response = await makeApiRequest(`${apiConfig.endpoints.auth}/reset-password`, requestOptions);
+      console.log('[AuthContext] Response received:', response.status, response.statusText);
 
       const data = await response.json();
+      console.log('[AuthContext] Response data:', data);
       
       if (!data.success) {
+        console.error('[AuthContext] Server returned error:', data.message);
         throw new Error(data.message || 'Password reset failed');
       }
       
-      console.log('Password reset request successful for:', email);
+      console.log('[AuthContext] Password reset request successful for:', email);
     } catch (error: any) {
-      console.error('Password reset error:', error);
+      console.error('[AuthContext] Password reset error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        email: email
+      });
       
       // Provide user-friendly error messages
       if (error.message.includes('HTTP error! status: 500')) {
         throw new Error('Server error. Please try again later or contact support.');
       } else if (error.message.includes('Failed to fetch')) {
         throw new Error('Network error. Please check your connection and try again.');
+      } else if (error.message.includes('Cannot GET')) {
+        throw new Error('Server configuration error. The password reset endpoint is not properly configured.');
       } else {
         throw new Error(error.message || 'Password reset failed. Please try again.');
       }

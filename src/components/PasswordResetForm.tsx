@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface PasswordResetFormProps {
   onBack: () => void;
-  onResetRequest: (email: string) => void;
+  onResetRequest: (email: string) => Promise<void>;
 }
 
 export const PasswordResetForm: React.FC<PasswordResetFormProps> = ({ onBack, onResetRequest }) => {
@@ -21,18 +21,27 @@ export const PasswordResetForm: React.FC<PasswordResetFormProps> = ({ onBack, on
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[PasswordResetForm] Form submitted with email:', email);
     setIsLoading(true);
     setError(null);
     
     try {
+      console.log('[PasswordResetForm] Calling onResetRequest function...');
       await onResetRequest(email);
+      console.log('[PasswordResetForm] Reset request successful');
       setIsSubmitted(true);
       toast({
         title: "Reset Link Sent",
         description: `If an account exists for ${email}, you will receive a password reset link.`,
       });
     } catch (error: any) {
-      console.error('Password reset error:', error);
+      console.error('[PasswordResetForm] Password reset error:', error);
+      console.error('[PasswordResetForm] Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      
       const errorMessage = error.message || 'Failed to send reset email. Please try again.';
       setError(errorMessage);
       toast({
@@ -99,7 +108,7 @@ export const PasswordResetForm: React.FC<PasswordResetFormProps> = ({ onBack, on
               disabled={isLoading}
             />
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full" disabled={isLoading || !email.trim()}>
             {isLoading ? 'Sending...' : 'Send Reset Link'}
           </Button>
           <Button onClick={onBack} variant="outline" className="w-full" disabled={isLoading}>
