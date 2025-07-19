@@ -1,6 +1,6 @@
 
-Title,Detail,StartDate,EndDate,LeaveType,Requester,Approver,Status,Created
-Summer Vacation,Annual leave for family trip,2024-07-15,2024-07-26,Annual,john.doe@company.com,sarah.manager@company.com,approved,2024-06-15 10:30:00
-Sick Leave,Flu symptoms,2024-09-03,2024-09-05,Sick,jane.smith@company.com,chaisahr@clintonhealthaccess.org,approved,2024-09-03 08:15:00
-Study Leave,Professional certification exam,2024-11-20,2024-11-22,Study,mike.wilson@company.com,jane.smith@company.com,pending,2024-11-01 14:20:00
-Team Building,Company retreat,2024-08-10,2024-08-12,Annual,sarah.manager@company.com,chaisahr@clintonhealthaccess.org,approved,2024-07-20 09:00:00
+Title,Detail,StartDate,EndDate,LeaveType,Requester,Approver,Status,workingDays,Created
+Summer Vacation,Annual leave for family trip,2024-07-15,2024-07-26,Annual,john.doe@company.com,sarah.manager@company.com,approved,8.0,2024-06-15 10:30:00
+Sick Leave,Flu symptoms,2024-09-03,2024-09-05,Sick,jane.smith@company.com,chaisahr@clintonhealthaccess.org,approved,3.0,2024-09-03 08:15:00
+Study Leave,Professional certification exam,2024-11-20,2024-11-22,Study,mike.wilson@company.com,jane.smith@company.com,pending,3.0,2024-11-01 14:20:00
+Team Building,Company retreat,2024-08-10,2024-08-12,Annual,sarah.manager@company.com,chaisahr@clintonhealthaccess.org,approved,3.0,2024-07-20 09:00:00

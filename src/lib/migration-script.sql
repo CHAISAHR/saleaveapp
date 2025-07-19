@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS staging_leave_balances (
     Manager VARCHAR(255)
 );
 
--- Staging table for leave_taken CSV import
+-- Staging table for leave_taken CSV import (with workingDays column)
 CREATE TABLE IF NOT EXISTS staging_leave_taken (
     Title VARCHAR(255),
     Detail TEXT,
@@ -51,8 +51,11 @@ CREATE TABLE IF NOT EXISTS staging_leave_taken (
     Requester VARCHAR(255),
     Approver VARCHAR(255),
     Status VARCHAR(20),
+    workingDays VARCHAR(20), -- Added workingDays column
     Created VARCHAR(30)
 );
+
+-- ... keep existing code (validation and calculation procedures)
 
 -- =========================================================================
 -- STEP 2: Data validation and cleanup procedures
@@ -266,7 +269,7 @@ BEGIN
     COMMIT;
 END//
 
--- Migration procedure for leave taken
+-- Migration procedure for leave taken (updated to include workingDays)
 CREATE OR REPLACE PROCEDURE MigrateLeaveRequests()
 BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -278,7 +281,7 @@ BEGIN
     START TRANSACTION;
     
     INSERT INTO leave_taken (
-        Title, Detail, StartDate, EndDate, LeaveType, Requester, Approver, Status, Created
+        Title, Detail, StartDate, EndDate, LeaveType, Requester, Approver, Status, workingDays, Created
     )
     SELECT 
         Title,
@@ -292,6 +295,7 @@ BEGIN
             WHEN LOWER(Status) IN ('pending', 'approved', 'rejected', 'cancelled') THEN LOWER(Status)
             ELSE 'pending' 
         END,
+        CAST(NULLIF(workingDays, '') AS DECIMAL(8,3)),
         STR_TO_DATE(Created, '%Y-%m-%d %H:%i:%s')
     FROM staging_leave_taken;
     
@@ -300,6 +304,8 @@ BEGIN
 END//
 
 DELIMITER ;
+
+-- ... keep existing code (complete migration procedure and usage instructions)
 
 -- =========================================================================
 -- STEP 4: Complete migration procedure
@@ -365,6 +371,7 @@ NOTES:
 - Gender-based leave allocations are applied automatically (Maternity: 90 for females, 0 for males)
 - All data validation is performed before migration
 - The process is transactional - if any step fails, everything is rolled back
+- workingDays column is now included in leave_taken migration
 */
 
 -- Quick verification queries
