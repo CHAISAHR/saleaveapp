@@ -50,38 +50,33 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         const authToken = localStorage.getItem('auth_token');
         if (!authToken) return;
 
-        // Fetch current user's manager info
-        const response = await fetch(`${apiConfig.endpoints.balance}`, {
+        // Fetch all users to get current user's manager and available managers
+        const usersResponse = await fetch(`${apiConfig.endpoints.users}`, {
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
         });
-
-        if (response.ok) {
-          const data = await response.json();
-          const userBalance = data.balances?.find((b: any) => b.EmployeeEmail === currentUser.email);
-          if (userBalance?.Manager) {
-            // Fetch manager details from users endpoint
-            const usersResponse = await fetch(`${apiConfig.endpoints.users}`, {
-              headers: {
-                'Authorization': `Bearer ${authToken}`
-              }
-            });
-            
-            if (usersResponse.ok) {
-              const usersData = await usersResponse.json();
-              const manager = usersData.users?.find((u: any) => u.email === userBalance.Manager);
-              if (manager) {
-                setManagerInfo({ name: manager.name, email: manager.email });
-              }
-              
-              // Set available managers (users with manager or admin role)
-              const managers = usersData.users?.filter((u: any) => 
-                u.role === 'manager' || u.role === 'admin'
-              ) || [];
-              setAvailableManagers(managers);
+        
+        if (usersResponse.ok) {
+          const usersData = await usersResponse.json();
+          const allUsers = usersData.users || [];
+          
+          // Find current user to get their manager_email
+          const currentUserData = allUsers.find((u: any) => u.email === currentUser.email);
+          
+          if (currentUserData?.manager_email) {
+            // Find the manager by email
+            const manager = allUsers.find((u: any) => u.email === currentUserData.manager_email);
+            if (manager) {
+              setManagerInfo({ name: manager.name, email: manager.email });
             }
           }
+          
+          // Set available managers (users with manager or admin role)
+          const managers = allUsers.filter((u: any) => 
+            u.role === 'manager' || u.role === 'admin'
+          );
+          setAvailableManagers(managers);
         }
       } catch (error) {
         console.error('Failed to fetch manager info:', error);
