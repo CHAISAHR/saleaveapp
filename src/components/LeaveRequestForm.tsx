@@ -48,8 +48,18 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     const fetchManagerInfo = async () => {
       try {
         const authToken = localStorage.getItem('auth_token');
-        if (!authToken) return;
+        console.log('Manager fetch - Auth token present:', !!authToken);
+        console.log('Manager fetch - Auth token type:', typeof authToken);
+        console.log('Manager fetch - Auth token preview:', authToken?.substring(0, 20));
+        console.log('Manager fetch - Current user email:', currentUser.email);
+        
+        if (!authToken) {
+          console.log('Manager fetch - No auth token found');
+          return;
+        }
 
+        console.log('Manager fetch - Making API request to:', `${apiConfig.endpoints.users}`);
+        
         // Fetch all users to get current user's manager and available managers
         const usersResponse = await fetch(`${apiConfig.endpoints.users}`, {
           headers: {
@@ -57,33 +67,58 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
           }
         });
         
+        console.log('Manager fetch - Response status:', usersResponse.status);
+        console.log('Manager fetch - Response ok:', usersResponse.ok);
+        
         if (usersResponse.ok) {
           const usersData = await usersResponse.json();
+          console.log('Manager fetch - Users data received:', !!usersData);
+          console.log('Manager fetch - Users array length:', usersData.users?.length || 0);
+          
           const allUsers = usersData.users || [];
           
           // Find current user to get their manager_email
           const currentUserData = allUsers.find((u: any) => u.email === currentUser.email);
+          console.log('Manager fetch - Current user found in data:', !!currentUserData);
+          console.log('Manager fetch - Current user manager_email:', currentUserData?.manager_email);
           
           if (currentUserData?.manager_email) {
             // Find the manager by email
             const manager = allUsers.find((u: any) => u.email === currentUserData.manager_email);
+            console.log('Manager fetch - Manager found:', !!manager);
+            console.log('Manager fetch - Manager name:', manager?.name);
+            
             if (manager) {
               setManagerInfo({ name: manager.name, email: manager.email });
+              console.log('Manager fetch - Manager info set successfully');
+            } else {
+              console.log('Manager fetch - Manager not found in users list');
             }
+          } else {
+            console.log('Manager fetch - No manager_email found for current user');
           }
           
           // Set available managers (users with manager or admin role)
           const managers = allUsers.filter((u: any) => 
             u.role === 'manager' || u.role === 'admin'
           );
+          console.log('Manager fetch - Available managers count:', managers.length);
           setAvailableManagers(managers);
+        } else {
+          const errorText = await usersResponse.text();
+          console.error('Manager fetch - API error:', usersResponse.status, errorText);
         }
       } catch (error) {
-        console.error('Failed to fetch manager info:', error);
+        console.error('Manager fetch - Failed to fetch manager info:', error);
+        console.error('Manager fetch - Error details:', error instanceof Error ? error.message : 'Unknown error');
       }
     };
 
-    fetchManagerInfo();
+    if (currentUser?.email) {
+      fetchManagerInfo();
+    } else {
+      console.log('Manager fetch - No current user email available');
+    }
   }, [currentUser.email]);
 
   // Fetch company holidays on component mount
