@@ -49,6 +49,7 @@ CREATE TABLE company_holidays (
 );
 
 -- Leave taken table - tracks all submitted leave requests with alternative manager support
+-- Fixed column name to match API endpoint expectations
 CREATE TABLE leave_taken (
     LeaveID INT PRIMARY KEY AUTO_INCREMENT,
     Title VARCHAR(255) NOT NULL,
@@ -61,6 +62,7 @@ CREATE TABLE leave_taken (
     AlternativeApprover VARCHAR(255) NULL, -- New field for alternative manager
     ApproverReason TEXT NULL, -- Reason for alternative approver
     Status ENUM('pending', 'approved', 'rejected', 'cancelled') DEFAULT 'pending',
+    workingDays DECIMAL(8,3) DEFAULT 0, -- Fixed column name to match API
     __PowerAppsId__ VARCHAR(255) NULL,
     Created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     Modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -79,6 +81,8 @@ CREATE TABLE leave_attachments (
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (leave_id) REFERENCES leave_taken(LeaveID) ON DELETE CASCADE
 );
+
+-- ... keep existing code (leave_balances table and rest of the schema)
 
 -- Leave balances table - tracks employee leave balances with monthly accrual (supports negative values with 3 decimal places)
 -- IMPORTANT UNITS:
@@ -153,7 +157,6 @@ CREATE TABLE audit_log (
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ... keep existing code (indexes, default data inserts)
 -- Create indexes for better performance
 CREATE INDEX idx_users_department ON users(department);
 CREATE INDEX idx_users_manager ON users(manager_email);
