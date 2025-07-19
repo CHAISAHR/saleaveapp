@@ -127,17 +127,16 @@ export const AppSidebar = ({
             <SidebarGroupLabel>View As</SidebarGroupLabel>
             <SidebarGroupContent>
               <div className="space-y-1 px-2">
-                {currentUser.role === 'admin' && (
-                  <Button
-                    variant={userRole === 'employee' ? 'default' : 'ghost'}
-                    size="sm"
-                    className="w-full justify-start"
-                    onClick={() => onRoleChange('employee')}
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    Employee View
-                  </Button>
-                )}
+                <Button
+                  variant={userRole === 'employee' ? 'default' : 'ghost'}
+                  size="sm"
+                  className="w-full justify-start"
+                  onClick={() => onRoleChange('employee')}
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Employee View
+                </Button>
+                
                 {(currentUser.role === 'manager' || currentUser.role === 'admin') && (
                   <Button
                     variant={userRole === 'manager' ? 'default' : 'ghost'}
@@ -149,6 +148,7 @@ export const AppSidebar = ({
                     Manager View
                   </Button>
                 )}
+                
                 {currentUser.role === 'admin' && (
                   <Button
                     variant={userRole === 'admin' ? 'default' : 'ghost'}
