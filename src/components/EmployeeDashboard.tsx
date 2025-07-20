@@ -1,9 +1,12 @@
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { LeaveBalanceGrid } from "@/components/LeaveBalanceGrid";
 import { LeaveStatsCards } from "@/components/LeaveStatsCards";
 import { LeaveRequestsList } from "@/components/LeaveRequestsList";
+import { apiConfig } from "@/config/apiConfig";
+import { useToast } from "@/hooks/use-toast";
 
 interface EmployeeDashboardProps {
   onNewRequest: () => void;
@@ -16,98 +19,43 @@ export const EmployeeDashboard = ({
   currentUser,
   activeView = 'requests'
 }: EmployeeDashboardProps) => {
-  // Sample leave balances with correct units
-  const leaveBalances = [{
-    type: 'Annual',
-    used: 8,
-    total: 20,
-    accrued: 12.5,
-    unit: 'days',
-    broughtForward: 5,
-    balance: 9.5 // Calculated balance: broughtForward + accrued - used
-  }, {
-    type: 'Sick',
-    used: 3,
-    total: 36,
-    accrued: 36,
-    unit: 'days',
-    balance: 33
-  }, {
-    type: 'Maternity',
-    used: 0,
-    total: 3,
-    accrued: 3,
-    unit: 'months',
-    balance: 3
-  }, {
-    type: 'Parental',
-    used: 0,
-    total: 4,
-    accrued: 4,
-    unit: 'weeks',
-    balance: 4
-  }, {
-    type: 'Family',
-    used: 1,
-    total: 3,
-    accrued: 3,
-    unit: 'days',
-    balance: 2
-  }, {
-    type: 'Adoption',
-    used: 0,
-    total: 4,
-    accrued: 4,
-    unit: 'weeks',
-    balance: 4
-  }, {
-    type: 'Study',
-    used: 2,
-    total: 6,
-    accrued: 6,
-    unit: 'days',
-    balance: 4
-  }, {
-    type: 'Wellness',
-    used: 0,
-    total: 2,
-    accrued: 2,
-    unit: 'days',
-    balance: 2
-  }];
+  const [leaveRequests, setLeaveRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  // Sample leave requests
-  const leaveRequests = [{
-    id: 1,
-    title: "Family Vacation",
-    type: "Annual",
-    startDate: "2024-07-15",
-    endDate: "2024-07-19",
-    days: 5,
-    status: "approved",
-    submittedDate: "2024-06-15",
-    description: "Summer vacation with family"
-  }, {
-    id: 2,
-    title: "Medical Appointment",
-    type: "Sick",
-    startDate: "2024-06-20",
-    endDate: "2024-06-20",
-    days: 1,
-    status: "pending",
-    submittedDate: "2024-06-18",
-    description: "Regular health check-up"
-  }, {
-    id: 3,
-    title: "Conference Attendance",
-    type: "Study",
-    startDate: "2024-08-10",
-    endDate: "2024-08-12",
-    days: 3,
-    status: "rejected",
-    submittedDate: "2024-06-10",
-    description: "Professional development conference"
-  }];
+  const getAuthHeaders = () => {
+    const authToken = localStorage.getItem('auth_token');
+    return {
+      'Authorization': `Bearer ${authToken}`,
+      'Content-Type': 'application/json'
+    };
+  };
+
+  const fetchLeaveRequests = async () => {
+    try {
+      const response = await fetch(`${apiConfig.endpoints.leave}/requests`, {
+        headers: getAuthHeaders()
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const userRequests = data.filter((request: any) => 
+          request.Requester === currentUser.email
+        );
+        setLeaveRequests(userRequests);
+      } else {
+        console.error('Failed to fetch leave requests');
+      }
+    } catch (error) {
+      console.error('Error fetching leave requests:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLeaveRequests();
+  }, [currentUser.email]);
 
   if (activeView === 'balance') {
     return (
@@ -123,7 +71,28 @@ export const EmployeeDashboard = ({
           </Button>
         </div>
 
-        <LeaveBalanceGrid leaveBalances={leaveBalances} />
+        <LeaveBalanceGrid userEmail={currentUser.email} />
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">My Leave Requests</h2>
+            <p className="text-gray-600">Manage and track your leave applications</p>
+          </div>
+          <Button onClick={onNewRequest} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="h-4 w-4 mr-2" />
+            New Request
+          </Button>
+        </div>
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading your requests...</p>
+        </div>
       </div>
     );
   }

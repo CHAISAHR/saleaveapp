@@ -1,8 +1,75 @@
 
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, Calendar as CalendarIcon, Database, Settings } from "lucide-react";
+import { apiConfig } from "@/config/apiConfig";
 
 export const AdminStatsCards = () => {
+  const [stats, setStats] = useState({
+    totalEmployees: 0,
+    activeRequests: 0,
+    monthlyRequests: 0,
+    departments: 0
+  });
+
+  const getAuthHeaders = () => {
+    const authToken = localStorage.getItem('auth_token');
+    return {
+      'Authorization': `Bearer ${authToken}`,
+      'Content-Type': 'application/json'
+    };
+  };
+
+  const fetchStats = async () => {
+    try {
+      // Fetch employee count from balances
+      const balanceResponse = await fetch(`${apiConfig.endpoints.balance}`, {
+        headers: getAuthHeaders()
+      });
+
+      if (balanceResponse.ok) {
+        const balanceData = await balanceResponse.json();
+        const uniqueDepartments = [...new Set(balanceData.map(b => b.Department))];
+        
+        setStats(prev => ({
+          ...prev,
+          totalEmployees: balanceData.length,
+          departments: uniqueDepartments.length
+        }));
+      }
+
+      // Fetch requests data
+      const requestsResponse = await fetch(`${apiConfig.endpoints.leave}/requests`, {
+        headers: getAuthHeaders()
+      });
+
+      if (requestsResponse.ok) {
+        const requestsData = await requestsResponse.json();
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        
+        const activeRequests = requestsData.filter(r => r.Status === 'pending').length;
+        const monthlyRequests = requestsData.filter(r => {
+          const requestDate = new Date(r.Created);
+          return requestDate.getMonth() === currentMonth && requestDate.getFullYear() === currentYear;
+        }).length;
+
+        setStats(prev => ({
+          ...prev,
+          activeRequests,
+          monthlyRequests
+        }));
+      }
+
+    } catch (error) {
+      console.error('Error fetching admin stats:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
       <Card>
@@ -13,7 +80,7 @@ export const AdminStatsCards = () => {
             </div>
             <div>
               <p className="text-sm text-gray-600">Total Employees</p>
-              <p className="text-2xl font-bold text-gray-900">248</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalEmployees}</p>
             </div>
           </div>
         </CardContent>
@@ -27,7 +94,7 @@ export const AdminStatsCards = () => {
             </div>
             <div>
               <p className="text-sm text-gray-600">Active Requests</p>
-              <p className="text-2xl font-bold text-gray-900">42</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.activeRequests}</p>
             </div>
           </div>
         </CardContent>
@@ -41,7 +108,7 @@ export const AdminStatsCards = () => {
             </div>
             <div>
               <p className="text-sm text-gray-600">This Month</p>
-              <p className="text-2xl font-bold text-gray-900">156</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.monthlyRequests}</p>
             </div>
           </div>
         </CardContent>
@@ -55,7 +122,7 @@ export const AdminStatsCards = () => {
             </div>
             <div>
               <p className="text-sm text-gray-600">Departments</p>
-              <p className="text-2xl font-bold text-gray-900">12</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.departments}</p>
             </div>
           </div>
         </CardContent>

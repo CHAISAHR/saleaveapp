@@ -1,26 +1,117 @@
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { BarChart3, Users } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-
-const pendingLeavesByDepartment = [
-  { name: 'Ops', value: 5, color: '#8884d8' },
-  { name: 'Global', value: 8, color: '#82ca9d' },
-  { name: 'Finance', value: 3, color: '#ffc658' },
-  { name: 'Access', value: 6, color: '#ff7300' },
-  { name: 'SHF', value: 4, color: '#8dd1e1' },
-];
-
-const departmentData = [
-  { department: 'Ops', pending: 5, approved: 15, rejected: 2 },
-  { department: 'Global', pending: 8, approved: 22, rejected: 3 },
-  { department: 'Finance', pending: 3, approved: 12, rejected: 1 },
-  { department: 'Access', pending: 6, approved: 18, rejected: 2 },
-  { department: 'SHF', pending: 4, approved: 10, rejected: 1 },
-];
+import { apiConfig } from "@/config/apiConfig";
 
 export const AdminCharts = () => {
+  const [pendingLeavesByDepartment, setPendingLeavesByDepartment] = useState([]);
+  const [departmentData, setDepartmentData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#8dd1e1', '#d084d0'];
+
+  const getAuthHeaders = () => {
+    const authToken = localStorage.getItem('auth_token');
+    return {
+      'Authorization': `Bearer ${authToken}`,
+      'Content-Type': 'application/json'
+    };
+  };
+
+  const fetchChartData = async () => {
+    try {
+      // Fetch requests data
+      const requestsResponse = await fetch(`${apiConfig.endpoints.leave}/requests`, {
+        headers: getAuthHeaders()
+      });
+
+      // Fetch balance data for department info
+      const balanceResponse = await fetch(`${apiConfig.endpoints.balance}`, {
+        headers: getAuthHeaders()
+      });
+
+      if (requestsResponse.ok && balanceResponse.ok) {
+        const requestsData = await requestsResponse.json();
+        const balanceData = await balanceResponse.json();
+
+        // Create department mapping
+        const departmentMap = {};
+        balanceData.forEach(balance => {
+          departmentMap[balance.EmployeeEmail] = balance.Department;
+        });
+
+        // Group requests by department and status
+        const departmentStats = {};
+        
+        requestsData.forEach(request => {
+          const department = departmentMap[request.Requester] || 'Unknown';
+          
+          if (!departmentStats[department]) {
+            departmentStats[department] = {
+              department,
+              pending: 0,
+              approved: 0,
+              rejected: 0
+            };
+          }
+          
+          departmentStats[department][request.Status]++;
+        });
+
+        const departmentArray = Object.values(departmentStats);
+        setDepartmentData(departmentArray);
+
+        // Create pie chart data for pending requests
+        const pendingData = departmentArray
+          .filter(dept => dept.pending > 0)
+          .map((dept, index) => ({
+            name: dept.department,
+            value: dept.pending,
+            color: colors[index % colors.length]
+          }));
+
+        setPendingLeavesByDepartment(pendingData);
+      }
+    } catch (error) {
+      console.error('Error fetching chart data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchChartData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Loading Charts...</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Loading Charts...</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Pending Leaves by Department - Pie Chart */}
@@ -33,25 +124,31 @@ export const AdminCharts = () => {
           <CardDescription>Current pending leave requests breakdown</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={pendingLeavesByDepartment}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}`}
-                >
-                  {pendingLeavesByDepartment.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          {pendingLeavesByDepartment.length === 0 ? (
+            <div className="h-64 flex items-center justify-center text-gray-500">
+              <p>No pending requests by department</p>
+            </div>
+          ) : (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pendingLeavesByDepartment}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    dataKey="value"
+                    label={({ name, value }) => `${name}: ${value}`}
+                  >
+                    {pendingLeavesByDepartment.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -65,19 +162,25 @@ export const AdminCharts = () => {
           <CardDescription>Leave requests status by department</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={departmentData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="department" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="pending" fill="#ffc658" />
-                <Bar dataKey="approved" fill="#82ca9d" />
-                <Bar dataKey="rejected" fill="#ff7300" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {departmentData.length === 0 ? (
+            <div className="h-64 flex items-center justify-center text-gray-500">
+              <p>No department data available</p>
+            </div>
+          ) : (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={departmentData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="department" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="pending" fill="#ffc658" />
+                  <Bar dataKey="approved" fill="#82ca9d" />
+                  <Bar dataKey="rejected" fill="#ff7300" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
