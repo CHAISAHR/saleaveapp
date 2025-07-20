@@ -702,12 +702,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                 <SelectContent>
                   {leaveTypes.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
-                      <div>
-                        <div className="font-medium">{type.label}</div>
-                        <div className="text-xs text-gray-500">
-                          {type.balance} {type.unit} available
-                        </div>
-                      </div>
+                      {type.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
