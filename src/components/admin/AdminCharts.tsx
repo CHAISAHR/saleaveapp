@@ -5,9 +5,22 @@ import { BarChart3, Users } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { apiConfig } from "@/config/apiConfig";
 
+interface DepartmentStats {
+  department: string;
+  pending: number;
+  approved: number;
+  rejected: number;
+}
+
+interface PendingData {
+  name: string;
+  value: number;
+  color: string;
+}
+
 export const AdminCharts = () => {
-  const [pendingLeavesByDepartment, setPendingLeavesByDepartment] = useState([]);
-  const [departmentData, setDepartmentData] = useState([]);
+  const [pendingLeavesByDepartment, setPendingLeavesByDepartment] = useState<PendingData[]>([]);
+  const [departmentData, setDepartmentData] = useState<DepartmentStats[]>([]);
   const [loading, setLoading] = useState(true);
 
   const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#8dd1e1', '#d084d0'];
@@ -43,9 +56,9 @@ export const AdminCharts = () => {
         });
 
         // Group requests by department and status
-        const departmentStats = {};
+        const departmentStats: Record<string, DepartmentStats> = {};
         
-        requestsData.forEach(request => {
+        requestsData.forEach((request: any) => {
           const department = departmentMap[request.Requester] || 'Unknown';
           
           if (!departmentStats[department]) {
@@ -57,16 +70,16 @@ export const AdminCharts = () => {
             };
           }
           
-          departmentStats[department][request.Status]++;
+          departmentStats[department][request.Status as keyof Omit<DepartmentStats, 'department'>]++;
         });
 
         const departmentArray = Object.values(departmentStats);
         setDepartmentData(departmentArray);
 
         // Create pie chart data for pending requests
-        const pendingData = departmentArray
-          .filter(dept => dept.pending > 0)
-          .map((dept, index) => ({
+        const pendingData: PendingData[] = departmentArray
+          .filter((dept: DepartmentStats) => dept.pending > 0)
+          .map((dept: DepartmentStats, index: number) => ({
             name: dept.department,
             value: dept.pending,
             color: colors[index % colors.length]
