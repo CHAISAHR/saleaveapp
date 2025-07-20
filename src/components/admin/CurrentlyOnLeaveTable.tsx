@@ -20,17 +20,40 @@ export const CurrentlyOnLeaveTable = () => {
 
   const fetchCurrentlyOnLeave = async () => {
     try {
-      const response = await makeApiRequest(`${apiConfig.endpoints.leave}/requests`, {
-        headers: getAuthHeaders()
-      });
+      // Fetch both leave requests and users data
+      const [requestsResponse, usersResponse] = await Promise.all([
+        makeApiRequest(`${apiConfig.endpoints.leave}/requests`, {
+          headers: getAuthHeaders()
+        }),
+        makeApiRequest(`${apiConfig.endpoints.users}`, {
+          headers: getAuthHeaders()
+        })
+      ]);
 
-      const requestsData = await response.json();
-      console.log('CurrentlyOnLeave - Raw data:', requestsData);
+      const requestsData = await requestsResponse.json();
+      const usersData = await usersResponse.json();
+      
+      console.log('CurrentlyOnLeave - Raw requests data:', requestsData);
+      console.log('CurrentlyOnLeave - Raw users data:', usersData);
       
       // Handle both real API responses and mock data arrays
       const requestsArray = Array.isArray(requestsData) ? requestsData : 
                            (requestsData.success && requestsData.requests ? requestsData.requests : 
                             requestsData.data || []);
+      
+      const usersArray = Array.isArray(usersData) ? usersData : 
+                        (usersData.success && usersData.data ? usersData.data : 
+                         usersData.data || []);
+      
+      // Create email to name mapping
+      const emailToNameMap = {};
+      usersArray.forEach(user => {
+        const email = user.email || user.Email;
+        const name = user.name || user.Name;
+        if (email && name) {
+          emailToNameMap[email] = name;
+        }
+      });
       
       console.log('CurrentlyOnLeave - Requests array:', requestsArray);
       
@@ -54,11 +77,13 @@ export const CurrentlyOnLeaveTable = () => {
         const todayTime = today.getTime();
         const endTime = endDate.getTime();
         const daysRemaining = Math.ceil((endTime - todayTime) / (1000 * 60 * 60 * 24));
+        const requesterEmail = leave.Requester || leave.requester;
         
         return {
           ...leave,
           daysRemaining: Math.max(0, daysRemaining),
-          employeeName: leave.EmployeeName || leave.employeeName || leave.Requester || leave.requester,
+          employeeName: emailToNameMap[requesterEmail] || requesterEmail,
+          employeeEmail: requesterEmail,
           leaveType: leave.LeaveType || leave.leaveType,
           startDate: leave.StartDate || leave.startDate,
           endDate: leave.EndDate || leave.endDate
@@ -126,30 +151,68 @@ export const CurrentlyOnLeaveTable = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentlyOnLeave.map((staff) => (
-                  <TableRow key={staff.LeaveID}>
-                    <TableCell className="font-medium">{staff.Requester}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {staff.LeaveType}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-gray-500">
-                      {new Date(staff.StartDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-xs text-gray-500">
-                      {new Date(staff.EndDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={staff.daysRemaining === 0 ? 'destructive' : 'secondary'}
-                        className="text-xs"
-                      >
-                        {staff.daysRemaining} days
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {currentlyOnLeave.map((staff) => {
+                  // Function to get leave type color
+                  const getLeaveTypeVariant = (leaveType) => {
+                    switch (leaveType?.toLowerCase()) {
+                      case 'annual leave':
+                      case 'annual':
+                        return 'default';
+                      case 'sick leave':
+                      case 'sick':
+                        return 'destructive';
+                      case 'maternity leave':
+                      case 'maternity':
+                        return 'secondary';
+                      case 'parental leave':
+                      case 'parental':
+                        return 'outline';
+                      case 'study leave':
+                      case 'study':
+                        return 'default';
+                      case 'family responsibility':
+                      case 'family':
+                        return 'secondary';
+                      default:
+                        return 'outline';
+                    }
+                  };
+
+                  // Function to get days remaining color
+                  const getDaysRemainingVariant = (days) => {
+                    if (days === 0) return 'destructive';
+                    if (days <= 3) return 'secondary';
+                    return 'default';
+                  };
+
+                  return (
+                    <TableRow key={staff.LeaveID || staff.id} className="hover:bg-muted/50 transition-colors">
+                      <TableCell className="font-medium">{staff.employeeName}</TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={getLeaveTypeVariant(staff.leaveType)}
+                          className="text-xs font-medium animate-fade-in"
+                        >
+                          {staff.leaveType}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(staff.startDate).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(staff.endDate).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={getDaysRemainingVariant(staff.daysRemaining)}
+                          className="text-xs font-medium animate-fade-in hover-scale"
+                        >
+                          {staff.daysRemaining} {staff.daysRemaining === 1 ? 'day' : 'days'}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
