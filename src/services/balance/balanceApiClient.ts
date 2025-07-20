@@ -1,5 +1,5 @@
 
-import { apiConfig } from '@/config/apiConfig';
+import { apiConfig, makeApiRequest } from '@/config/apiConfig';
 import { EmployeeBalance, LeaveRequest } from '../balanceService';
 
 export class BalanceApiClient {
@@ -30,14 +30,24 @@ export class BalanceApiClient {
   // Get employee balance
   static async getEmployeeBalance(employeeEmail: string, year: number = new Date().getFullYear()): Promise<EmployeeBalance | null> {
     try {
-      const response = await this.apiRequest(`/${employeeEmail}?year=${year}`);
+      const token = this.getAuthToken();
+      const headers: any = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await makeApiRequest(`${apiConfig.endpoints.balance}/${employeeEmail}?year=${year}`, {
+        headers
+      });
       
-      // Handle both real API response (response.balance) and mock data (array of balances)
-      if (response.balance) {
-        return response.balance;
-      } else if (Array.isArray(response)) {
+      const data = await response.json();
+      
+      // Handle both real API response (data.balance) and mock data (array of balances)
+      if (data.balance) {
+        return data.balance;
+      } else if (Array.isArray(data)) {
         // Mock data is an array, find the employee by email
-        const mockBalance = response.find((b: any) => b.email === employeeEmail);
+        const mockBalance = data.find((b: any) => b.email === employeeEmail);
         if (mockBalance) {
           // Convert mock data to EmployeeBalance format
           return {

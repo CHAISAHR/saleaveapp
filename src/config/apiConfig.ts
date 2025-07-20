@@ -129,6 +129,17 @@ const createMockResponse = (url: string): Response => {
         maternityLeave: 0,
         paternityLeave: 0,
         studyLeave: 8
+      },
+      {
+        email: 'chaisahr@clintonhealthaccess.org',
+        name: 'Chai Sahr',
+        department: 'Health',
+        annualLeave: 18,
+        sickLeave: 12,
+        familyResponsibility: 3,
+        maternityLeave: 0,
+        paternityLeave: 0,
+        studyLeave: 7
       }
     ];
   } else if (url.includes('/api/users')) {
