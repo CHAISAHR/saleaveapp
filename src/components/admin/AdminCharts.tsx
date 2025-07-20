@@ -45,13 +45,19 @@ export const AdminCharts = () => {
         headers: getAuthHeaders()
       });
 
-      if (requestsResponse.ok && balanceResponse.ok) {
-        const requestsData = await requestsResponse.json();
-        const balanceData = await balanceResponse.json();
+      const requestsData = await requestsResponse.json();
+      const balanceData = await balanceResponse.json();
 
-        // Ensure data is arrays
-        const requestsArray = Array.isArray(requestsData) ? requestsData : (requestsData.data || []);
-        const balanceArray = Array.isArray(balanceData) ? balanceData : (balanceData.data || []);
+      console.log('AdminCharts - Requests data:', requestsData);
+      console.log('AdminCharts - Balance data:', balanceData);
+
+      // Handle both real API responses and mock data arrays
+      const requestsArray = Array.isArray(requestsData) ? requestsData : 
+                           (requestsData.success && requestsData.requests ? requestsData.requests : 
+                            requestsData.data || []);
+      const balanceArray = Array.isArray(balanceData) ? balanceData : 
+                          (balanceData.success && balanceData.data ? balanceData.data : 
+                           balanceData.data || []);
 
         // Create department mapping
         const departmentMap = {};
@@ -90,7 +96,9 @@ export const AdminCharts = () => {
           }));
 
         setPendingLeavesByDepartment(pendingData);
-      }
+        
+        console.log('AdminCharts - Final department data:', departmentArray);
+        console.log('AdminCharts - Final pending data:', pendingData);
     } catch (error) {
       console.error('Error fetching chart data:', error);
     } finally {

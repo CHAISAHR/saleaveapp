@@ -24,36 +24,49 @@ export const CurrentlyOnLeaveTable = () => {
         headers: getAuthHeaders()
       });
 
-      if (response.ok) {
-        const requestsData = await response.json();
-        // Ensure requestsData is an array
-        const requestsArray = Array.isArray(requestsData) ? requestsData : (requestsData.data || []);
-        const today = new Date();
+      const requestsData = await response.json();
+      console.log('CurrentlyOnLeave - Raw data:', requestsData);
+      
+      // Handle both real API responses and mock data arrays
+      const requestsArray = Array.isArray(requestsData) ? requestsData : 
+                           (requestsData.success && requestsData.requests ? requestsData.requests : 
+                            requestsData.data || []);
+      
+      console.log('CurrentlyOnLeave - Requests array:', requestsArray);
+      
+      const today = new Date();
+      
+      // Filter for approved requests that are currently active
+      const activeLeave = requestsArray.filter(request => {
+        const startDate = new Date(request.StartDate || request.startDate);
+        const endDate = new Date(request.EndDate || request.endDate);
+        const status = request.Status || request.status;
+        return status === 'approved' && 
+               startDate <= today && 
+               endDate >= today;
+      });
+
+      console.log('CurrentlyOnLeave - Active leave:', activeLeave);
+
+      // Calculate days remaining for each
+      const leaveWithDaysRemaining = activeLeave.map(leave => {
+        const endDate = new Date(leave.EndDate || leave.endDate);
+        const todayTime = today.getTime();
+        const endTime = endDate.getTime();
+        const daysRemaining = Math.ceil((endTime - todayTime) / (1000 * 60 * 60 * 24));
         
-        // Filter for approved requests that are currently active
-        const activeLeave = requestsArray.filter(request => {
-          const startDate = new Date(request.StartDate);
-          const endDate = new Date(request.EndDate);
-          return request.Status === 'approved' && 
-                 startDate <= today && 
-                 endDate >= today;
-        });
+        return {
+          ...leave,
+          daysRemaining: Math.max(0, daysRemaining),
+          employeeName: leave.EmployeeName || leave.employeeName || leave.Requester || leave.requester,
+          leaveType: leave.LeaveType || leave.leaveType,
+          startDate: leave.StartDate || leave.startDate,
+          endDate: leave.EndDate || leave.endDate
+        };
+      });
 
-        // Calculate days remaining for each
-        const leaveWithDaysRemaining = activeLeave.map(leave => {
-          const endDate = new Date(leave.EndDate);
-          const todayTime = today.getTime();
-          const endTime = endDate.getTime();
-          const daysRemaining = Math.ceil((endTime - todayTime) / (1000 * 60 * 60 * 24));
-          
-          return {
-            ...leave,
-            daysRemaining: Math.max(0, daysRemaining)
-          };
-        });
-
-        setCurrentlyOnLeave(leaveWithDaysRemaining);
-      }
+      console.log('CurrentlyOnLeave - Final data:', leaveWithDaysRemaining);
+      setCurrentlyOnLeave(leaveWithDaysRemaining);
     } catch (error) {
       console.error('Error fetching currently on leave data:', error);
     } finally {
