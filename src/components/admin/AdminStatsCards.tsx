@@ -6,7 +6,7 @@ import { apiConfig, makeApiRequest } from "@/config/apiConfig";
 
 export const AdminStatsCards = () => {
   const [stats, setStats] = useState({
-    totalEmployees: 0,
+    totalUsers: 0,
     activeRequests: 0,
     monthlyRequests: 0,
     departments: 0
@@ -64,7 +64,7 @@ export const AdminStatsCards = () => {
         
         setStats(prev => ({
           ...prev,
-          totalEmployees: balanceArray.length,
+          totalUsers: balanceArray.length,
           departments: uniqueDepartments.length
         }));
         
@@ -98,7 +98,7 @@ export const AdminStatsCards = () => {
             
             setStats(prev => ({
               ...prev,
-              totalEmployees: usersArray.length,
+              totalUsers: usersArray.length,
               departments: uniqueUserDepartments.length
             }));
             
@@ -169,8 +169,8 @@ export const AdminStatsCards = () => {
               <Users className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total Employees</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalEmployees}</p>
+              <p className="text-sm text-gray-600">Total Users</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
             </div>
           </div>
         </CardContent>
