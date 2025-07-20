@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, Users } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
 import { apiConfig, makeApiRequest } from "@/config/apiConfig";
 
 interface DepartmentStats {
@@ -20,9 +20,8 @@ interface TimeSeriesData {
 }
 
 interface PendingData {
-  name: string;
-  value: number;
-  color: string;
+  department: string;
+  pending: number;
 }
 
 export const AdminCharts = () => {
@@ -30,7 +29,7 @@ export const AdminCharts = () => {
   const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#8dd1e1', '#d084d0'];
+  
 
   const getAuthHeaders = () => {
     const authToken = localStorage.getItem('auth_token');
@@ -140,13 +139,12 @@ export const AdminCharts = () => {
         
         setTimeSeriesData(sortedTimeData);
 
-        // Create pie chart data for pending requests by department
+        // Create bar chart data for pending requests by department
         const pendingData: PendingData[] = Object.values(departmentStats)
           .filter((dept: DepartmentStats) => dept.pending > 0)
-          .map((dept: DepartmentStats, index: number) => ({
-            name: dept.department,
-            value: dept.pending,
-            color: colors[index % colors.length]
+          .map((dept: DepartmentStats) => ({
+            department: dept.department,
+            pending: dept.pending
           }));
 
         setPendingLeavesByDepartment(pendingData);
@@ -193,7 +191,7 @@ export const AdminCharts = () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Pending Leaves by Department - Pie Chart */}
+      {/* Pending Leaves by Department - Bar Chart */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -210,21 +208,18 @@ export const AdminCharts = () => {
           ) : (
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pendingLeavesByDepartment}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    dataKey="value"
-                    label={({ name, value }) => `${name}: ${value}`}
-                  >
-                    {pendingLeavesByDepartment.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
+                <BarChart data={pendingLeavesByDepartment} margin={{ bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="department" 
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis />
                   <Tooltip />
-                </PieChart>
+                  <Bar dataKey="pending" fill="#ffc658" />
+                </BarChart>
               </ResponsiveContainer>
             </div>
           )}
