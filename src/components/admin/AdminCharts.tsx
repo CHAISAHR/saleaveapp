@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, Users } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { apiConfig } from "@/config/apiConfig";
+import { apiConfig, makeApiRequest } from "@/config/apiConfig";
 
 interface DepartmentStats {
   department: string;
@@ -36,12 +36,12 @@ export const AdminCharts = () => {
   const fetchChartData = async () => {
     try {
       // Fetch requests data
-      const requestsResponse = await fetch(`${apiConfig.endpoints.leave}/requests`, {
+      const requestsResponse = await makeApiRequest(`${apiConfig.endpoints.leave}/requests`, {
         headers: getAuthHeaders()
       });
 
       // Fetch balance data for department info
-      const balanceResponse = await fetch(`${apiConfig.endpoints.balance}`, {
+      const balanceResponse = await makeApiRequest(`${apiConfig.endpoints.balance}`, {
         headers: getAuthHeaders()
       });
 

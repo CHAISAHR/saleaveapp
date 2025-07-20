@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { apiConfig } from "@/config/apiConfig";
+import { apiConfig, makeApiRequest } from "@/config/apiConfig";
 
 export const CurrentlyOnLeaveTable = () => {
   const [currentlyOnLeave, setCurrentlyOnLeave] = useState([]);
@@ -20,7 +20,7 @@ export const CurrentlyOnLeaveTable = () => {
 
   const fetchCurrentlyOnLeave = async () => {
     try {
-      const response = await fetch(`${apiConfig.endpoints.leave}/requests`, {
+      const response = await makeApiRequest(`${apiConfig.endpoints.leave}/requests`, {
         headers: getAuthHeaders()
       });
 
