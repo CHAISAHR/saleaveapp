@@ -30,26 +30,37 @@ export class BalanceApiClient {
   // Get employee balance
   static async getEmployeeBalance(employeeEmail: string, year: number = new Date().getFullYear()): Promise<EmployeeBalance | null> {
     try {
-      const token = this.getAuthToken();
-      const headers: any = {};
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      const response = await makeApiRequest(`${apiConfig.endpoints.balance}/${employeeEmail}?year=${year}`, {
-        headers
+      const authToken = localStorage.getItem('auth_token');
+      console.log('BalanceApiClient - Fetching balance for:', employeeEmail);
+      
+      // Use direct fetch to match AdminAllBalances behavior
+      const response = await fetch(`${apiConfig.endpoints.balance}/${employeeEmail}?year=${year}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
       });
+
+      console.log('BalanceApiClient - Response status:', response.status);
       
-      const data = await response.json();
+      if (response.ok) {
+        const data = await response.json();
+        console.log('BalanceApiClient - Response data:', data);
+        
+        if (data.success && data.balance) {
+          return data.balance;
+        }
+      } else {
+        console.error('BalanceApiClient - API error:', response.status, response.statusText);
+      }
       
-      // Handle both real API response (data.balance) and mock data (array of balances)
-      if (data.balance) {
-        return data.balance;
-      } else if (Array.isArray(data)) {
-        // Mock data is an array, find the employee by email
-        const mockBalance = data.find((b: any) => b.email === employeeEmail);
+      // If direct API fails, fall back to makeApiRequest for mock data
+      console.log('BalanceApiClient - Falling back to mock data');
+      const mockData = await makeApiRequest('/balance', {});
+      
+      if (mockData && Array.isArray(mockData)) {
+        const mockBalance = mockData.find((b: any) => b.email === employeeEmail);
         if (mockBalance) {
-          // Convert mock data to EmployeeBalance format
           console.log('Converting mock balance data:', mockBalance);
           const converted = {
             BalanceID: 1,
@@ -60,7 +71,7 @@ export class BalanceApiClient {
             Broughtforward: 0,
             Annual: 20,
             AccumulatedLeave: mockBalance.annualLeave || 0,
-            AnnualUsed: 0, // Set to 0 since we already have the available balance
+            AnnualUsed: 0,
             Forfeited: 0,
             Annual_leave_adjustments: 0,
             SickUsed: (36 - (mockBalance.sickLeave || 0)),
