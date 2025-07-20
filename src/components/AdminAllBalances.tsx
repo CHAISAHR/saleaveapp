@@ -45,6 +45,7 @@ interface EmployeeBalance {
   Annual_leave_adjustment_comments?: string;
   Manager: string;
   Modified: string;
+  Start_date?: string; // Employee start date for prorated calculations
 }
 
 export const AdminAllBalances = () => {
@@ -109,7 +110,7 @@ export const AdminAllBalances = () => {
   };
 
   const calculateCurrentBalance = (balance: EmployeeBalance) => {
-    return balanceService.calculateAnnualLeaveBalance(balance);
+    return balanceService.calculateCurrentBalance(balance, 'annual', balance.Start_date);
   };
 
   // Updated termination balance calculation using new formula
