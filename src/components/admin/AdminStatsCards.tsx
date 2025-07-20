@@ -25,32 +25,89 @@ export const AdminStatsCards = () => {
       console.log('AdminStatsCards - Starting to fetch stats...');
       
       // Fetch employee count from balances
-      const balanceResponse = await makeApiRequest(`${apiConfig.endpoints.balance}`, {
-        headers: getAuthHeaders()
-      });
+      try {
+        console.log('AdminStatsCards - Fetching balance data from:', `${apiConfig.endpoints.balance}`);
+        const balanceResponse = await makeApiRequest(`${apiConfig.endpoints.balance}`, {
+          headers: getAuthHeaders()
+        });
 
-      const balanceData = await balanceResponse.json();
-      console.log('AdminStatsCards - Balance response:', balanceData);
-      
-      // Handle both real API responses and mock data arrays
-      const balanceArray = Array.isArray(balanceData) ? balanceData : 
-                          (balanceData.success && balanceData.data ? balanceData.data : 
-                           balanceData.data || []);
-      
-      console.log('AdminStatsCards - Balance array:', balanceArray);
-      
-      // Handle different field naming conventions for department
-      const uniqueDepartments = [...new Set(balanceArray.map(b => 
-        b.Department || b.department || 'Unknown'
-      ).filter(dept => dept !== 'Unknown'))];
-      
-      console.log('AdminStatsCards - Unique departments:', uniqueDepartments);
-      
-      setStats(prev => ({
-        ...prev,
-        totalEmployees: balanceArray.length,
-        departments: uniqueDepartments.length
-      }));
+        console.log('AdminStatsCards - Balance response status:', balanceResponse.status);
+        console.log('AdminStatsCards - Balance response headers:', balanceResponse.headers);
+        
+        const balanceData = await balanceResponse.json();
+        console.log('AdminStatsCards - Raw balance response:', balanceData);
+        
+        // Handle both real API responses and mock data arrays
+        const balanceArray = Array.isArray(balanceData) ? balanceData : 
+                            (balanceData.success && balanceData.data ? balanceData.data : 
+                             balanceData.data || balanceData.balances || []);
+        
+        console.log('AdminStatsCards - Processed balance array:', balanceArray);
+        console.log('AdminStatsCards - Balance array length:', balanceArray.length);
+        
+        if (balanceArray.length > 0) {
+          console.log('AdminStatsCards - Sample balance record:', balanceArray[0]);
+          console.log('AdminStatsCards - Sample record keys:', Object.keys(balanceArray[0] || {}));
+        }
+        
+        // Handle different field naming conventions for department
+        const departments = balanceArray.map(b => {
+          const dept = b.Department || b.department || b.dept || b.Department_Name || b.departmentName || null;
+          console.log('AdminStatsCards - Department value for record:', dept, 'from record:', b);
+          return dept;
+        }).filter(dept => dept && dept !== 'Unknown' && dept.trim() !== '');
+        
+        const uniqueDepartments = [...new Set(departments)];
+        
+        console.log('AdminStatsCards - All departments found:', departments);
+        console.log('AdminStatsCards - Unique departments:', uniqueDepartments);
+        
+        setStats(prev => ({
+          ...prev,
+          totalEmployees: balanceArray.length,
+          departments: uniqueDepartments.length
+        }));
+        
+        console.log('AdminStatsCards - Set employees:', balanceArray.length, 'departments:', uniqueDepartments.length);
+        
+      } catch (balanceError) {
+        console.error('AdminStatsCards - Error fetching balance data:', balanceError);
+        // Try fetching from users endpoint as fallback
+        console.log('AdminStatsCards - Trying users endpoint as fallback...');
+        
+        try {
+          const usersResponse = await makeApiRequest(`${apiConfig.endpoints.users}`, {
+            headers: getAuthHeaders()
+          });
+          
+          const usersData = await usersResponse.json();
+          console.log('AdminStatsCards - Users fallback data:', usersData);
+          
+          const usersArray = Array.isArray(usersData) ? usersData : 
+                           (usersData.success && usersData.data ? usersData.data : 
+                            usersData.users || []);
+          
+          console.log('AdminStatsCards - Users array from fallback:', usersArray);
+          
+          if (usersArray.length > 0) {
+            const userDepartments = usersArray.map(u => 
+              u.Department || u.department || u.dept || null
+            ).filter(dept => dept && dept !== 'Unknown');
+            
+            const uniqueUserDepartments = [...new Set(userDepartments)];
+            
+            setStats(prev => ({
+              ...prev,
+              totalEmployees: usersArray.length,
+              departments: uniqueUserDepartments.length
+            }));
+            
+            console.log('AdminStatsCards - Fallback: Set employees:', usersArray.length, 'departments:', uniqueUserDepartments.length);
+          }
+        } catch (usersError) {
+          console.error('AdminStatsCards - Users fallback also failed:', usersError);
+        }
+      }
 
       // Fetch requests data
       const requestsResponse = await makeApiRequest(`${apiConfig.endpoints.leave}/requests`, {
