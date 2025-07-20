@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Edit } from "lucide-react";
+import { BalanceCalculations } from "@/services/balance/balanceCalculations";
 
 interface EmployeeBalance {
   BalanceID: number;
@@ -139,7 +140,9 @@ export const AdminAllBalancesTable = ({
                   <TableCell>{balance.Year}</TableCell>
                   <TableCell>{balance.Broughtforward}</TableCell>
                   <TableCell>{balance.Annual}</TableCell>
-                  <TableCell className="font-medium text-purple-600">{balance.AccumulatedLeave}</TableCell>
+                   <TableCell className="font-medium text-purple-600">
+                     {BalanceCalculations.calculateAccumulatedLeave(new Date(), balance.Contract_termination_date)}
+                   </TableCell>
                   <TableCell>{balance.AnnualUsed}</TableCell>
                   <TableCell>
                     <Input
