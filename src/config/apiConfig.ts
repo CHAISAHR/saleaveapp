@@ -1,6 +1,6 @@
 
 // API configuration for different environments
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://ex-production.up.railway.app';
 
 console.log('API Configuration:', {
   VITE_API_URL: import.meta.env.VITE_API_URL,
