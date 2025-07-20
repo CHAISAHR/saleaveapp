@@ -1,15 +1,22 @@
 
 import { EmployeeBalance } from '../../balanceService';
+import { AccumulatedLeaveCalculations } from './accumulatedLeaveCalculations';
 
 export class CurrentBalanceCalculations {
-  // Calculate current annual leave balance
+  // Calculate current annual leave balance using dynamic accumulated leave calculation
   static calculateAnnualLeaveBalance(balance: EmployeeBalance, employeeStartDate?: string): number {
+    // Calculate accumulated leave dynamically instead of using database field
+    const dynamicAccumulatedLeave = AccumulatedLeaveCalculations.calculateAccumulatedLeave(
+      new Date(), 
+      balance.Contract_termination_date
+    );
+    
     // Debug: Log all values to identify NaN source
     console.log(`Balance values for ${balance.EmployeeName}:`, {
       Broughtforward: balance.Broughtforward, 
       BroughtforwardType: typeof balance.Broughtforward,
-      AccumulatedLeave: balance.AccumulatedLeave, 
-      AccumulatedLeaveType: typeof balance.AccumulatedLeave,
+      DatabaseAccumulatedLeave: balance.AccumulatedLeave, 
+      DynamicAccumulatedLeave: dynamicAccumulatedLeave,
       AnnualUsed: balance.AnnualUsed, 
       AnnualUsedType: typeof balance.AnnualUsed,
       Forfeited: balance.Forfeited, 
@@ -20,7 +27,7 @@ export class CurrentBalanceCalculations {
 
     // Convert all values to numbers, defaulting to 0 if invalid
     const broughtforward = Number(balance.Broughtforward) || 0;
-    const accumulatedLeave = Number(balance.AccumulatedLeave) || 0;
+    const accumulatedLeave = dynamicAccumulatedLeave; // Use calculated value instead of database field
     const annualUsed = Number(balance.AnnualUsed) || 0;
     const forfeited = Number(balance.Forfeited) || 0;
     const adjustments = Number(balance.Annual_leave_adjustments) || 0;
@@ -35,7 +42,8 @@ export class CurrentBalanceCalculations {
 
     console.log(`Annual leave balance calculation for ${balance.EmployeeName}:`, {
       broughtforward: balance.Broughtforward,
-      accumulatedLeave: balance.AccumulatedLeave,
+      databaseAccumulatedLeave: balance.AccumulatedLeave,
+      dynamicAccumulatedLeave: accumulatedLeave,
       annualUsed: balance.AnnualUsed,
       forfeited: balance.Forfeited,
       adjustments: balance.Annual_leave_adjustments,
