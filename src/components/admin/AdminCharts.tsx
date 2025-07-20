@@ -155,17 +155,19 @@ export const AdminCharts = () => {
         }
         
         requestsArray.forEach((request: any) => {
-          // Extract date from submission timestamp - handle different date formats
-          const submissionDate = request.SubmissionDate || request.submission_date || request.created_at;
+          // Extract date from submission timestamp or fallback to start date
+          const submissionDate = request.SubmissionDate || request.submission_date || 
+                               request.created_at || request.startDate || request.start_date;
           if (!submissionDate) return;
           
           const date = new Date(submissionDate);
-          if (date.getFullYear() !== currentYear) return; // Only current year data
+          if (isNaN(date.getTime()) || date.getFullYear() !== currentYear) return; // Only current year data
           
           const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
           
           if (timeStats[monthKey]) {
-            const status = request.Status?.toLowerCase() || 'pending';
+            // Handle different status field naming and normalize the value
+            const status = (request.status || request.Status || 'pending').toLowerCase();
             if (status === 'pending' || status === 'approved' || status === 'rejected') {
               timeStats[monthKey][status as keyof Omit<TimeSeriesData, 'date'>]++;
             }
