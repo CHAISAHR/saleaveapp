@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, XCircle, AlertCircle, Edit, Save, X, Download, Ban } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Edit, Save, X, Download, Ban, Filter, FilterX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { balanceService } from "@/services/balanceService";
 import { apiConfig, makeApiRequest } from "@/config/apiConfig";
@@ -33,6 +33,17 @@ export const AdminAllRequests = () => {
   const [editingRequest, setEditingRequest] = useState<LeaveRequest | null>(null);
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Filter states
+  const [filters, setFilters] = useState({
+    status: '',
+    leaveType: '',
+    requester: '',
+    startDate: '',
+    endDate: '',
+    searchTerm: ''
+  });
+  const [showFilters, setShowFilters] = useState(false);
 
   const getAuthHeaders = () => {
     const authToken = localStorage.getItem('auth_token');
@@ -199,6 +210,35 @@ export const AdminAllRequests = () => {
     setEditingRequest(null);
   };
 
+  // Filtered requests
+  const filteredRequests = useMemo(() => {
+    return requests.filter(request => {
+      const matchesStatus = !filters.status || request.Status.toLowerCase() === filters.status.toLowerCase();
+      const matchesLeaveType = !filters.leaveType || request.LeaveType === filters.leaveType;
+      const matchesRequester = !filters.requester || request.Requester.toLowerCase().includes(filters.requester.toLowerCase());
+      const matchesStartDate = !filters.startDate || request.StartDate >= filters.startDate;
+      const matchesEndDate = !filters.endDate || request.EndDate <= filters.endDate;
+      const matchesSearchTerm = !filters.searchTerm || 
+        request.Title.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        request.Detail.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        request.Requester.toLowerCase().includes(filters.searchTerm.toLowerCase());
+
+      return matchesStatus && matchesLeaveType && matchesRequester && 
+             matchesStartDate && matchesEndDate && matchesSearchTerm;
+    });
+  }, [requests, filters]);
+
+  const clearFilters = () => {
+    setFilters({
+      status: '',
+      leaveType: '',
+      requester: '',
+      startDate: '',
+      endDate: '',
+      searchTerm: ''
+    });
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
@@ -230,22 +270,125 @@ export const AdminAllRequests = () => {
           <h2 className="text-2xl font-bold text-gray-900">All Leave Requests</h2>
           <p className="text-gray-600">View and manage all employee leave requests</p>
         </div>
-        <Button onClick={downloadCSV} variant="outline">
-          <Download className="h-4 w-4 mr-2" />
-          Download CSV
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setShowFilters(!showFilters)} variant="outline">
+            <Filter className="h-4 w-4 mr-2" />
+            {showFilters ? 'Hide Filters' : 'Show Filters'}
+          </Button>
+          <Button onClick={downloadCSV} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Download CSV
+          </Button>
+        </div>
       </div>
+
+      {/* Filters Section */}
+      {showFilters && (
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-lg">Filters</CardTitle>
+              <Button onClick={clearFilters} variant="ghost" size="sm">
+                <FilterX className="h-4 w-4 mr-2" />
+                Clear All
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Search</label>
+                <Input
+                  placeholder="Search title, detail, or requester..."
+                  value={filters.searchTerm}
+                  onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium mb-2 block">Status</label>
+                <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All statuses</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Leave Type</label>
+                <Select value={filters.leaveType} onValueChange={(value) => setFilters(prev => ({ ...prev, leaveType: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All types</SelectItem>
+                    <SelectItem value="Annual">Annual</SelectItem>
+                    <SelectItem value="Sick">Sick</SelectItem>
+                    <SelectItem value="Family">Family</SelectItem>
+                    <SelectItem value="Study">Study</SelectItem>
+                    <SelectItem value="Maternity">Maternity</SelectItem>
+                    <SelectItem value="Parental">Parental</SelectItem>
+                    <SelectItem value="Wellness">Wellness</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Requester</label>
+                <Input
+                  placeholder="Filter by requester name..."
+                  value={filters.requester}
+                  onChange={(e) => setFilters(prev => ({ ...prev, requester: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Start Date From</label>
+                <Input
+                  type="date"
+                  value={filters.startDate}
+                  onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">End Date To</label>
+                <Input
+                  type="date"
+                  value={filters.endDate}
+                  onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
           <CardTitle>Leave Requests</CardTitle>
-          <CardDescription>All leave requests across the organization ({requests.length} total)</CardDescription>
+          <CardDescription>
+            Showing {filteredRequests.length} of {requests.length} leave requests
+            {filteredRequests.length !== requests.length && ' (filtered)'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          {requests.length === 0 ? (
+          {filteredRequests.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>No leave requests found</p>
+              <p>{requests.length === 0 ? 'No leave requests found' : 'No requests match your filters'}</p>
+              {requests.length > 0 && (
+                <Button onClick={clearFilters} variant="outline" className="mt-2">
+                  Clear Filters
+                </Button>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -269,7 +412,7 @@ export const AdminAllRequests = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {requests.map((request) => (
+                  {filteredRequests.map((request) => (
                     <TableRow key={request.LeaveID}>
                       <TableCell className="font-medium">{request.LeaveID}</TableCell>
                       <TableCell>
