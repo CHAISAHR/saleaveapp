@@ -32,7 +32,7 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
         ) : userRole === 'manager' ? (
           <ManagerDashboard currentUser={currentUser} activeView="balance" />
         ) : (
-          <AdminDashboard currentUser={currentUser} activeView="system" />
+          <AdminDashboard currentUser={currentUser} activeView="balances" />
         );
 
       case 'all-requests':
