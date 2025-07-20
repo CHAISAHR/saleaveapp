@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminBalanceManager } from "./AdminBalanceManager";
-import { AdminCharts } from "./admin/AdminCharts";
+
 import { CurrentlyOnLeaveTable } from "./admin/CurrentlyOnLeaveTable";
 import { AdminStatsCards } from "./admin/AdminStatsCards";
 import { apiConfig, makeApiRequest } from "@/config/apiConfig";
@@ -201,9 +201,6 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
           </div>
         </CardContent>
       </Card>
-
-      {/* Charts Grid */}
-      <AdminCharts />
 
       {/* Staff Currently on Leave Table */}
       <CurrentlyOnLeaveTable />
