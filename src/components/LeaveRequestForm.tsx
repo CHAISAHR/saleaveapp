@@ -106,6 +106,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
             u.role === 'manager' || u.role === 'admin'
           );
           console.log('Manager fetch - Available managers count:', managers.length);
+          console.log('Manager fetch - Available managers list:', managers.map(m => ({ name: m.name, email: m.email, role: m.role })));
           setAvailableManagers(managers);
         } else {
           const errorText = await usersResponse.text();
@@ -806,25 +807,34 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
 
               {formData.useAlternativeManager && (
                 <div className="space-y-4 pl-6 border-l-2 border-purple-300">
-                  <div className="space-y-2">
-                    <Label htmlFor="alternativeManager">Alternative Manager *</Label>
-                    <Select value={formData.alternativeManager || "none"} onValueChange={(value) => setFormData(prev => ({ ...prev, alternativeManager: value === "none" ? "" : value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select alternative manager" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Select a manager</SelectItem>
-                        {availableManagers.map((manager) => (
-                          <SelectItem key={manager.email} value={manager.email}>
-                            <div>
-                              <div className="font-medium">{manager.name}</div>
-                              <div className="text-xs text-gray-500">{manager.department} - {manager.email}</div>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                   <div className="space-y-2">
+                     <Label htmlFor="alternativeManager">Alternative Manager *</Label>
+                     <Select value={formData.alternativeManager || "none"} onValueChange={(value) => setFormData(prev => ({ ...prev, alternativeManager: value === "none" ? "" : value }))}>
+                       <SelectTrigger className="bg-white dark:bg-gray-800">
+                         <SelectValue placeholder="Select alternative manager" />
+                       </SelectTrigger>
+                       <SelectContent className="z-[10000] bg-white dark:bg-gray-800 border shadow-lg">
+                         <SelectItem value="none">Select a manager</SelectItem>
+                         {availableManagers.length === 0 ? (
+                           <SelectItem value="no-managers" disabled>
+                             No managers available
+                           </SelectItem>
+                         ) : (
+                           availableManagers.map((manager) => (
+                             <SelectItem key={manager.email} value={manager.email}>
+                               <div>
+                                 <div className="font-medium">{manager.name}</div>
+                                 <div className="text-xs text-gray-500">{manager.department} - {manager.email}</div>
+                               </div>
+                             </SelectItem>
+                           ))
+                         )}
+                       </SelectContent>
+                     </Select>
+                     {availableManagers.length === 0 && (
+                       <p className="text-xs text-orange-600">No alternative managers found. Check console for debugging info.</p>
+                     )}
+                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="alternativeManagerReason">Reason for Alternative Manager *</Label>
