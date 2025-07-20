@@ -36,8 +36,8 @@ export const AdminAllRequests = () => {
 
   // Filter states
   const [filters, setFilters] = useState({
-    status: '',
-    leaveType: '',
+    status: 'all',
+    leaveType: 'all',
     requester: '',
     startDate: '',
     endDate: '',
@@ -213,8 +213,8 @@ export const AdminAllRequests = () => {
   // Filtered requests
   const filteredRequests = useMemo(() => {
     return requests.filter(request => {
-      const matchesStatus = !filters.status || request.Status.toLowerCase() === filters.status.toLowerCase();
-      const matchesLeaveType = !filters.leaveType || request.LeaveType === filters.leaveType;
+      const matchesStatus = filters.status === 'all' || !filters.status || request.Status.toLowerCase() === filters.status.toLowerCase();
+      const matchesLeaveType = filters.leaveType === 'all' || !filters.leaveType || request.LeaveType === filters.leaveType;
       const matchesRequester = !filters.requester || request.Requester.toLowerCase().includes(filters.requester.toLowerCase());
       const matchesStartDate = !filters.startDate || request.StartDate >= filters.startDate;
       const matchesEndDate = !filters.endDate || request.EndDate <= filters.endDate;
@@ -230,8 +230,8 @@ export const AdminAllRequests = () => {
 
   const clearFilters = () => {
     setFilters({
-      status: '',
-      leaveType: '',
+      status: 'all',
+      leaveType: 'all',
       requester: '',
       startDate: '',
       endDate: '',
@@ -312,7 +312,7 @@ export const AdminAllRequests = () => {
                     <SelectValue placeholder="All statuses" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All statuses</SelectItem>
+                    <SelectItem value="all">All statuses</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="approved">Approved</SelectItem>
                     <SelectItem value="rejected">Rejected</SelectItem>
@@ -328,7 +328,7 @@ export const AdminAllRequests = () => {
                     <SelectValue placeholder="All types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All types</SelectItem>
+                    <SelectItem value="all">All types</SelectItem>
                     <SelectItem value="Annual">Annual</SelectItem>
                     <SelectItem value="Sick">Sick</SelectItem>
                     <SelectItem value="Family">Family</SelectItem>
