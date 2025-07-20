@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('[AuthContext] Manual auth token present:', !!authToken);
         console.log('[AuthContext] Manual user data present:', !!manualUser);
         
-        if (authToken && authToken !== 'mock-jwt-token' && manualUser) {
+        if (authToken && authToken !== 'mock-jwt-token' && authToken !== 'mock-admin-token' && manualUser) {
           console.log('[AuthContext] Validating manual login token...');
           try {
             // Validate token with backend
@@ -117,15 +117,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const mockAdminLogin = async () => {
-    console.log('Mock admin login triggered');
+    console.log('Mock admin login triggered - will attempt real backend authentication');
     
     try {
-      // Try to authenticate with the backend using a test admin account
+      // Try to authenticate with the backend using real credentials
       const response = await makeApiRequest(`${apiConfig.endpoints.auth}/login`, {
         method: 'POST',
         body: JSON.stringify({ 
           email: 'chaisahr@clintonhealthaccess.org', 
-          password: 'admin123' // You might need to adjust this password
+          password: 'admin123' // Default test password - users should change this
         })
       });
 
@@ -147,7 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             aud: 'backend',
             iss: 'backend',
             iat: Date.now() / 1000,
-            exp: (Date.now() / 1000) + 86400, // 24 hours
+            exp: (Date.now() / 1000) + 86400,
             sub: `backend-${data.user.email}`,
             email: data.user.email,
             role: data.user.role,
@@ -159,39 +159,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         setUser(userAccount);
         localStorage.setItem('manualUser', JSON.stringify(userAccount));
-        localStorage.removeItem('mockUser'); // Clear old mock data
-        console.log('Mock admin login successful with backend token');
+        // Clear any old mock data
+        localStorage.removeItem('mockUser');
+        console.log('Admin authentication successful with backend JWT');
       } else {
-        throw new Error(data.message || 'Admin login failed');
+        throw new Error(data.message || 'Authentication failed');
       }
     } catch (error) {
-      console.error('Mock admin login error:', error);
-      // Fallback to old mock behavior if backend is unavailable
-      const mockAdminAccount: AccountInfo = {
-        homeAccountId: 'mock-chaisahr@clintonhealthaccess.org',
-        environment: 'mock',
-        tenantId: 'mock-tenant',
-        username: 'chaisahr@clintonhealthaccess.org',
-        localAccountId: 'mock-chaisahr@clintonhealthaccess.org',
-        name: 'Admin User',
-        idTokenClaims: {
-          aud: 'mock',
-          iss: 'mock',
-          iat: Date.now() / 1000,
-          exp: (Date.now() / 1000) + 86400, // 24 hours
-          sub: 'mock-chaisahr@clintonhealthaccess.org',
-          email: 'chaisahr@clintonhealthaccess.org',
-          role: 'admin',
-          department: 'HR & Operations',
-          given_name: 'Admin',
-          family_name: 'User'
-        }
-      };
-
-      setUser(mockAdminAccount);
-      localStorage.setItem('mockUser', JSON.stringify(mockAdminAccount));
-      localStorage.setItem('auth_token', 'mock-admin-token');
-      console.log('Using fallback mock admin login');
+      console.error('Backend authentication failed:', error);
+      throw new Error('Unable to authenticate with backend. Please use manual login with valid credentials.');
     }
   };
 
