@@ -4,27 +4,46 @@ import { EmployeeBalance } from '../../balanceService';
 export class AccumulatedLeaveCalculations {
   // Calculate AccumulatedLeave - starts at 0, accumulates 1.667 at end of each completed month
   static calculateAccumulatedLeave(currentDate: Date = new Date(), terminationDate?: string): number {
+    console.log(`AccumulatedLeave calculation input:`, {
+      currentDate: currentDate.toISOString(),
+      terminationDate,
+      currentMonth: currentDate.getMonth() + 1,
+      currentDay: currentDate.getDate()
+    });
+
     const year = currentDate.getFullYear();
     const targetDate = terminationDate ? new Date(terminationDate) : currentDate;
     
     // If termination date is in a different year, use end of that year or current date
     const calculationDate = targetDate.getFullYear() === year ? targetDate : currentDate;
     
+    console.log(`AccumulatedLeave dates:`, {
+      year,
+      targetDate: targetDate.toISOString(),
+      calculationDate: calculationDate.toISOString(),
+      calculationMonth: calculationDate.getMonth() + 1,
+      calculationDay: calculationDate.getDate()
+    });
+    
     // Get completed months (leave is earned on the 27th of each month)
     let completedMonths = calculationDate.getMonth(); // 0-based months
+    
+    console.log(`Before 27th check - completedMonths: ${completedMonths}, date: ${calculationDate.getDate()}`);
     
     // If we're on or after the 27th of current month, include current month's leave
     if (calculationDate.getDate() >= 27) {
       completedMonths += 1;
+      console.log(`After 27th check - completedMonths increased to: ${completedMonths}`);
     }
     
     // Accumulate 1.667 for each completed month, max 20 days (12 months * 1.667 = 20.004)
     const accumulated = Math.min(completedMonths * 1.667, 20);
     
-    console.log(`AccumulatedLeave calculation:`, {
+    console.log(`AccumulatedLeave final calculation:`, {
       year,
       calculationDate: calculationDate.toISOString().split('T')[0],
       completedMonths,
+      rawAccumulated: completedMonths * 1.667,
       accumulated: Number(accumulated.toFixed(1))
     });
     
