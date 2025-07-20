@@ -67,20 +67,53 @@ export const AdminCharts = () => {
 
         // Create department mapping from users table
         const departmentMap = {};
-        usersArray.forEach(user => {
-          // Handle different field naming conventions
-          const email = user.email || user.Email || user.EmployeeEmail;
-          const department = user.department || user.Department;
+        console.log('AdminCharts - Creating department mapping from users...');
+        
+        usersArray.forEach((user, index) => {
+          // Handle different field naming conventions for email
+          const email = user.email || user.Email || user.EmployeeEmail || user.employee_email || user.userEmail;
+          // Handle different field naming conventions for department  
+          const department = user.department || user.Department || user.dept || user.Department_Name || user.departmentName;
+          
+          if (index < 3) {
+            console.log('AdminCharts - Sample user record:', user);
+            console.log('AdminCharts - Extracted email:', email, 'department:', department);
+          }
+          
           if (email && department) {
-            departmentMap[email] = department;
+            departmentMap[email.toLowerCase()] = department; // Use lowercase for consistent matching
+            departmentMap[email] = department; // Also keep original case
           }
         });
+        
+        console.log('AdminCharts - Department mapping created:', departmentMap);
+        console.log('AdminCharts - Total users mapped:', Object.keys(departmentMap).length);
 
         // Group requests by department for pie chart
         const departmentStats: Record<string, DepartmentStats> = {};
         
-        requestsArray.forEach((request: any) => {
-          const department = departmentMap[request.Requester] || 'Unknown';
+        requestsArray.forEach((request: any, index) => {
+          // Handle different field naming conventions for requester email
+          const requesterEmail = request.Requester || request.requester || request.email || 
+                                 request.EmployeeEmail || request.employee_email || request.user_email ||
+                                 request.requestedBy || request.requested_by;
+          
+          if (index < 3) {
+            console.log('AdminCharts - Sample request record:', request);
+            console.log('AdminCharts - Extracted requester email:', requesterEmail);
+          }
+          
+          // Try both original case and lowercase for lookup
+          let department = 'Unknown';
+          if (requesterEmail) {
+            department = departmentMap[requesterEmail] || 
+                        departmentMap[requesterEmail.toLowerCase()] || 
+                        'Unknown';
+          }
+          
+          if (index < 3) {
+            console.log('AdminCharts - Mapped department:', department);
+          }
           
           if (!departmentStats[department]) {
             departmentStats[department] = {
@@ -91,10 +124,12 @@ export const AdminCharts = () => {
             };
           }
           
-          if (request.Status === 'pending') {
+          if (request.Status === 'pending' || (request.status && request.status.toLowerCase() === 'pending')) {
             departmentStats[department].pending++;
           }
         });
+        
+        console.log('AdminCharts - Final department stats:', departmentStats);
 
         // Create time series data by grouping requests by month from beginning of year
         const timeStats: Record<string, TimeSeriesData> = {};
