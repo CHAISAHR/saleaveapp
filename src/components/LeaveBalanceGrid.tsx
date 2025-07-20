@@ -2,9 +2,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ForfeitRibbon } from "@/components/ForfeitRibbon";
-import { apiConfig, makeApiRequest } from "@/config/apiConfig";
-import { BalanceCalculations } from "@/services/balance/balanceCalculations";
-import { EmployeeBalance } from "@/services/balanceService";
+import { balanceService, EmployeeBalance } from "@/services/balanceService";
 
 interface LeaveBalance {
   type: string;
@@ -25,117 +23,104 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
   const [leaveBalances, setLeaveBalances] = useState<LeaveBalance[]>(propBalances || []);
   const [loading, setLoading] = useState(!propBalances);
 
-  // Get authorization headers
-  const getAuthHeaders = () => {
-    const authToken = localStorage.getItem('auth_token');
-    return {
-      'Authorization': `Bearer ${authToken}`,
-      'Content-Type': 'application/json'
-    };
-  };
-
-  // Fetch leave balances from backend
+  // Fetch leave balances from live database via balance service
   const fetchLeaveBalances = async () => {
-    if (propBalances) return; // Use prop data if provided
+    if (propBalances || !userEmail) return; // Use prop data if provided or no user email
     
     try {
       setLoading(true);
+      console.log('Fetching live balance data for:', userEmail);
       
-      const response = await fetch(`${apiConfig.endpoints.balance}${userEmail ? `/${userEmail}` : ''}`, {
-        headers: getAuthHeaders()
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        // Transform backend employee balance data to component format
-        if (data && data.EmployeeName) {
-          const employeeBalance: EmployeeBalance = data;
-          const accumulatedLeave = BalanceCalculations.calculateAccumulatedLeave(
-            new Date(), 
-            employeeBalance.Contract_termination_date
-          );
-          
-          const transformedBalances: LeaveBalance[] = [
-            {
-              type: 'Annual',
-              used: employeeBalance.AnnualUsed || 0,
-              total: (employeeBalance.Annual || 0) + (employeeBalance.Broughtforward || 0),
-              accrued: accumulatedLeave,
-              unit: 'days',
-              broughtForward: employeeBalance.Broughtforward || 0,
-              balance: BalanceCalculations.calculateCurrentBalance(employeeBalance, 'annual', employeeBalance.Start_date)
-            },
-            {
-              type: 'Sick',
-              used: employeeBalance.SickUsed || 0,
-              total: 36, // Max sick leave allocation
-              accrued: 36,
-              unit: 'days',
-              balance: BalanceCalculations.calculateOtherLeaveBalance(36, employeeBalance.SickUsed || 0)
-            },
-            {
-              type: 'Maternity',
-              used: employeeBalance.MaternityUsed || 0,
-              total: 3,
-              accrued: 3,
-              unit: 'months',
-              balance: BalanceCalculations.calculateOtherLeaveBalance(3, employeeBalance.MaternityUsed || 0)
-            },
-            {
-              type: 'Parental',
-              used: employeeBalance.ParentalUsed || 0,
-              total: 4,
-              accrued: 4,
-              unit: 'weeks',
-              balance: BalanceCalculations.calculateOtherLeaveBalance(4, employeeBalance.ParentalUsed || 0)
-            },
-            {
-              type: 'Family',
-              used: employeeBalance.FamilyUsed || 0,
-              total: 5,
-              accrued: 5,
-              unit: 'days',
-              balance: BalanceCalculations.calculateOtherLeaveBalance(5, employeeBalance.FamilyUsed || 0)
-            },
-            {
-              type: 'Adoption',
-              used: employeeBalance.AdoptionUsed || 0,
-              total: 10,
-              accrued: 10,
-              unit: 'weeks',
-              balance: BalanceCalculations.calculateOtherLeaveBalance(10, employeeBalance.AdoptionUsed || 0)
-            },
-            {
-              type: 'Study',
-              used: employeeBalance.StudyUsed || 0,
-              total: 10,
-              accrued: 10,
-              unit: 'days',
-              balance: BalanceCalculations.calculateOtherLeaveBalance(10, employeeBalance.StudyUsed || 0)
-            },
-            {
-              type: 'Wellness',
-              used: employeeBalance.WellnessUsed || 0,
-              total: 2,
-              accrued: 2,
-              unit: 'days',
-              balance: BalanceCalculations.calculateOtherLeaveBalance(2, employeeBalance.WellnessUsed || 0)
-            }
-          ];
-          
-          setLeaveBalances(transformedBalances);
-        } else {
-          // Fallback to default balances if backend doesn't return structured data
-          setLeaveBalances(getDefaultBalances());
-        }
+      // Use the balance service to get live data from database
+      const employeeBalance = await balanceService.getEmployeeBalance(userEmail);
+      
+      if (employeeBalance) {
+        console.log('Live balance data received:', employeeBalance);
+        
+        // Calculate accumulated leave using balance service
+        const accumulatedLeave = balanceService.calculateMonthlyAccumulation(
+          new Date().getMonth() + 1, 
+          employeeBalance.Contract_termination_date
+        );
+        
+        // Transform to component format using balance service calculations
+        const transformedBalances: LeaveBalance[] = [
+          {
+            type: 'Annual',
+            used: employeeBalance.AnnualUsed || 0,
+            total: (employeeBalance.Annual || 0) + (employeeBalance.Broughtforward || 0),
+            accrued: accumulatedLeave,
+            unit: 'days',
+            broughtForward: employeeBalance.Broughtforward || 0,
+            balance: balanceService.calculateCurrentBalance(employeeBalance, 'annual', employeeBalance.Start_date)
+          },
+          {
+            type: 'Sick',
+            used: employeeBalance.SickUsed || 0,
+            total: 36,
+            accrued: 36,
+            unit: 'days',
+            balance: balanceService.calculateCurrentBalance(employeeBalance, 'sick')
+          },
+          {
+            type: 'Maternity',
+            used: employeeBalance.MaternityUsed || 0,
+            total: 90,
+            accrued: 90,
+            unit: 'days',
+            balance: balanceService.calculateCurrentBalance(employeeBalance, 'maternity')
+          },
+          {
+            type: 'Parental',
+            used: employeeBalance.ParentalUsed || 0,
+            total: 20,
+            accrued: 20,
+            unit: 'days',
+            balance: balanceService.calculateCurrentBalance(employeeBalance, 'parental')
+          },
+          {
+            type: 'Family',
+            used: employeeBalance.FamilyUsed || 0,
+            total: 3,
+            accrued: 3,
+            unit: 'days',
+            balance: balanceService.calculateCurrentBalance(employeeBalance, 'family')
+          },
+          {
+            type: 'Adoption',
+            used: employeeBalance.AdoptionUsed || 0,
+            total: 20,
+            accrued: 20,
+            unit: 'days',
+            balance: balanceService.calculateCurrentBalance(employeeBalance, 'adoption')
+          },
+          {
+            type: 'Study',
+            used: employeeBalance.StudyUsed || 0,
+            total: 6,
+            accrued: 6,
+            unit: 'days',
+            balance: balanceService.calculateCurrentBalance(employeeBalance, 'study')
+          },
+          {
+            type: 'Wellness',
+            used: employeeBalance.WellnessUsed || 0,
+            total: 2,
+            accrued: 2,
+            unit: 'days',
+            balance: balanceService.calculateCurrentBalance(employeeBalance, 'wellness')
+          }
+        ];
+        
+        console.log('Transformed balances:', transformedBalances);
+        setLeaveBalances(transformedBalances);
       } else {
-        console.error('Failed to fetch leave balances');
-        // Fallback to default balances
+        console.warn('No balance data received, using fallback');
         setLeaveBalances(getDefaultBalances());
       }
     } catch (error) {
-      console.error('Error fetching leave balances:', error);
-      // Fallback to default balances
+      console.error('Error fetching live balance data:', error);
+      // Fallback to default balances only if live data fails
       setLeaveBalances(getDefaultBalances());
     } finally {
       setLoading(false);
