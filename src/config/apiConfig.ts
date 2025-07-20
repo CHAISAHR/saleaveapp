@@ -1,9 +1,26 @@
 
 // API configuration for different environments
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://ex-production.up.railway.app';
+// Check for VITE_API_URL environment variable first, then fallback
+const getApiBaseUrl = () => {
+  const viteApiUrl = import.meta.env.VITE_API_URL;
+  const fallbackUrl = 'https://ex-production.up.railway.app';
+  
+  console.log('Environment variables check:', {
+    VITE_API_URL: viteApiUrl,
+    MODE: import.meta.env.MODE,
+    DEV: import.meta.env.DEV,
+    PROD: import.meta.env.PROD
+  });
+  
+  const selectedUrl = viteApiUrl || fallbackUrl;
+  console.log('Selected API base URL:', selectedUrl);
+  
+  return selectedUrl;
+};
 
-console.log('API Configuration:', {
-  VITE_API_URL: import.meta.env.VITE_API_URL,
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('Final API Configuration:', {
   API_BASE_URL: API_BASE_URL,
   mode: import.meta.env.MODE,
   dev: import.meta.env.DEV
