@@ -2,11 +2,18 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, Users } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
 import { apiConfig, makeApiRequest } from "@/config/apiConfig";
 
 interface DepartmentStats {
   department: string;
+  pending: number;
+  approved: number;
+  rejected: number;
+}
+
+interface TimeSeriesData {
+  date: string;
   pending: number;
   approved: number;
   rejected: number;
@@ -20,7 +27,7 @@ interface PendingData {
 
 export const AdminCharts = () => {
   const [pendingLeavesByDepartment, setPendingLeavesByDepartment] = useState<PendingData[]>([]);
-  const [departmentData, setDepartmentData] = useState<DepartmentStats[]>([]);
+  const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesData[]>([]);
   const [loading, setLoading] = useState(true);
 
   const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#8dd1e1', '#d084d0'];
@@ -70,7 +77,7 @@ export const AdminCharts = () => {
           }
         });
 
-        // Group requests by department and status
+        // Group requests by department for pie chart
         const departmentStats: Record<string, DepartmentStats> = {};
         
         requestsArray.forEach((request: any) => {
@@ -85,14 +92,45 @@ export const AdminCharts = () => {
             };
           }
           
-          departmentStats[department][request.Status as keyof Omit<DepartmentStats, 'department'>]++;
+          if (request.Status === 'pending') {
+            departmentStats[department].pending++;
+          }
         });
 
-        const departmentArray = Object.values(departmentStats);
-        setDepartmentData(departmentArray);
+        // Create time series data by grouping requests by submission date
+        const timeStats: Record<string, TimeSeriesData> = {};
+        
+        requestsArray.forEach((request: any) => {
+          // Extract date from submission timestamp - handle different date formats
+          const submissionDate = request.SubmissionDate || request.submission_date || request.created_at;
+          if (!submissionDate) return;
+          
+          const date = new Date(submissionDate).toISOString().split('T')[0]; // YYYY-MM-DD format
+          
+          if (!timeStats[date]) {
+            timeStats[date] = {
+              date,
+              pending: 0,
+              approved: 0,
+              rejected: 0
+            };
+          }
+          
+          const status = request.Status?.toLowerCase() || 'pending';
+          if (status === 'pending' || status === 'approved' || status === 'rejected') {
+            timeStats[date][status as keyof Omit<TimeSeriesData, 'date'>]++;
+          }
+        });
 
-        // Create pie chart data for pending requests
-        const pendingData: PendingData[] = departmentArray
+        // Sort time series data by date and limit to last 30 days
+        const sortedTimeData = Object.values(timeStats)
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+          .slice(-30);
+        
+        setTimeSeriesData(sortedTimeData);
+
+        // Create pie chart data for pending requests by department
+        const pendingData: PendingData[] = Object.values(departmentStats)
           .filter((dept: DepartmentStats) => dept.pending > 0)
           .map((dept: DepartmentStats, index: number) => ({
             name: dept.department,
@@ -102,8 +140,8 @@ export const AdminCharts = () => {
 
         setPendingLeavesByDepartment(pendingData);
         
-        console.log('AdminCharts - Final department data:', departmentArray);
-        console.log('AdminCharts - Final pending data:', pendingData);
+        console.log('AdminCharts - Final pending by department data:', pendingData);
+        console.log('AdminCharts - Final time series data:', sortedTimeData);
     } catch (error) {
       console.error('Error fetching chart data:', error);
     } finally {
@@ -182,32 +220,56 @@ export const AdminCharts = () => {
         </CardContent>
       </Card>
 
-      {/* Department Status - Bar Chart */}
+      {/* Leave Status Over Time - Line Chart */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Users className="h-5 w-5" />
-            <span>Department Status</span>
+            <span>Leave Status Over Time</span>
           </CardTitle>
-          <CardDescription>Leave requests status by department</CardDescription>
+          <CardDescription>Leave request trends over the last 30 days</CardDescription>
         </CardHeader>
         <CardContent>
-          {departmentData.length === 0 ? (
+          {timeSeriesData.length === 0 ? (
             <div className="h-64 flex items-center justify-center text-gray-500">
-              <p>No department data available</p>
+              <p>No time series data available</p>
             </div>
           ) : (
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={departmentData}>
+                <LineChart data={timeSeriesData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="department" />
+                  <XAxis 
+                    dataKey="date" 
+                    tickFormatter={(value) => new Date(value).toLocaleDateString()} 
+                  />
                   <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="pending" fill="#ffc658" />
-                  <Bar dataKey="approved" fill="#82ca9d" />
-                  <Bar dataKey="rejected" fill="#ff7300" />
-                </BarChart>
+                  <Tooltip 
+                    labelFormatter={(value) => new Date(value).toLocaleDateString()}
+                  />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="pending" 
+                    stroke="#ffc658" 
+                    strokeWidth={2}
+                    name="Pending"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="approved" 
+                    stroke="#82ca9d" 
+                    strokeWidth={2}
+                    name="Approved"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="rejected" 
+                    stroke="#ff7300" 
+                    strokeWidth={2}
+                    name="Rejected"
+                  />
+                </LineChart>
               </ResponsiveContainer>
             </div>
           )}
