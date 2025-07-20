@@ -8,24 +8,7 @@ interface ForfeitRibbonProps {
 }
 
 export const ForfeitRibbon = ({ broughtForward, annualUsed }: ForfeitRibbonProps) => {
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const forfeitureDeadline = new Date(currentYear, 6, 31); // July 31st of current year
-  
-  // Calculate days to forfeit based on actual policy:
-  // - Only brought forward leave can be forfeited
-  // - Only if we're past the forfeiture deadline (July 31st)
-  // - The amount to forfeit is the unused portion of brought forward leave
-  let daysToForfeit = 0;
-  
-  if (currentDate > forfeitureDeadline && broughtForward > 0) {
-    // If past July 31st, any unused brought forward leave is forfeited
-    const usedFromBroughtForward = Math.min(annualUsed, broughtForward);
-    daysToForfeit = Math.max(0, broughtForward - usedFromBroughtForward);
-  } else if (currentDate <= forfeitureDeadline && broughtForward > 0) {
-    // If before July 31st, show potential forfeiture (all brought forward days)
-    daysToForfeit = broughtForward;
-  }
+  const daysToForfeit = Math.max(0, broughtForward - annualUsed);
   
   if (daysToForfeit === 0) {
     return null;
