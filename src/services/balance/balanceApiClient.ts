@@ -61,17 +61,17 @@ export class BalanceApiClient {
       if (mockData && Array.isArray(mockData)) {
         const mockBalance = mockData.find((b: any) => b.email === employeeEmail);
         if (mockBalance) {
-          console.log('Converting mock balance data:', mockBalance);
+          console.log('Converting mock balance data for user:', mockBalance.email);
           const converted = {
             BalanceID: 1,
             EmployeeName: mockBalance.name,
             EmployeeEmail: mockBalance.email,
             Department: mockBalance.department,
             Year: year,
-            Broughtforward: 0,
+            Broughtforward: Math.floor(Math.random() * 5) + 2, // Random 2-6 days brought forward
             Annual: 20,
             AccumulatedLeave: mockBalance.annualLeave || 0,
-            AnnualUsed: 0,
+            AnnualUsed: 20 - (mockBalance.annualLeave || 0), // Calculate used from remaining
             Forfeited: 0,
             Annual_leave_adjustments: 0,
             SickUsed: (36 - (mockBalance.sickLeave || 0)),
