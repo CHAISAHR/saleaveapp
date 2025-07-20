@@ -65,17 +65,17 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
           {
             type: 'Maternity',
             used: employeeBalance.MaternityUsed || 0,
-            total: 90,
-            accrued: 90,
-            unit: 'days',
+            total: 3,
+            accrued: 3,
+            unit: 'months',
             balance: balanceService.calculateCurrentBalance(employeeBalance, 'maternity')
           },
           {
             type: 'Parental',
             used: employeeBalance.ParentalUsed || 0,
-            total: 20,
-            accrued: 20,
-            unit: 'days',
+            total: 4,
+            accrued: 4,
+            unit: 'weeks',
             balance: balanceService.calculateCurrentBalance(employeeBalance, 'parental')
           },
           {
@@ -89,9 +89,9 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
           {
             type: 'Adoption',
             used: employeeBalance.AdoptionUsed || 0,
-            total: 20,
-            accrued: 20,
-            unit: 'days',
+            total: 4,
+            accrued: 4,
+            unit: 'weeks',
             balance: balanceService.calculateCurrentBalance(employeeBalance, 'adoption')
           },
           {
@@ -173,10 +173,10 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
     {
       type: 'Adoption',
       used: 0,
-      total: 10,
-      accrued: 10,
+      total: 4,
+      accrued: 4,
       unit: 'weeks',
-      balance: 10
+      balance: 4
     },
     {
       type: 'Study',
@@ -263,6 +263,7 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
                 <li>• Sick: 1 day per month, accumulates to 36 in 3 years</li>
                 <li>• Maternity: 3 months (for eligible employees)</li>
                 <li>• Parental: 4 weeks per annum</li>
+                <li>• Adoption: 4 weeks per annum</li>
               </ul>
             </div>
             <div>

@@ -58,13 +58,13 @@ export class CurrentBalanceCalculations {
       case 'sick':
         return this.calculateOtherLeaveBalance(36, balance.SickUsed);
       case 'maternity':
-        return this.calculateOtherLeaveBalance(90, balance.MaternityUsed);
+        return this.calculateOtherLeaveBalance(3, balance.MaternityUsed); // 3 months
       case 'parental':
-        return this.calculateOtherLeaveBalance(20, balance.ParentalUsed);
+        return this.calculateOtherLeaveBalance(4, balance.ParentalUsed); // 4 weeks
       case 'family':
         return this.calculateOtherLeaveBalance(3, balance.FamilyUsed);
       case 'adoption':
-        return this.calculateOtherLeaveBalance(20, balance.AdoptionUsed);
+        return this.calculateOtherLeaveBalance(4, balance.AdoptionUsed); // 4 weeks
       case 'study':
         return this.calculateOtherLeaveBalance(6, balance.StudyUsed);
       case 'wellness':
@@ -79,10 +79,10 @@ export class CurrentBalanceCalculations {
     return {
       annual: this.calculateAnnualLeaveBalance(balance, employeeStartDate),
       sick: this.calculateOtherLeaveBalance(36, balance.SickUsed),
-      maternity: this.calculateOtherLeaveBalance(90, balance.MaternityUsed),
-      parental: this.calculateOtherLeaveBalance(20, balance.ParentalUsed),
+      maternity: this.calculateOtherLeaveBalance(3, balance.MaternityUsed), // 3 months
+      parental: this.calculateOtherLeaveBalance(4, balance.ParentalUsed), // 4 weeks
       family: this.calculateOtherLeaveBalance(3, balance.FamilyUsed),
-      adoption: this.calculateOtherLeaveBalance(20, balance.AdoptionUsed),
+      adoption: this.calculateOtherLeaveBalance(4, balance.AdoptionUsed), // 4 weeks
       study: this.calculateOtherLeaveBalance(6, balance.StudyUsed),
       wellness: this.calculateOtherLeaveBalance(2, balance.WellnessUsed)
     };
