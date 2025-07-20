@@ -10,8 +10,9 @@ export class AccumulatedLeaveCalculations {
     // If termination date is in a different year, use end of that year or current date
     const calculationDate = targetDate.getFullYear() === year ? targetDate : currentDate;
     
-    // Get completed months (accumulation happens at END of month)
-    const completedMonths = calculationDate.getMonth(); // 0-based, so January = 0, means 0 completed months
+    // Get completed months (including current month for accrual)
+    // January = month 0, so we add 1 to include the current month
+    const completedMonths = calculationDate.getMonth() + 1;
     
     // Accumulate 1.667 for each completed month, max 20 days (12 months * 1.667 = 20.004)
     const accumulated = Math.min(completedMonths * 1.667, 20);
