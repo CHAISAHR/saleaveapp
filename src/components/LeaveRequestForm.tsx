@@ -445,13 +445,24 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
 
   const sendEmailNotifications = async (requestData: any) => {
     try {
-      const approverEmail = formData.useAlternativeManager && formData.alternativeManager 
-        ? formData.alternativeManager 
-        : managerInfo?.email;
+      // Determine the approver email with fallback logic
+      let approverEmail: string;
+      let approverName: string;
 
-      const approverName = formData.useAlternativeManager && formData.alternativeManager
-        ? availableManagers.find(m => m.email === formData.alternativeManager)?.name || formData.alternativeManager
-        : managerInfo?.name || "Manager";
+      if (formData.useAlternativeManager && formData.alternativeManager) {
+        // Use selected alternative manager
+        approverEmail = formData.alternativeManager;
+        approverName = availableManagers.find(m => m.email === formData.alternativeManager)?.name || formData.alternativeManager;
+      } else if (managerInfo?.email) {
+        // Use fetched manager info
+        approverEmail = managerInfo.email;
+        approverName = managerInfo.name;
+      } else {
+        // Fallback to default admin when manager info is not available
+        console.warn('Manager info not available, using fallback admin');
+        approverEmail = 'chaisahr@clintonhealthaccess.org';
+        approverName = 'Admin';
+      }
       
       const managerEmailData = {
         to: approverEmail,
