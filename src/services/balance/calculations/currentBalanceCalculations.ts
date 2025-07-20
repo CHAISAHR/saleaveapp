@@ -4,13 +4,33 @@ import { EmployeeBalance } from '../../balanceService';
 export class CurrentBalanceCalculations {
   // Calculate current annual leave balance
   static calculateAnnualLeaveBalance(balance: EmployeeBalance, employeeStartDate?: string): number {
-    // Use AccumulatedLeave from the balance object (should be calculated/updated regularly)
+    // Debug: Log all values to identify NaN source
+    console.log(`Balance values for ${balance.EmployeeName}:`, {
+      Broughtforward: balance.Broughtforward, 
+      BroughtforwardType: typeof balance.Broughtforward,
+      AccumulatedLeave: balance.AccumulatedLeave, 
+      AccumulatedLeaveType: typeof balance.AccumulatedLeave,
+      AnnualUsed: balance.AnnualUsed, 
+      AnnualUsedType: typeof balance.AnnualUsed,
+      Forfeited: balance.Forfeited, 
+      ForfeitedType: typeof balance.Forfeited,
+      Annual_leave_adjustments: balance.Annual_leave_adjustments, 
+      AdjustmentsType: typeof balance.Annual_leave_adjustments
+    });
+
+    // Convert all values to numbers, defaulting to 0 if invalid
+    const broughtforward = Number(balance.Broughtforward) || 0;
+    const accumulatedLeave = Number(balance.AccumulatedLeave) || 0;
+    const annualUsed = Number(balance.AnnualUsed) || 0;
+    const forfeited = Number(balance.Forfeited) || 0;
+    const adjustments = Number(balance.Annual_leave_adjustments) || 0;
+
     const currentBalance = Number((
-      balance.Broughtforward + 
-      balance.AccumulatedLeave - 
-      balance.AnnualUsed - 
-      balance.Forfeited - 
-      balance.Annual_leave_adjustments
+      broughtforward + 
+      accumulatedLeave - 
+      annualUsed - 
+      forfeited - 
+      adjustments
     ).toFixed(1));
 
     console.log(`Annual leave balance calculation for ${balance.EmployeeName}:`, {
