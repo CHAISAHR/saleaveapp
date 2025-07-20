@@ -68,10 +68,10 @@ export class BalanceApiClient {
             EmployeeEmail: mockBalance.email,
             Department: mockBalance.department,
             Year: year,
-            Broughtforward: Math.floor(Math.random() * 5) + 2, // Random 2-6 days brought forward
+            Broughtforward: mockBalance.broughtforward || 0, // Use actual broughtforward from leave_balance table
             Annual: 20,
             AccumulatedLeave: mockBalance.annualLeave || 0,
-            AnnualUsed: 20 - (mockBalance.annualLeave || 0), // Calculate used from remaining
+            AnnualUsed: mockBalance.annualUsed || 0, // Use actual annualUsed from leave_balance table
             Forfeited: 0,
             Annual_leave_adjustments: 0,
             SickUsed: (36 - (mockBalance.sickLeave || 0)),
