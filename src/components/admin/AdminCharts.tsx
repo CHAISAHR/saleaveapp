@@ -124,8 +124,15 @@ export const AdminCharts = () => {
             };
           }
           
-          if (request.Status === 'pending' || (request.status && request.status.toLowerCase() === 'pending')) {
+          // Handle different status field naming and normalize the value
+          const status = (request.status || request.Status || 'pending').toLowerCase();
+          
+          if (status === 'pending') {
             departmentStats[department].pending++;
+          } else if (status === 'approved') {
+            departmentStats[department].approved++;
+          } else if (status === 'rejected') {
+            departmentStats[department].rejected++;
           }
         });
         
@@ -175,12 +182,13 @@ export const AdminCharts = () => {
         setTimeSeriesData(sortedTimeData);
 
         // Create bar chart data for pending requests by department
+        // Show all departments that have users, even if no pending requests
         const pendingData: PendingData[] = Object.values(departmentStats)
-          .filter((dept: DepartmentStats) => dept.pending > 0)
           .map((dept: DepartmentStats) => ({
             department: dept.department,
             pending: dept.pending
-          }));
+          }))
+          .filter((dept: PendingData) => dept.department !== 'Unknown'); // Hide unknown departments
 
         setPendingLeavesByDepartment(pendingData);
         
