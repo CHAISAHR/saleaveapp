@@ -7,7 +7,7 @@ interface AuthContextType {
   user: AccountInfo | null;
   isAuthenticated: boolean;
   manualLogin: (email: string, password: string) => Promise<void>;
-  mockAdminLogin: () => void;
+  mockAdminLogin: () => Promise<void>;
   manualSignUp: (userData: {
     email: string;
     password: string;
@@ -116,36 +116,83 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
   }, []);
 
-  const mockAdminLogin = () => {
+  const mockAdminLogin = async () => {
     console.log('Mock admin login triggered');
     
-    // Create a mock admin user
-    const mockAdminAccount: AccountInfo = {
-      homeAccountId: 'mock-chaisahr@clintonhealthaccess.org',
-      environment: 'mock',
-      tenantId: 'mock-tenant',
-      username: 'chaisahr@clintonhealthaccess.org',
-      localAccountId: 'mock-chaisahr@clintonhealthaccess.org',
-      name: 'Admin User',
-      idTokenClaims: {
-        aud: 'mock',
-        iss: 'mock',
-        iat: Date.now() / 1000,
-        exp: (Date.now() / 1000) + 86400, // 24 hours
-        sub: 'mock-chaisahr@clintonhealthaccess.org',
-        email: 'chaisahr@clintonhealthaccess.org',
-        role: 'admin',
-        department: 'HR & Operations',
-        given_name: 'Admin',
-        family_name: 'User'
-      }
-    };
+    try {
+      // Try to authenticate with the backend using a test admin account
+      const response = await makeApiRequest(`${apiConfig.endpoints.auth}/login`, {
+        method: 'POST',
+        body: JSON.stringify({ 
+          email: 'chaisahr@clintonhealthaccess.org', 
+          password: 'admin123' // You might need to adjust this password
+        })
+      });
 
-    setUser(mockAdminAccount);
-    localStorage.setItem('mockUser', JSON.stringify(mockAdminAccount));
-    localStorage.setItem('auth_token', 'mock-admin-token');
-    
-    console.log('Mock admin login successful');
+      const data = await response.json();
+      
+      if (data.success && data.token) {
+        // Store the real JWT token from backend
+        localStorage.setItem('auth_token', data.token);
+        
+        // Create AccountInfo-like object from backend user data
+        const userAccount: AccountInfo = {
+          homeAccountId: `backend-${data.user.email}`,
+          environment: 'backend',
+          tenantId: 'backend-tenant',
+          username: data.user.email,
+          localAccountId: `backend-${data.user.email}`,
+          name: data.user.name,
+          idTokenClaims: {
+            aud: 'backend',
+            iss: 'backend',
+            iat: Date.now() / 1000,
+            exp: (Date.now() / 1000) + 86400, // 24 hours
+            sub: `backend-${data.user.email}`,
+            email: data.user.email,
+            role: data.user.role,
+            department: data.user.department,
+            given_name: data.user.name.split(' ')[0],
+            family_name: data.user.name.split(' ').slice(1).join(' ')
+          }
+        };
+
+        setUser(userAccount);
+        localStorage.setItem('manualUser', JSON.stringify(userAccount));
+        localStorage.removeItem('mockUser'); // Clear old mock data
+        console.log('Mock admin login successful with backend token');
+      } else {
+        throw new Error(data.message || 'Admin login failed');
+      }
+    } catch (error) {
+      console.error('Mock admin login error:', error);
+      // Fallback to old mock behavior if backend is unavailable
+      const mockAdminAccount: AccountInfo = {
+        homeAccountId: 'mock-chaisahr@clintonhealthaccess.org',
+        environment: 'mock',
+        tenantId: 'mock-tenant',
+        username: 'chaisahr@clintonhealthaccess.org',
+        localAccountId: 'mock-chaisahr@clintonhealthaccess.org',
+        name: 'Admin User',
+        idTokenClaims: {
+          aud: 'mock',
+          iss: 'mock',
+          iat: Date.now() / 1000,
+          exp: (Date.now() / 1000) + 86400, // 24 hours
+          sub: 'mock-chaisahr@clintonhealthaccess.org',
+          email: 'chaisahr@clintonhealthaccess.org',
+          role: 'admin',
+          department: 'HR & Operations',
+          given_name: 'Admin',
+          family_name: 'User'
+        }
+      };
+
+      setUser(mockAdminAccount);
+      localStorage.setItem('mockUser', JSON.stringify(mockAdminAccount));
+      localStorage.setItem('auth_token', 'mock-admin-token');
+      console.log('Using fallback mock admin login');
+    }
   };
 
   const manualLogin = async (email: string, password: string) => {
