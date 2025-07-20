@@ -94,7 +94,7 @@ export const AdminCharts = () => {
         
         requestsArray.forEach((request: any, index) => {
           // Handle different field naming conventions for requester email
-          const requesterEmail = request.Requester || request.requester || request.email || 
+          const requesterEmail = request.employeeEmail || request.Requester || request.requester || request.email || 
                                  request.EmployeeEmail || request.employee_email || request.user_email ||
                                  request.requestedBy || request.requested_by;
           
