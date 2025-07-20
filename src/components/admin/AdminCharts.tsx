@@ -155,9 +155,8 @@ export const AdminCharts = () => {
         }
         
         requestsArray.forEach((request: any) => {
-          // Extract date from submission timestamp or fallback to start date
-          const submissionDate = request.SubmissionDate || request.submission_date || 
-                               request.created_at || request.startDate || request.start_date;
+          // Use created_at as the primary date field
+          const submissionDate = request.created_at;
           if (!submissionDate) return;
           
           const date = new Date(submissionDate);
