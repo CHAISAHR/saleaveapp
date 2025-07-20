@@ -31,7 +31,42 @@ export class BalanceApiClient {
   static async getEmployeeBalance(employeeEmail: string, year: number = new Date().getFullYear()): Promise<EmployeeBalance | null> {
     try {
       const response = await this.apiRequest(`/${employeeEmail}?year=${year}`);
-      return response.balance;
+      
+      // Handle both real API response (response.balance) and mock data (array of balances)
+      if (response.balance) {
+        return response.balance;
+      } else if (Array.isArray(response)) {
+        // Mock data is an array, find the employee by email
+        const mockBalance = response.find((b: any) => b.email === employeeEmail);
+        if (mockBalance) {
+          // Convert mock data to EmployeeBalance format
+          return {
+            BalanceID: 1,
+            EmployeeName: mockBalance.name,
+            EmployeeEmail: mockBalance.email,
+            Department: mockBalance.department,
+            Year: year,
+            Broughtforward: 0,
+            Annual: 20,
+            AccumulatedLeave: mockBalance.annualLeave || 0,
+            AnnualUsed: (20 - (mockBalance.annualLeave || 0)),
+            Forfeited: 0,
+            Annual_leave_adjustments: 0,
+            SickUsed: (36 - (mockBalance.sickLeave || 0)),
+            MaternityUsed: mockBalance.maternityLeave || 0,
+            ParentalUsed: mockBalance.paternityLeave || 0,
+            FamilyUsed: (3 - (mockBalance.familyResponsibility || 0)),
+            AdoptionUsed: 0,
+            StudyUsed: (10 - (mockBalance.studyLeave || 0)),
+            WellnessUsed: 0,
+            Current_leave_balance: mockBalance.annualLeave || 0,
+            Manager: 'jane.smith@example.com',
+            Start_date: '2024-01-01'
+          };
+        }
+      }
+      
+      return null;
     } catch (error) {
       console.error('Failed to get employee balance:', error);
       return null;
