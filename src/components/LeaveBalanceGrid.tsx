@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ForfeitRibbon } from "@/components/ForfeitRibbon";
 import { apiConfig, makeApiRequest } from "@/config/apiConfig";
+import { BalanceCalculations } from "@/services/balance/balanceCalculations";
+import { EmployeeBalance } from "@/services/balanceService";
 
 interface LeaveBalance {
   type: string;
@@ -45,9 +47,51 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
 
       if (response.ok) {
         const data = await response.json();
-        // Use the transformed balances from backend if available
-        if (data.balances && data.balances.length > 0) {
-          setLeaveBalances(data.balances);
+        // Transform backend employee balance data to component format
+        if (data && data.EmployeeName) {
+          const employeeBalance: EmployeeBalance = data;
+          const accumulatedLeave = BalanceCalculations.calculateAccumulatedLeave(
+            new Date(), 
+            employeeBalance.Contract_termination_date
+          );
+          
+          const transformedBalances: LeaveBalance[] = [
+            {
+              type: 'Annual',
+              used: employeeBalance.AnnualUsed || 0,
+              total: (employeeBalance.Annual || 0) + (employeeBalance.Broughtforward || 0),
+              accrued: accumulatedLeave,
+              unit: 'days',
+              broughtForward: employeeBalance.Broughtforward || 0,
+              balance: BalanceCalculations.calculateCurrentBalance(employeeBalance, 'annual', employeeBalance.Start_date)
+            },
+            {
+              type: 'Sick',
+              used: employeeBalance.SickUsed || 0,
+              total: 36, // Max sick leave allocation
+              accrued: 36,
+              unit: 'days',
+              balance: BalanceCalculations.calculateOtherLeaveBalance(36, employeeBalance.SickUsed || 0)
+            },
+            {
+              type: 'Maternity',
+              used: employeeBalance.MaternityUsed || 0,
+              total: 3,
+              accrued: 3,
+              unit: 'months',
+              balance: BalanceCalculations.calculateOtherLeaveBalance(3, employeeBalance.MaternityUsed || 0)
+            },
+            {
+              type: 'Parental',
+              used: employeeBalance.ParentalUsed || 0,
+              total: 4,
+              accrued: 4,
+              unit: 'weeks',
+              balance: BalanceCalculations.calculateOtherLeaveBalance(4, employeeBalance.ParentalUsed || 0)
+            }
+          ];
+          
+          setLeaveBalances(transformedBalances);
         } else {
           // Fallback to default balances if backend doesn't return structured data
           setLeaveBalances(getDefaultBalances());
