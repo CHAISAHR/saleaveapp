@@ -97,35 +97,46 @@ export const AdminCharts = () => {
           }
         });
 
-        // Create time series data by grouping requests by submission date
+        // Create time series data by grouping requests by month from beginning of year
         const timeStats: Record<string, TimeSeriesData> = {};
+        const currentYear = new Date().getFullYear();
+        
+        // Initialize all months from January to current month
+        for (let month = 0; month < 12; month++) {
+          const monthKey = `${currentYear}-${String(month + 1).padStart(2, '0')}`;
+          const monthName = new Date(currentYear, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+          timeStats[monthKey] = {
+            date: monthName,
+            pending: 0,
+            approved: 0,
+            rejected: 0
+          };
+        }
         
         requestsArray.forEach((request: any) => {
           // Extract date from submission timestamp - handle different date formats
           const submissionDate = request.SubmissionDate || request.submission_date || request.created_at;
           if (!submissionDate) return;
           
-          const date = new Date(submissionDate).toISOString().split('T')[0]; // YYYY-MM-DD format
+          const date = new Date(submissionDate);
+          if (date.getFullYear() !== currentYear) return; // Only current year data
           
-          if (!timeStats[date]) {
-            timeStats[date] = {
-              date,
-              pending: 0,
-              approved: 0,
-              rejected: 0
-            };
-          }
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
           
-          const status = request.Status?.toLowerCase() || 'pending';
-          if (status === 'pending' || status === 'approved' || status === 'rejected') {
-            timeStats[date][status as keyof Omit<TimeSeriesData, 'date'>]++;
+          if (timeStats[monthKey]) {
+            const status = request.Status?.toLowerCase() || 'pending';
+            if (status === 'pending' || status === 'approved' || status === 'rejected') {
+              timeStats[monthKey][status as keyof Omit<TimeSeriesData, 'date'>]++;
+            }
           }
         });
 
-        // Sort time series data by date and limit to last 30 days
-        const sortedTimeData = Object.values(timeStats)
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-          .slice(-30);
+        // Get monthly data in chronological order, only up to current month
+        const currentMonth = new Date().getMonth();
+        const sortedTimeData = Object.keys(timeStats)
+          .sort()
+          .slice(0, currentMonth + 1) // Only show months up to current month
+          .map(key => timeStats[key]);
         
         setTimeSeriesData(sortedTimeData);
 
@@ -227,7 +238,7 @@ export const AdminCharts = () => {
             <Users className="h-5 w-5" />
             <span>Leave Status Over Time</span>
           </CardTitle>
-          <CardDescription>Leave request trends over the last 30 days</CardDescription>
+          <CardDescription>Monthly leave request trends from beginning of year</CardDescription>
         </CardHeader>
         <CardContent>
           {timeSeriesData.length === 0 ? (
@@ -241,12 +252,12 @@ export const AdminCharts = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     dataKey="date" 
-                    tickFormatter={(value) => new Date(value).toLocaleDateString()} 
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
                   />
                   <YAxis />
-                  <Tooltip 
-                    labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                  />
+                  <Tooltip />
                   <Legend />
                   <Line 
                     type="monotone" 
