@@ -27,12 +27,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
+    console.error('[useAuth] Context is undefined - AuthProvider may not be properly mounted');
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  console.log('[AuthProvider] Mounting AuthProvider...');
   const [user, setUser] = useState<AccountInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -95,9 +97,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        // Check for mock admin login
+        // Check for mock admin login only if there's no manual auth
         const mockUser = localStorage.getItem('mockUser');
-        if (mockUser && !authToken) {
+        const mockToken = localStorage.getItem('auth_token');
+        
+        if (mockUser && mockToken === 'mock-admin-token' && !manualUser) {
           console.log('[AuthContext] Setting mock user');
           setUser(JSON.parse(mockUser));
         }
@@ -318,6 +322,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   console.log('[AuthContext] Current auth state - user:', user?.username, 'authenticated:', !!user);
+  console.log('[AuthProvider] Rendering with context value...');
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
