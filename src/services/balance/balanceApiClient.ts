@@ -50,7 +50,8 @@ export class BalanceApiClient {
         const mockBalance = data.find((b: any) => b.email === employeeEmail);
         if (mockBalance) {
           // Convert mock data to EmployeeBalance format
-          return {
+          console.log('Converting mock balance data:', mockBalance);
+          const converted = {
             BalanceID: 1,
             EmployeeName: mockBalance.name,
             EmployeeEmail: mockBalance.email,
@@ -59,20 +60,22 @@ export class BalanceApiClient {
             Broughtforward: 0,
             Annual: 20,
             AccumulatedLeave: mockBalance.annualLeave || 0,
-            AnnualUsed: (20 - (mockBalance.annualLeave || 0)),
+            AnnualUsed: 0, // Set to 0 since we already have the available balance
             Forfeited: 0,
             Annual_leave_adjustments: 0,
             SickUsed: (36 - (mockBalance.sickLeave || 0)),
-            MaternityUsed: mockBalance.maternityLeave || 0,
-            ParentalUsed: mockBalance.paternityLeave || 0,
+            MaternityUsed: 0,
+            ParentalUsed: 0,
             FamilyUsed: (3 - (mockBalance.familyResponsibility || 0)),
             AdoptionUsed: 0,
-            StudyUsed: (10 - (mockBalance.studyLeave || 0)),
+            StudyUsed: (6 - (mockBalance.studyLeave || 0)),
             WellnessUsed: 0,
             Current_leave_balance: mockBalance.annualLeave || 0,
             Manager: 'jane.smith@example.com',
             Start_date: '2024-01-01'
           };
+          console.log('Converted balance object:', converted);
+          return converted;
         }
       }
       
