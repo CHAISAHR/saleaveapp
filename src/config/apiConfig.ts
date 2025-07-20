@@ -131,6 +131,33 @@ const createMockResponse = (url: string): Response => {
         studyLeave: 8
       }
     ];
+  } else if (url.includes('/api/users')) {
+    mockData = [
+      {
+        id: 1,
+        email: 'john.doe@example.com',
+        name: 'John Doe',
+        department: 'Engineering',
+        role: 'employee',
+        manager: 'jane.smith@example.com'
+      },
+      {
+        id: 2,
+        email: 'sarah.wilson@example.com',
+        name: 'Sarah Wilson',
+        department: 'Marketing',
+        role: 'employee',
+        manager: 'jane.smith@example.com'
+      },
+      {
+        id: 3,
+        email: 'jane.smith@example.com',
+        name: 'Jane Smith',
+        department: 'Management',
+        role: 'manager',
+        manager: null
+      }
+    ];
   }
   
   return new Response(JSON.stringify(mockData), {

@@ -40,29 +40,34 @@ export const AdminCharts = () => {
         headers: getAuthHeaders()
       });
 
-      // Fetch balance data for department info
-      const balanceResponse = await makeApiRequest(`${apiConfig.endpoints.balance}`, {
+      // Fetch users data for department info
+      const usersResponse = await makeApiRequest(`${apiConfig.endpoints.users}`, {
         headers: getAuthHeaders()
       });
 
       const requestsData = await requestsResponse.json();
-      const balanceData = await balanceResponse.json();
+      const usersData = await usersResponse.json();
 
       console.log('AdminCharts - Requests data:', requestsData);
-      console.log('AdminCharts - Balance data:', balanceData);
+      console.log('AdminCharts - Users data:', usersData);
 
       // Handle both real API responses and mock data arrays
       const requestsArray = Array.isArray(requestsData) ? requestsData : 
                            (requestsData.success && requestsData.requests ? requestsData.requests : 
                             requestsData.data || []);
-      const balanceArray = Array.isArray(balanceData) ? balanceData : 
-                          (balanceData.success && balanceData.data ? balanceData.data : 
-                           balanceData.data || []);
+      const usersArray = Array.isArray(usersData) ? usersData : 
+                        (usersData.success && usersData.data ? usersData.data : 
+                         usersData.data || []);
 
-        // Create department mapping
+        // Create department mapping from users table
         const departmentMap = {};
-        balanceArray.forEach(balance => {
-          departmentMap[balance.EmployeeEmail] = balance.Department;
+        usersArray.forEach(user => {
+          // Handle different field naming conventions
+          const email = user.email || user.Email || user.EmployeeEmail;
+          const department = user.department || user.Department;
+          if (email && department) {
+            departmentMap[email] = department;
+          }
         });
 
         // Group requests by department and status
