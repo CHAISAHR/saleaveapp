@@ -22,48 +22,77 @@ export const AdminStatsCards = () => {
 
   const fetchStats = async () => {
     try {
+      console.log('AdminStatsCards - Starting to fetch stats...');
+      
       // Fetch employee count from balances
       const balanceResponse = await makeApiRequest(`${apiConfig.endpoints.balance}`, {
         headers: getAuthHeaders()
       });
 
-      if (balanceResponse.ok) {
-        const balanceData = await balanceResponse.json();
-        // Ensure balanceData is an array
-        const balanceArray = Array.isArray(balanceData) ? balanceData : (balanceData.data || []);
-        const uniqueDepartments = [...new Set(balanceArray.map(b => b.Department))];
-        
-        setStats(prev => ({
-          ...prev,
-          totalEmployees: balanceArray.length,
-          departments: uniqueDepartments.length
-        }));
-      }
+      const balanceData = await balanceResponse.json();
+      console.log('AdminStatsCards - Balance response:', balanceData);
+      
+      // Handle both real API responses and mock data arrays
+      const balanceArray = Array.isArray(balanceData) ? balanceData : 
+                          (balanceData.success && balanceData.data ? balanceData.data : 
+                           balanceData.data || []);
+      
+      console.log('AdminStatsCards - Balance array:', balanceArray);
+      
+      // Handle different field naming conventions for department
+      const uniqueDepartments = [...new Set(balanceArray.map(b => 
+        b.Department || b.department || 'Unknown'
+      ).filter(dept => dept !== 'Unknown'))];
+      
+      console.log('AdminStatsCards - Unique departments:', uniqueDepartments);
+      
+      setStats(prev => ({
+        ...prev,
+        totalEmployees: balanceArray.length,
+        departments: uniqueDepartments.length
+      }));
 
       // Fetch requests data
       const requestsResponse = await makeApiRequest(`${apiConfig.endpoints.leave}/requests`, {
         headers: getAuthHeaders()
       });
 
-      if (requestsResponse.ok) {
-        const requestsData = await requestsResponse.json();
-        // Ensure requestsData is an array
-        const requestsArray = Array.isArray(requestsData) ? requestsData : (requestsData.data || []);
-        const currentMonth = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
+      const requestsData = await requestsResponse.json();
+      console.log('AdminStatsCards - Requests response:', requestsData);
+      
+      // Handle both real API responses and mock data arrays
+      const requestsArray = Array.isArray(requestsData) ? requestsData : 
+                           (requestsData.success && requestsData.requests ? requestsData.requests : 
+                            requestsData.data || []);
+      
+      console.log('AdminStatsCards - Requests array:', requestsArray);
+      
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      
+      // Handle different status and date field naming conventions
+      const activeRequests = requestsArray.filter(r => {
+        const status = (r.Status || r.status || '').toLowerCase();
+        return status === 'pending';
+      }).length;
+      
+      const monthlyRequests = requestsArray.filter(r => {
+        // Handle different date field names
+        const dateField = r.Created || r.SubmissionDate || r.submission_date || r.created_at;
+        if (!dateField) return false;
         
-        const activeRequests = requestsArray.filter(r => r.Status === 'pending').length;
-        const monthlyRequests = requestsArray.filter(r => {
-          const requestDate = new Date(r.Created);
-          return requestDate.getMonth() === currentMonth && requestDate.getFullYear() === currentYear;
-        }).length;
+        const requestDate = new Date(dateField);
+        return requestDate.getMonth() === currentMonth && requestDate.getFullYear() === currentYear;
+      }).length;
 
-        setStats(prev => ({
-          ...prev,
-          activeRequests,
-          monthlyRequests
-        }));
-      }
+      console.log('AdminStatsCards - Active requests:', activeRequests);
+      console.log('AdminStatsCards - Monthly requests:', monthlyRequests);
+
+      setStats(prev => ({
+        ...prev,
+        activeRequests,
+        monthlyRequests
+      }));
 
     } catch (error) {
       console.error('Error fetching admin stats:', error);
