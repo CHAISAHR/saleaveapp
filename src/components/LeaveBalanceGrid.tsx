@@ -25,11 +25,14 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
 
   // Fetch leave balances from live database via balance service
   const fetchLeaveBalances = async () => {
-    if (propBalances || !userEmail) return; // Use prop data if provided or no user email
+    if (propBalances || !userEmail) {
+      console.log('Skipping fetch - propBalances:', !!propBalances, 'userEmail:', userEmail);
+      return; // Use prop data if provided or no user email
+    }
     
     try {
       setLoading(true);
-      console.log('Fetching live balance data for:', userEmail);
+      console.log('Fetching live balance data for user:', userEmail);
       
       // Use the balance service to get live data from database
       const employeeBalance = await balanceService.getEmployeeBalance(userEmail);
