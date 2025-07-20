@@ -23,7 +23,7 @@ interface AuthenticationPageProps {
 
 export const AuthenticationPage = ({ manualLogin, manualSignUp, resetPassword }: AuthenticationPageProps) => {
   const [authMode, setAuthMode] = useState<'signin' | 'signup' | 'reset'>('signin');
-  const { mockAdminLogin } = useAuth();
+  const { mockAdminLogin, mockEmployeeLogin, mockManagerLogin } = useAuth();
 
   if (authMode === 'reset') {
     return (
@@ -55,15 +55,31 @@ export const AuthenticationPage = ({ manualLogin, manualSignUp, resetPassword }:
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <h4 className="text-sm font-medium text-yellow-800 mb-2">Quick Test Login</h4>
             <p className="text-xs text-yellow-700 mb-3">
-              Use this for testing when the backend server is not available
+              Choose a role to test with (requires backend authentication)
             </p>
-            <Button 
-              onClick={mockAdminLogin}
-              variant="outline" 
-              className="w-full border-yellow-300 text-yellow-800 hover:bg-yellow-100"
-            >
-              Login as Admin (Test Mode)
-            </Button>
+            <div className="space-y-2">
+              <Button 
+                onClick={mockAdminLogin}
+                variant="outline" 
+                className="w-full border-yellow-300 text-yellow-800 hover:bg-yellow-100"
+              >
+                Login as Admin
+              </Button>
+              <Button 
+                onClick={mockManagerLogin}
+                variant="outline" 
+                className="w-full border-yellow-300 text-yellow-800 hover:bg-yellow-100"
+              >
+                Login as Manager
+              </Button>
+              <Button 
+                onClick={mockEmployeeLogin}
+                variant="outline" 
+                className="w-full border-yellow-300 text-yellow-800 hover:bg-yellow-100"
+              >
+                Login as Employee
+              </Button>
+            </div>
           </div>
 
           {/* Auth mode toggle */}
