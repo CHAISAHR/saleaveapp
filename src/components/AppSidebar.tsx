@@ -45,7 +45,7 @@ export const AppSidebar = ({
       {
         value: "balance",
         icon: Calendar,
-        label: userRole === 'employee' ? 'Balance' : userRole === 'manager' ? 'Team Balances' : 'System Overview'
+        label: userRole === 'employee' ? 'Balance' : userRole === 'manager' ? 'Team Balances' : 'Balance Manager'
       },
       {
         value: "holidays",
