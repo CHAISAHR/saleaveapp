@@ -43,11 +43,6 @@ export const AppSidebar = ({
         label: userRole === 'employee' ? 'My Requests' : userRole === 'manager' ? 'Team Requests' : 'Dashboard'
       },
       {
-        value: "balance",
-        icon: Calendar,
-        label: userRole === 'employee' ? 'Balance' : userRole === 'manager' ? 'Team Balances' : 'Balance Manager'
-      },
-      {
         value: "holidays",
         icon: Calendar,
         label: "Holidays"
@@ -58,6 +53,15 @@ export const AppSidebar = ({
         label: "About"
       }
     ];
+
+    // Add balance tab only for employees and managers
+    if (userRole !== 'admin') {
+      baseItems.splice(1, 0, {
+        value: "balance",
+        icon: Calendar,
+        label: userRole === 'employee' ? 'Balance' : 'Team Balances'
+      });
+    }
 
     if (userRole === 'admin') {
       baseItems.splice(1, 0, {
@@ -70,7 +74,7 @@ export const AppSidebar = ({
         icon: Users,
         label: "All Balances"
       });
-      baseItems.splice(4, 0, {
+      baseItems.splice(3, 0, {
         value: "user-management",
         icon: Users,
         label: "User Management"
