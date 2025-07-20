@@ -182,13 +182,13 @@ export const AdminCharts = () => {
         setTimeSeriesData(sortedTimeData);
 
         // Create bar chart data for pending requests by department
-        // Show all departments that have users, even if no pending requests
+        // Only show departments with pending requests > 0
         const pendingData: PendingData[] = Object.values(departmentStats)
+          .filter((dept: DepartmentStats) => dept.pending > 0 && dept.department !== 'Unknown')
           .map((dept: DepartmentStats) => ({
             department: dept.department,
             pending: dept.pending
-          }))
-          .filter((dept: PendingData) => dept.department !== 'Unknown'); // Hide unknown departments
+          }));
 
         setPendingLeavesByDepartment(pendingData);
         
