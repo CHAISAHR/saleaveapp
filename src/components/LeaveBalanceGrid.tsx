@@ -88,6 +88,38 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
               accrued: 4,
               unit: 'weeks',
               balance: BalanceCalculations.calculateOtherLeaveBalance(4, employeeBalance.ParentalUsed || 0)
+            },
+            {
+              type: 'Family',
+              used: employeeBalance.FamilyUsed || 0,
+              total: 5,
+              accrued: 5,
+              unit: 'days',
+              balance: BalanceCalculations.calculateOtherLeaveBalance(5, employeeBalance.FamilyUsed || 0)
+            },
+            {
+              type: 'Adoption',
+              used: employeeBalance.AdoptionUsed || 0,
+              total: 10,
+              accrued: 10,
+              unit: 'weeks',
+              balance: BalanceCalculations.calculateOtherLeaveBalance(10, employeeBalance.AdoptionUsed || 0)
+            },
+            {
+              type: 'Study',
+              used: employeeBalance.StudyUsed || 0,
+              total: 10,
+              accrued: 10,
+              unit: 'days',
+              balance: BalanceCalculations.calculateOtherLeaveBalance(10, employeeBalance.StudyUsed || 0)
+            },
+            {
+              type: 'Wellness',
+              used: employeeBalance.WellnessUsed || 0,
+              total: 2,
+              accrued: 2,
+              unit: 'days',
+              balance: BalanceCalculations.calculateOtherLeaveBalance(2, employeeBalance.WellnessUsed || 0)
             }
           ];
           
@@ -144,6 +176,38 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
       accrued: 4,
       unit: 'weeks',
       balance: 4
+    },
+    {
+      type: 'Family',
+      used: 0,
+      total: 5,
+      accrued: 5,
+      unit: 'days',
+      balance: 5
+    },
+    {
+      type: 'Adoption',
+      used: 0,
+      total: 10,
+      accrued: 10,
+      unit: 'weeks',
+      balance: 10
+    },
+    {
+      type: 'Study',
+      used: 0,
+      total: 10,
+      accrued: 10,
+      unit: 'days',
+      balance: 10
+    },
+    {
+      type: 'Wellness',
+      used: 0,
+      total: 2,
+      accrued: 2,
+      unit: 'days',
+      balance: 2
     }
   ];
 
@@ -175,7 +239,7 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
         />
       )}
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
         {leaveBalances.map(balance => {
           return (
             <Card key={balance.type} className="hover:shadow-md transition-shadow">
