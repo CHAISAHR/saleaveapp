@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/useUser";
 import { calculateWorkingDays } from "@/lib/utils";
 import { apiConfig } from "@/config/apiConfig";
+import { balanceService, type EmployeeBalance } from "@/services/balanceService";
 
 interface LeaveRequestFormProps {
   isOpen: boolean;
@@ -42,6 +43,8 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
   const [companyHolidays, setCompanyHolidays] = useState<Date[]>([]);
   const [managerInfo, setManagerInfo] = useState<{ name: string; email: string } | null>(null);
   const [availableManagers, setAvailableManagers] = useState<any[]>([]);
+  const [userBalance, setUserBalance] = useState<EmployeeBalance | null>(null);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(true);
 
   // Fetch manager info and available managers on component mount
   useEffect(() => {
@@ -138,72 +141,145 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     fetchHolidays();
   }, []);
 
-  const leaveTypes = [
-    { 
-      value: "annual", 
-      label: "Annual Leave", 
-      description: "Vacation and personal time off",
-      balance: 12,
-      total: 20,
-      unit: "days"
-    },
-    { 
-      value: "sick", 
-      label: "Sick Leave", 
-      description: "Medical appointments and illness",
-      balance: 33,
-      total: 36,
-      unit: "days"
-    },
-    { 
-      value: "maternity", 
-      label: "Maternity Leave", 
-      description: "Childbirth and recovery period (for women)",
-      balance: 3,
-      total: 3,
-      unit: "months"
-    },
-    { 
-      value: "parental", 
-      label: "Parental Leave", 
-      description: "Caring for newborn or adopted child",
-      balance: 4,
-      total: 4,
-      unit: "weeks"
-    },
-    { 
-      value: "family", 
-      label: "Family Leave", 
-      description: "Caring for family members",
-      balance: 2,
-      total: 3,
-      unit: "days"
-    },
-    { 
-      value: "adoption", 
-      label: "Adoption Leave", 
-      description: "Adopting a child",
-      balance: 4,
-      total: 4,
-      unit: "weeks"
-    },
-    { 
-      value: "study", 
-      label: "Study Leave", 
-      description: "Professional development and training",
-      balance: 4,
-      total: 6,
-      unit: "days"
-    },
-    { 
-      value: "wellness", 
-      label: "Wellness Leave", 
-      description: "Mental health and wellbeing",
-      balance: 2,
-      total: 2,
-      unit: "days"
+  // Fetch user balance data
+  useEffect(() => {
+    const fetchUserBalance = async () => {
+      if (!currentUser?.email) return;
+      
+      try {
+        setIsLoadingBalance(true);
+        const balance = await balanceService.getEmployeeBalance(currentUser.email);
+        setUserBalance(balance);
+        console.log('User balance loaded:', balance);
+      } catch (error) {
+        console.error('Failed to fetch user balance:', error);
+      } finally {
+        setIsLoadingBalance(false);
+      }
+    };
+
+    fetchUserBalance();
+  }, [currentUser?.email]);
+
+  // Generate leave types based on user's actual balance data
+  const getLeaveTypes = () => {
+    if (isLoadingBalance) {
+      return []; // Return empty array while loading
     }
-  ];
+
+    const baseTypes = [
+      { 
+        value: "annual", 
+        label: "Annual Leave", 
+        description: "Vacation and personal time off",
+        unit: "days"
+      },
+      { 
+        value: "sick", 
+        label: "Sick Leave", 
+        description: "Medical appointments and illness",
+        unit: "days"
+      },
+      { 
+        value: "maternity", 
+        label: "Maternity Leave", 
+        description: "Childbirth and recovery period (for women)",
+        unit: "months"
+      },
+      { 
+        value: "parental", 
+        label: "Parental Leave", 
+        description: "Caring for newborn or adopted child",
+        unit: "weeks"
+      },
+      { 
+        value: "family", 
+        label: "Family Leave", 
+        description: "Caring for family members",
+        unit: "days"
+      },
+      { 
+        value: "adoption", 
+        label: "Adoption Leave", 
+        description: "Adopting a child",
+        unit: "weeks"
+      },
+      { 
+        value: "study", 
+        label: "Study Leave", 
+        description: "Professional development and training",
+        unit: "days"
+      },
+      { 
+        value: "wellness", 
+        label: "Wellness Leave", 
+        description: "Mental health and wellbeing",
+        unit: "days"
+      }
+    ];
+
+    if (!userBalance) {
+      // If no balance data, return base types with zero balances
+      return baseTypes.map(type => ({
+        ...type,
+        balance: 0,
+        total: type.value === "annual" ? 20 : 
+               type.value === "sick" ? 36 : 
+               type.value === "maternity" ? 3 : 
+               type.value === "parental" || type.value === "adoption" ? 4 : 
+               type.value === "study" ? 6 : 2
+      }));
+    }
+
+    // Calculate real balances using the balance service
+    return baseTypes.map(type => {
+      let balance = 0;
+      let total = 0;
+
+      switch (type.value) {
+        case "annual":
+          balance = balanceService.calculateAnnualLeaveBalance(userBalance, userBalance.Start_date);
+          total = 20; // Standard annual leave allocation
+          break;
+        case "sick":
+          balance = balanceService.calculateOtherLeaveBalance(36, userBalance.SickUsed || 0);
+          total = 36;
+          break;
+        case "maternity":
+          balance = balanceService.calculateOtherLeaveBalance(3, userBalance.MaternityUsed || 0);
+          total = 3;
+          break;
+        case "parental":
+          balance = balanceService.calculateOtherLeaveBalance(4, userBalance.ParentalUsed || 0);
+          total = 4;
+          break;
+        case "family":
+          balance = balanceService.calculateOtherLeaveBalance(3, userBalance.FamilyUsed || 0);
+          total = 3;
+          break;
+        case "adoption":
+          balance = balanceService.calculateOtherLeaveBalance(4, userBalance.AdoptionUsed || 0);
+          total = 4;
+          break;
+        case "study":
+          balance = balanceService.calculateOtherLeaveBalance(6, userBalance.StudyUsed || 0);
+          total = 6;
+          break;
+        case "wellness":
+          balance = balanceService.calculateOtherLeaveBalance(2, userBalance.WellnessUsed || 0);
+          total = 2;
+          break;
+      }
+
+      return {
+        ...type,
+        balance: Math.max(0, balance), // Ensure balance is not negative
+        total
+      };
+    });
+  };
+
+  const leaveTypes = getLeaveTypes();
 
   // South African public holidays for 2025
   const publicHolidays = [
