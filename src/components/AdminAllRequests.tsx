@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, XCircle, AlertCircle, Edit, Save, X, Download, Ban } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { balanceService } from "@/services/balanceService";
-import { apiConfig } from "@/config/apiConfig";
+import { apiConfig, makeApiRequest } from "@/config/apiConfig";
 
 interface LeaveRequest {
   LeaveID: number;
@@ -44,21 +44,18 @@ export const AdminAllRequests = () => {
 
   const fetchRequests = async () => {
     try {
-      const response = await fetch(`${apiConfig.endpoints.leave}/requests`, {
+      const response = await makeApiRequest(`${apiConfig.endpoints.leave}/requests`, {
         headers: getAuthHeaders()
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.requests) {
-          setRequests(data.requests);
-        }
+      const data = await response.json();
+      // Handle both mock data (array) and real API response (object with success property)
+      if (Array.isArray(data)) {
+        setRequests(data);
+      } else if (data.success && data.requests) {
+        setRequests(data.requests);
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to fetch leave requests",
-          variant: "destructive",
-        });
+        setRequests([]);
       }
     } catch (error) {
       console.error('Error fetching requests:', error);
@@ -78,7 +75,7 @@ export const AdminAllRequests = () => {
 
   const handleStatusUpdate = async (requestId: number, newStatus: 'pending' | 'approved' | 'rejected' | 'cancelled', reason?: string) => {
     try {
-      const response = await fetch(`${apiConfig.endpoints.leave}/requests/${requestId}/status`, {
+      const response = await makeApiRequest(`${apiConfig.endpoints.leave}/requests/${requestId}/status`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({
