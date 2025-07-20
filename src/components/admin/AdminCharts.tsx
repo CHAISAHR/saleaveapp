@@ -131,7 +131,7 @@ export const AdminCharts = () => {
             departmentStats[department].pending++;
           } else if (status === 'approved') {
             departmentStats[department].approved++;
-          } else if (status === 'rejected') {
+          } else if (status === 'rejected' || status === 'declined' || status === 'cancelled') {
             departmentStats[department].rejected++;
           }
         });
@@ -167,8 +167,12 @@ export const AdminCharts = () => {
           if (timeStats[monthKey]) {
             // Handle different status field naming and normalize the value
             const status = (request.status || request.Status || 'pending').toLowerCase();
-            if (status === 'pending' || status === 'approved' || status === 'rejected') {
-              timeStats[monthKey][status as keyof Omit<TimeSeriesData, 'date'>]++;
+            if (status === 'pending') {
+              timeStats[monthKey].pending++;
+            } else if (status === 'approved') {
+              timeStats[monthKey].approved++;
+            } else if (status === 'rejected' || status === 'declined' || status === 'cancelled') {
+              timeStats[monthKey].rejected++;
             }
           }
         });
