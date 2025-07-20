@@ -6,6 +6,7 @@ import { AdminAllBalancesHeader } from "./admin/AdminAllBalancesHeader";
 import { AdminAllBalancesTable } from "./admin/AdminAllBalancesTable";
 import { EditBalanceDialog } from "./admin/EditBalanceDialog";
 import { WarningDialogs } from "./admin/WarningDialogs";
+import { apiConfig } from "@/config/apiConfig";
 
 interface EmployeeBalance {
   BalanceID: number;
@@ -55,6 +56,50 @@ export const AdminAllBalances = () => {
   const [showRolloverWarning, setShowRolloverWarning] = useState(false);
   const [showForfeitWarning, setShowForfeitWarning] = useState(false);
   const [currentYear] = useState(new Date().getFullYear());
+  const [balances, setBalances] = useState<EmployeeBalance[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const getAuthHeaders = () => {
+    const authToken = localStorage.getItem('auth_token');
+    return {
+      'Authorization': `Bearer ${authToken}`,
+      'Content-Type': 'application/json'
+    };
+  };
+
+  const fetchBalances = async () => {
+    try {
+      const response = await fetch(`${apiConfig.endpoints.balance}`, {
+        headers: getAuthHeaders()
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.balances) {
+          setBalances(data.balances);
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to fetch balances",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching balances:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch balances",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBalances();
+  }, []);
 
   // Check if current date is after July 31st
   const isAfterJuly31 = () => {
@@ -62,79 +107,6 @@ export const AdminAllBalances = () => {
     const july31 = new Date(currentDate.getFullYear(), 6, 31); // July is month 6 (0-indexed)
     return currentDate > july31;
   };
-
-  // Mock data - in real app this would come from API
-  const [balances, setBalances] = useState<EmployeeBalance[]>([
-    {
-      BalanceID: 1,
-      EmployeeName: "John Smith",
-      EmployeeEmail: "john.smith@company.com",
-      Department: "HR",
-      Status: "Active",
-      Year: 2025,
-      Broughtforward: 5,
-      Annual: 20,
-      AccumulatedLeave: 20.0, // 12 months * 1.667
-      AnnualUsed: 8,
-      Forfeited: 0,
-      Annual_leave_adjustments: 0,
-      SickBroughtforward: 2,
-      Sick: 36,
-      SickUsed: 2,
-      Maternity: 90,
-      MaternityUsed: 0,
-      Parental: 20,
-      ParentalUsed: 0,
-      Family: 3,
-      FamilyUsed: 1,
-      Adoption: 20,
-      AdoptionUsed: 0,
-      Study: 6,
-      StudyUsed: 0,
-      Wellness: 2,
-      WellnessUsed: 0,
-      PowerAppsId: "PA001",
-      Current_leave_balance: 17,
-      Leave_balance_previous_month: 15.5,
-      Manager: "sarah.johnson@company.com",
-      Modified: "2024-12-11T10:00:00Z"
-    },
-    {
-      BalanceID: 2,
-      EmployeeName: "Emily Davis",
-      EmployeeEmail: "emily.davis@company.com",
-      Department: "HR",
-      Status: "Active",
-      Year: 2025,
-      Broughtforward: 3,
-      Annual: 20,
-      AccumulatedLeave: 13.3, // 8 months * 1.667 (terminated)
-      AnnualUsed: 12,
-      Forfeited: 0,
-      Annual_leave_adjustments: 0,
-      SickBroughtforward: 5,
-      Sick: 36,
-      SickUsed: 4,
-      Maternity: 90,
-      MaternityUsed: 0,
-      Parental: 20,
-      ParentalUsed: 0,
-      Family: 3,
-      FamilyUsed: 1,
-      Adoption: 20,
-      AdoptionUsed: 0,
-      Study: 6,
-      StudyUsed: 2,
-      Wellness: 2,
-      WellnessUsed: 0,
-      PowerAppsId: "PA002",
-      Current_leave_balance: 11,
-      Leave_balance_previous_month: 13.5,
-      Contract_termination_date: "2024-12-01",
-      Manager: "sarah.johnson@company.com",
-      Modified: "2024-12-11T10:00:00Z"
-    }
-  ]);
 
   const calculateCurrentBalance = (balance: EmployeeBalance) => {
     return balanceService.calculateAnnualLeaveBalance(balance);
@@ -379,6 +351,15 @@ export const AdminAllBalances = () => {
       description: "Employee balances have been updated after rollover.",
     });
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2">Loading balances...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
