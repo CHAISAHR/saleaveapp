@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, Calendar as CalendarIcon, Database, Settings } from "lucide-react";
-import { apiConfig } from "@/config/apiConfig";
+import { apiConfig, makeApiRequest } from "@/config/apiConfig";
 
 export const AdminStatsCards = () => {
   const [stats, setStats] = useState({
@@ -23,33 +23,37 @@ export const AdminStatsCards = () => {
   const fetchStats = async () => {
     try {
       // Fetch employee count from balances
-      const balanceResponse = await fetch(`${apiConfig.endpoints.balance}`, {
+      const balanceResponse = await makeApiRequest(`${apiConfig.endpoints.balance}`, {
         headers: getAuthHeaders()
       });
 
       if (balanceResponse.ok) {
         const balanceData = await balanceResponse.json();
-        const uniqueDepartments = [...new Set(balanceData.map(b => b.Department))];
+        // Ensure balanceData is an array
+        const balanceArray = Array.isArray(balanceData) ? balanceData : (balanceData.data || []);
+        const uniqueDepartments = [...new Set(balanceArray.map(b => b.Department))];
         
         setStats(prev => ({
           ...prev,
-          totalEmployees: balanceData.length,
+          totalEmployees: balanceArray.length,
           departments: uniqueDepartments.length
         }));
       }
 
       // Fetch requests data
-      const requestsResponse = await fetch(`${apiConfig.endpoints.leave}/requests`, {
+      const requestsResponse = await makeApiRequest(`${apiConfig.endpoints.leave}/requests`, {
         headers: getAuthHeaders()
       });
 
       if (requestsResponse.ok) {
         const requestsData = await requestsResponse.json();
+        // Ensure requestsData is an array
+        const requestsArray = Array.isArray(requestsData) ? requestsData : (requestsData.data || []);
         const currentMonth = new Date().getMonth();
         const currentYear = new Date().getFullYear();
         
-        const activeRequests = requestsData.filter(r => r.Status === 'pending').length;
-        const monthlyRequests = requestsData.filter(r => {
+        const activeRequests = requestsArray.filter(r => r.Status === 'pending').length;
+        const monthlyRequests = requestsArray.filter(r => {
           const requestDate = new Date(r.Created);
           return requestDate.getMonth() === currentMonth && requestDate.getFullYear() === currentYear;
         }).length;

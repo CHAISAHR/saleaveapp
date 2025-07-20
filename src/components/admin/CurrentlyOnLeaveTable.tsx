@@ -26,10 +26,12 @@ export const CurrentlyOnLeaveTable = () => {
 
       if (response.ok) {
         const requestsData = await response.json();
+        // Ensure requestsData is an array
+        const requestsArray = Array.isArray(requestsData) ? requestsData : (requestsData.data || []);
         const today = new Date();
         
         // Filter for approved requests that are currently active
-        const activeLeave = requestsData.filter(request => {
+        const activeLeave = requestsArray.filter(request => {
           const startDate = new Date(request.StartDate);
           const endDate = new Date(request.EndDate);
           return request.Status === 'approved' && 

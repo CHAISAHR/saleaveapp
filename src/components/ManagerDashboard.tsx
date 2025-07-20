@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CheckCircle, XCircle, AlertCircle, Clock, Users, Calendar, Mail, Ban, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiConfig } from "@/config/apiConfig";
+import { apiConfig, makeApiRequest } from "@/config/apiConfig";
 import { balanceService } from "@/services/balanceService";
 
 interface ManagerDashboardProps {
@@ -34,29 +34,33 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
   const fetchTeamData = async () => {
     try {
       // Fetch team balances
-      const balanceResponse = await fetch(`${apiConfig.endpoints.balance}`, {
+      const balanceResponse = await makeApiRequest(`${apiConfig.endpoints.balance}`, {
         headers: getAuthHeaders()
       });
 
       if (balanceResponse.ok) {
         const balanceData = await balanceResponse.json();
-        const teamBalances = balanceData.filter((balance: any) => 
+        // Ensure balanceData is an array
+        const balanceArray = Array.isArray(balanceData) ? balanceData : (balanceData.data || []);
+        const teamBalances = balanceArray.filter((balance: any) => 
           balance.Manager === currentUser.email
         );
         setTeamMembers(teamBalances);
       }
 
       // Fetch leave requests
-      const requestsResponse = await fetch(`${apiConfig.endpoints.leave}/requests`, {
+      const requestsResponse = await makeApiRequest(`${apiConfig.endpoints.leave}/requests`, {
         headers: getAuthHeaders()
       });
 
       if (requestsResponse.ok) {
         const requestsData = await requestsResponse.json();
+        // Ensure requestsData is an array
+        const requestsArray = Array.isArray(requestsData) ? requestsData : (requestsData.data || []);
         
         // Filter requests for team members
         const teamEmails = teamMembers.map(member => member.EmployeeEmail);
-        const teamRequests = requestsData.filter((request: any) => 
+        const teamRequests = requestsArray.filter((request: any) => 
           teamEmails.includes(request.Requester)
         );
 

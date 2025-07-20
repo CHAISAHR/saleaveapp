@@ -49,16 +49,20 @@ export const AdminCharts = () => {
         const requestsData = await requestsResponse.json();
         const balanceData = await balanceResponse.json();
 
+        // Ensure data is arrays
+        const requestsArray = Array.isArray(requestsData) ? requestsData : (requestsData.data || []);
+        const balanceArray = Array.isArray(balanceData) ? balanceData : (balanceData.data || []);
+
         // Create department mapping
         const departmentMap = {};
-        balanceData.forEach(balance => {
+        balanceArray.forEach(balance => {
           departmentMap[balance.EmployeeEmail] = balance.Department;
         });
 
         // Group requests by department and status
         const departmentStats: Record<string, DepartmentStats> = {};
         
-        requestsData.forEach((request: any) => {
+        requestsArray.forEach((request: any) => {
           const department = departmentMap[request.Requester] || 'Unknown';
           
           if (!departmentStats[department]) {

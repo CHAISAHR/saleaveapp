@@ -5,7 +5,7 @@ import { Plus } from "lucide-react";
 import { LeaveBalanceGrid } from "@/components/LeaveBalanceGrid";
 import { LeaveStatsCards } from "@/components/LeaveStatsCards";
 import { LeaveRequestsList } from "@/components/LeaveRequestsList";
-import { apiConfig } from "@/config/apiConfig";
+import { apiConfig, makeApiRequest } from "@/config/apiConfig";
 import { useToast } from "@/hooks/use-toast";
 
 interface EmployeeDashboardProps {
@@ -33,13 +33,15 @@ export const EmployeeDashboard = ({
 
   const fetchLeaveRequests = async () => {
     try {
-      const response = await fetch(`${apiConfig.endpoints.leave}/requests`, {
+      const response = await makeApiRequest(`${apiConfig.endpoints.leave}/requests`, {
         headers: getAuthHeaders()
       });
 
       if (response.ok) {
         const data = await response.json();
-        const userRequests = data.filter((request: any) => 
+        // Ensure data is an array
+        const dataArray = Array.isArray(data) ? data : (data.data || []);
+        const userRequests = dataArray.filter((request: any) => 
           request.Requester === currentUser.email
         );
         setLeaveRequests(userRequests);
