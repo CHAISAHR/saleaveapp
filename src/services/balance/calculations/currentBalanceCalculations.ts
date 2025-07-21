@@ -11,6 +11,9 @@ export class CurrentBalanceCalculations {
       balance.Contract_termination_date
     );
     
+    // Save dynamic accumulated leave to database if it differs from stored value
+    this.syncAccumulatedLeaveToDatabase(balance.EmployeeEmail, dynamicAccumulatedLeave, balance.AccumulatedLeave);
+    
     // Debug: Log all values to identify NaN source
     console.log(`Balance values for ${balance.EmployeeName}:`, {
       Broughtforward: balance.Broughtforward, 
@@ -51,6 +54,22 @@ export class CurrentBalanceCalculations {
     });
 
     return currentBalance;
+  }
+
+  // Sync dynamic accumulated leave to database
+  private static async syncAccumulatedLeaveToDatabase(employeeEmail: string, dynamicValue: number, databaseValue: number | string): Promise<void> {
+    const dbValue = Number(databaseValue) || 0;
+    
+    // Only update if values differ by more than 0.1 to avoid unnecessary API calls
+    if (Math.abs(dynamicValue - dbValue) > 0.1) {
+      try {
+        const { BalanceApiClient } = await import('../balanceApiClient');
+        await BalanceApiClient.updateAccumulatedLeave(employeeEmail, dynamicValue);
+        console.log(`Updated accumulated leave for ${employeeEmail}: ${dbValue} → ${dynamicValue}`);
+      } catch (error) {
+        console.error(`Failed to sync accumulated leave for ${employeeEmail}:`, error);
+      }
+    }
   }
 
   // Calculate current balance for other leave types (yearly allocation - used)

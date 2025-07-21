@@ -106,6 +106,10 @@ class BalanceService {
   async updateBalanceOnApproval(leaveRequest: LeaveRequest): Promise<void> {
     return BalanceApiClient.updateBalanceOnApproval(leaveRequest);
   }
+
+  async updateAccumulatedLeave(employeeEmail: string, accumulatedLeave: number, year?: number): Promise<void> {
+    return BalanceApiClient.updateAccumulatedLeave(employeeEmail, accumulatedLeave, year);
+  }
 }
 
 export const balanceService = new BalanceService();

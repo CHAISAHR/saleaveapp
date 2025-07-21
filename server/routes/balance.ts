@@ -183,6 +183,29 @@ router.put('/update', authenticateToken, requireRole(['manager', 'admin']), asyn
   }
 });
 
+// Update accumulated leave in database
+router.put('/accumulated-leave', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { employeeEmail, accumulatedLeave, year } = req.body;
+    const currentYear = year || new Date().getFullYear();
+
+    // Check if user has permission to update this balance
+    if (req.user!.role === 'employee' && req.user!.email !== employeeEmail) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    await executeQuery(
+      'UPDATE leave_balances SET AccumulatedLeave = ? WHERE EmployeeEmail = ? AND Year = ?',
+      [accumulatedLeave, employeeEmail, currentYear]
+    );
+
+    res.json({ success: true, message: 'Accumulated leave updated successfully' });
+  } catch (error) {
+    console.error('Update accumulated leave error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update accumulated leave' });
+  }
+});
+
 // Get all balances (admin only)
 router.get('/', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
   try {

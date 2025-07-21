@@ -138,4 +138,23 @@ export class BalanceApiClient {
       throw error;
     }
   }
+
+  // Update accumulated leave in database
+  static async updateAccumulatedLeave(employeeEmail: string, accumulatedLeave: number, year?: number): Promise<void> {
+    try {
+      await this.apiRequest('/accumulated-leave', {
+        method: 'PUT',
+        body: JSON.stringify({
+          employeeEmail,
+          accumulatedLeave,
+          year: year || new Date().getFullYear()
+        })
+      });
+      
+      console.log('Accumulated leave updated for:', employeeEmail, 'to', accumulatedLeave);
+    } catch (error) {
+      console.error('Failed to update accumulated leave:', error);
+      throw error;
+    }
+  }
 }
