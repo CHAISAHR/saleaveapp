@@ -39,13 +39,13 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
       }
     }
 
-    // Get manager email and send notifications
+    // Get manager email from users table
     const managerQuery = await executeQuery(
-      'SELECT Manager FROM leave_balances WHERE EmployeeEmail = ? AND Year = ?',
-      [requester, new Date().getFullYear()]
+      'SELECT manager_email FROM users WHERE email = ?',
+      [requester]
     );
 
-    const managerEmail = managerQuery[0]?.Manager || 'chaisahr@clintonhealthaccess.org';
+    const managerEmail = managerQuery[0]?.manager_email || 'chaisahr@clintonhealthaccess.org';
     
     // Send email notification to manager
     const leaveRequest = {
