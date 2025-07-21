@@ -18,7 +18,7 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
   try {
     console.log('Leave request received:', {
       body: req.body,
-      user: req.user,
+      user: (req as AuthRequest).user,
       hasFiles: !!(req.files && (req.files as Express.Multer.File[]).length > 0)
     });
 
