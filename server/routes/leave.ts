@@ -16,15 +16,27 @@ const upload = multer({
 // Submit leave request with file attachments
 router.post('/request', authenticateToken, upload.array('attachments', 10), async (req, res) => {
   try {
+    console.log('Leave request received:', {
+      body: req.body,
+      user: req.user,
+      hasFiles: !!(req.files && (req.files as Express.Multer.File[]).length > 0)
+    });
+
     const { title, detail, startDate, endDate, leaveType, workingDays } = req.body;
     const requester = (req as AuthRequest).user!.email;
     const files = req.files as Express.Multer.File[];
+
+    console.log('About to insert leave request with data:', {
+      title, detail, startDate, endDate, leaveType, requester, workingDays
+    });
 
     const result = await executeQuery(
       `INSERT INTO leave_taken (Title, Detail, StartDate, EndDate, LeaveType, Requester, Status, Created, workingDays) 
        VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW(), ?)`,
       [title, detail, startDate, endDate, leaveType, requester, workingDays]
     );
+
+    console.log('Leave request inserted successfully, ID:', result.insertId);
 
     const leaveId = result.insertId;
 
