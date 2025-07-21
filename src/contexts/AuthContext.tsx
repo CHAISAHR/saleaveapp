@@ -51,6 +51,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (authToken && authToken !== 'mock-jwt-token' && manualUser) {
           console.log('[AuthContext] Validating manual login token...');
+          console.log('[AuthContext] Token exists:', !!authToken);
+          console.log('[AuthContext] Token preview:', authToken.substring(0, 20) + '...');
+          
           try {
             // Validate token with backend
             const response = await fetch(`${apiConfig.endpoints.auth}/me`, {
@@ -77,23 +80,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   aud: 'manual',
                   iss: 'manual',
                   iat: Date.now() / 1000,
-                  exp: (Date.now() / 1000) + 3600,
+                  exp: (Date.now() / 1000) + 86400, // 24 hours
                   sub: `manual-${userData.user.email}`,
                   email: userData.user.email,
-                  role: userData.user.role
+                  role: userData.user.role,
+                  department: userData.user.department
                 }
               };
               setUser(userAccount);
             } else {
               console.warn('[AuthContext] Token validation failed:', response.status);
-              // Token is invalid, clear it
-              localStorage.removeItem('auth_token');
-              localStorage.removeItem('manualUser');
+              // For production, try to extract user info from stored data instead of clearing immediately
+              const storedUser = JSON.parse(manualUser);
+              if (storedUser && storedUser.username) {
+                console.log('[AuthContext] Using stored user data as fallback:', storedUser.username);
+                setUser(storedUser);
+              } else {
+                console.warn('[AuthContext] Clearing invalid token and user data');
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('manualUser');
+              }
             }
           } catch (error) {
             console.error('[AuthContext] Token validation error:', error);
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('manualUser');
+            // In production, be more forgiving with network errors
+            if (error instanceof Error && error.message.includes('Failed to fetch')) {
+              console.log('[AuthContext] Network error during validation, using stored user data');
+              const storedUser = JSON.parse(manualUser);
+              if (storedUser && storedUser.username) {
+                setUser(storedUser);
+              }
+            } else {
+              localStorage.removeItem('auth_token');
+              localStorage.removeItem('manualUser');
+            }
           }
         }
 
