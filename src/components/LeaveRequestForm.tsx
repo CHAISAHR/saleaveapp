@@ -124,11 +124,22 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     }
   }, [currentUser.email]);
 
+  // Helper function to get auth headers
+  const getAuthHeaders = () => {
+    const authToken = localStorage.getItem('auth_token');
+    return {
+      'Authorization': `Bearer ${authToken}`,
+      'Content-Type': 'application/json'
+    };
+  };
+
   // Fetch company holidays on component mount
   useEffect(() => {
     const fetchHolidays = async () => {
       try {
-        const response = await fetch(`${apiConfig.endpoints.holiday}`);
+        const response = await fetch(`${apiConfig.endpoints.holiday}`, {
+          headers: getAuthHeaders()
+        });
         if (response.ok) {
           const data = await response.json();
           const holidays = data.holidays.map((h: any) => new Date(h.date));
