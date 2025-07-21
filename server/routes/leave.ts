@@ -67,13 +67,14 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
       leaveId: leaveId
     });
   } catch (error) {
-    console.error('Leave request error details:', {
-      error: error.message,
-      stack: error.stack,
+    const errorDetails = {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
       requestBody: req.body,
       userEmail: (req as AuthRequest).user?.email,
       timestamp: new Date().toISOString()
-    });
+    };
+    console.error('Leave request error details:', errorDetails);
     res.status(500).json({ success: false, message: 'Failed to submit leave request' });
   }
 });
