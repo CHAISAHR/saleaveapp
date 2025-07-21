@@ -193,6 +193,18 @@ router.put('/accumulated-leave', authenticateToken, async (req: AuthRequest, res
     if (req.user!.role === 'employee' && req.user!.email !== employeeEmail) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
+    
+    // For managers, check if they manage this employee
+    if (req.user!.role === 'manager' && req.user!.email !== employeeEmail) {
+      const employeeResult = await executeQuery(
+        'SELECT manager_email FROM users WHERE email = ? AND is_active = 1',
+        [employeeEmail]
+      );
+      
+      if (employeeResult.length === 0 || employeeResult[0].manager_email !== req.user!.email) {
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+    }
 
     await executeQuery(
       'UPDATE leave_balances SET AccumulatedLeave = ? WHERE EmployeeEmail = ? AND Year = ?',
