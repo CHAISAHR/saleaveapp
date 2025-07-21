@@ -16,11 +16,18 @@ const upload = multer({
 // Submit leave request with file attachments
 router.post('/request', authenticateToken, upload.array('attachments', 10), async (req, res) => {
   try {
+    console.log('=== LEAVE REQUEST START ===');
     console.log('Leave request received:', {
       body: req.body,
       user: (req as AuthRequest).user,
       hasFiles: !!(req.files && (req.files as Express.Multer.File[]).length > 0)
     });
+    
+    // Validate user authentication
+    if (!(req as AuthRequest).user) {
+      console.error('No authenticated user found');
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
 
     const { title, detail, startDate, endDate, leaveType, workingDays } = req.body;
     const requester = (req as AuthRequest).user!.email;
@@ -29,6 +36,16 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
     console.log('About to insert leave request with data:', {
       title, detail, startDate, endDate, leaveType, requester, workingDays
     });
+
+    // Test database connection first
+    console.log('Testing database connection...');
+    try {
+      await executeQuery('SELECT 1 as test');
+      console.log('Database connection successful');
+    } catch (dbError) {
+      console.error('Database connection failed:', dbError);
+      throw new Error('Database connection failed');
+    }
 
     const result = await executeQuery(
       `INSERT INTO leave_taken (Title, Detail, StartDate, EndDate, LeaveType, Requester, Status, Created, workingDays) 
@@ -59,7 +76,7 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
 
     const managerEmail = managerQuery[0]?.manager_email || 'chaisahr@clintonhealthaccess.org';
     
-    // Send email notification to manager
+    // Send email notification to manager (non-blocking)
     const leaveRequest = {
       title,
       description: detail,
@@ -70,8 +87,13 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
       submittedBy: requester
     };
 
-    await emailService.notifyManagerOfLeaveRequest(leaveRequest, managerEmail);
-    console.log(`Email notification sent to manager: ${managerEmail}`);
+    try {
+      await emailService.notifyManagerOfLeaveRequest(leaveRequest, managerEmail);
+      console.log(`Email notification sent to manager: ${managerEmail}`);
+    } catch (emailError) {
+      console.error('Failed to send email notification (non-blocking):', emailError);
+      // Don't fail the whole request if email fails
+    }
 
     res.status(201).json({
       success: true,
