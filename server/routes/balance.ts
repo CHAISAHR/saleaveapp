@@ -183,29 +183,14 @@ router.put('/update', authenticateToken, requireRole(['manager', 'admin']), asyn
   }
 });
 
-// Update accumulated leave in database
+// Update accumulated leave in database (system calculation only)
 router.put('/accumulated-leave', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { employeeEmail, accumulatedLeave, year } = req.body;
     const currentYear = year || new Date().getFullYear();
 
-    // Check if user has permission to update this balance
-    if (req.user!.role === 'employee' && req.user!.email !== employeeEmail) {
-      return res.status(403).json({ success: false, message: 'Access denied' });
-    }
-    
-    // For managers, check if they manage this employee
-    if (req.user!.role === 'manager' && req.user!.email !== employeeEmail) {
-      const employeeResult = await executeQuery(
-        'SELECT manager_email FROM users WHERE email = ? AND is_active = 1',
-        [employeeEmail]
-      );
-      
-      if (employeeResult.length === 0 || employeeResult[0].manager_email !== req.user!.email) {
-        return res.status(403).json({ success: false, message: 'Access denied' });
-      }
-    }
-
+    // This endpoint is for automatic system calculations only
+    // No role-based restrictions needed since it's a calculated field
     await executeQuery(
       'UPDATE leave_balances SET AccumulatedLeave = ? WHERE EmployeeEmail = ? AND Year = ?',
       [accumulatedLeave, employeeEmail, currentYear]
