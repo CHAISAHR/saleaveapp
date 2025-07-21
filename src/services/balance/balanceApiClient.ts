@@ -4,7 +4,7 @@ import { EmployeeBalance, LeaveRequest } from '../balanceService';
 
 export class BalanceApiClient {
   private static getAuthToken(): string | null {
-    return localStorage.getItem('authToken');
+    return localStorage.getItem('auth_token');
   }
 
   private static async apiRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
