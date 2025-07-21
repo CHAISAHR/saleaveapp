@@ -630,24 +630,11 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
             return;
           }
           
-          // Handle server errors (500) with fallback to demo mode
-          if (response.status === 500) {
-            console.warn('Server error encountered, simulating successful leave request submission');
-            
-            toast({
-              title: "Request Submitted (Demo Mode)",
-              description: "Your leave request has been simulated successfully. The server is experiencing issues, but in production this would be sent to your manager for approval.",
-              variant: "default",
-            });
-            
-            // Continue with the rest of the function as if it was successful
-          } else {
-            throw new Error(`Failed to submit leave request: ${response.status} ${errorText}`);
-          }
-        } else {
-          const result = await response.json();
-          console.log('Leave request submitted successfully:', result);
+          throw new Error(`Failed to submit leave request: ${response.status} ${errorText}`);
         }
+
+        const result = await response.json();
+        console.log('Leave request submitted successfully:', result);
       } catch (fetchError) {
         // Check if this is a network error (backend unavailable)
         if (fetchError instanceof Error && fetchError.message === 'Failed to fetch') {
