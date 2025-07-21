@@ -61,10 +61,10 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
           return;
         }
 
-        console.log('Manager fetch - Making API request to:', `${apiConfig.endpoints.users}`);
+        console.log('Manager fetch - Making API request to:', `${apiConfig.endpoints.users}/basic`);
         
-        // Fetch all users to get current user's manager and available managers
-        const usersResponse = await fetch(`${apiConfig.endpoints.users}`, {
+        // Fetch basic user info to get current user's manager and available managers
+        const usersResponse = await fetch(`${apiConfig.endpoints.users}/basic`, {
           headers: {
             'Authorization': `Bearer ${authToken}`
           }

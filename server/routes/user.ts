@@ -4,6 +4,20 @@ import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth'
 
 const router = express.Router();
 
+// Get basic user info for leave requests (all authenticated users)
+router.get('/basic', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const users = await executeQuery(
+      'SELECT email, name, department, role, manager_email FROM users WHERE is_active = 1 ORDER BY name'
+    );
+
+    res.json({ success: true, users });
+  } catch (error) {
+    console.error('Get basic users error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get basic user info' });
+  }
+});
+
 // Get all users (admin only)
 router.get('/', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
   try {
