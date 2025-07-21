@@ -1,9 +1,8 @@
 
 // API configuration for different environments
-// Check for VITE_API_URL environment variable first, then fallback
+// Use VITE_API_URL environment variable from production settings
 const getApiBaseUrl = () => {
   const viteApiUrl = import.meta.env.VITE_API_URL;
-  const fallbackUrl = 'https://ex-production.up.railway.app';
   
   console.log('Environment variables check:', {
     VITE_API_URL: viteApiUrl,
@@ -12,10 +11,13 @@ const getApiBaseUrl = () => {
     PROD: import.meta.env.PROD
   });
   
-  const selectedUrl = viteApiUrl || fallbackUrl;
-  console.log('Selected API base URL:', selectedUrl);
+  if (!viteApiUrl) {
+    console.error('VITE_API_URL environment variable is not set');
+    throw new Error('API base URL not configured. Please set VITE_API_URL in production variables.');
+  }
   
-  return selectedUrl;
+  console.log('Selected API base URL:', viteApiUrl);
+  return viteApiUrl;
 };
 
 const API_BASE_URL = getApiBaseUrl();
