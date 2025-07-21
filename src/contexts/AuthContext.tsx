@@ -8,8 +8,6 @@ interface AuthContextType {
   isAuthenticated: boolean;
   manualLogin: (email: string, password: string) => Promise<void>;
   mockAdminLogin: () => Promise<void>;
-  mockEmployeeLogin: () => Promise<void>;
-  mockManagerLogin: () => Promise<void>;
   manualSignUp: (userData: {
     email: string;
     password: string;
@@ -170,98 +168,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Backend authentication failed:', error);
       throw new Error('Unable to authenticate with backend. Please use manual login with valid credentials.');
-    }
-  };
-
-  const mockEmployeeLogin = async () => {
-    try {
-      const response = await makeApiRequest(`${apiConfig.endpoints.auth}/login`, {
-        method: 'POST',
-        body: JSON.stringify({ 
-          email: 'employee@company.com', 
-          password: 'employee123' 
-        })
-      });
-
-      const data = await response.json();
-      
-      if (data.success && data.token) {
-        localStorage.setItem('auth_token', data.token);
-        const userAccount: AccountInfo = {
-          homeAccountId: `backend-${data.user.email}`,
-          environment: 'backend',
-          tenantId: 'backend-tenant',
-          username: data.user.email,
-          localAccountId: `backend-${data.user.email}`,
-          name: data.user.name,
-          idTokenClaims: {
-            aud: 'backend',
-            iss: 'backend',
-            iat: Date.now() / 1000,
-            exp: (Date.now() / 1000) + 86400,
-            sub: `backend-${data.user.email}`,
-            email: data.user.email,
-            role: data.user.role,
-            department: data.user.department,
-            given_name: data.user.name.split(' ')[0],
-            family_name: data.user.name.split(' ').slice(1).join(' ')
-          }
-        };
-        setUser(userAccount);
-        localStorage.setItem('manualUser', JSON.stringify(userAccount));
-        localStorage.removeItem('mockUser');
-      } else {
-        throw new Error(data.message || 'Employee authentication failed');
-      }
-    } catch (error) {
-      console.error('Employee authentication failed:', error);
-      throw new Error('Unable to authenticate employee. Please use manual login.');
-    }
-  };
-
-  const mockManagerLogin = async () => {
-    try {
-      const response = await makeApiRequest(`${apiConfig.endpoints.auth}/login`, {
-        method: 'POST',
-        body: JSON.stringify({ 
-          email: 'manager@company.com', 
-          password: 'manager123' 
-        })
-      });
-
-      const data = await response.json();
-      
-      if (data.success && data.token) {
-        localStorage.setItem('auth_token', data.token);
-        const userAccount: AccountInfo = {
-          homeAccountId: `backend-${data.user.email}`,
-          environment: 'backend',
-          tenantId: 'backend-tenant',
-          username: data.user.email,
-          localAccountId: `backend-${data.user.email}`,
-          name: data.user.name,
-          idTokenClaims: {
-            aud: 'backend',
-            iss: 'backend',
-            iat: Date.now() / 1000,
-            exp: (Date.now() / 1000) + 86400,
-            sub: `backend-${data.user.email}`,
-            email: data.user.email,
-            role: data.user.role,
-            department: data.user.department,
-            given_name: data.user.name.split(' ')[0],
-            family_name: data.user.name.split(' ').slice(1).join(' ')
-          }
-        };
-        setUser(userAccount);
-        localStorage.setItem('manualUser', JSON.stringify(userAccount));
-        localStorage.removeItem('mockUser');
-      } else {
-        throw new Error(data.message || 'Manager authentication failed');
-      }
-    } catch (error) {
-      console.error('Manager authentication failed:', error);
-      throw new Error('Unable to authenticate manager. Please use manual login.');
     }
   };
 
@@ -432,8 +338,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated: !!user,
     manualLogin,
     mockAdminLogin,
-    mockEmployeeLogin,
-    mockManagerLogin,
     manualSignUp,
     resetPassword,
     logout,
