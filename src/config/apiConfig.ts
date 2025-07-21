@@ -12,13 +12,8 @@ const getApiBaseUrl = () => {
   });
   
   if (!viteApiUrl) {
-    if (import.meta.env.PROD) {
-      console.error('VITE_API_URL environment variable is not set in production');
-      throw new Error('API base URL not configured. Please set VITE_API_URL in production variables.');
-    } else {
-      console.warn('VITE_API_URL not set in development, using mock data fallback');
-      return 'http://localhost:3000'; // Development fallback for mock responses
-    }
+    console.error('VITE_API_URL environment variable is not set');
+    throw new Error('API base URL not configured. Please set VITE_API_URL in production variables.');
   }
   
   console.log('Selected API base URL:', viteApiUrl);
