@@ -7,9 +7,37 @@ const router = express.Router();
 // Get basic user info for leave requests (all authenticated users)
 router.get('/basic', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const users = await executeQuery(
-      'SELECT email, name, department, role, manager_email FROM users WHERE is_active = 1 ORDER BY name'
-    );
+    const userEmail = req.user?.email;
+    const userRole = req.user?.role;
+    
+    let users;
+    
+    if (userRole === 'admin') {
+      // Admins can see all users
+      users = await executeQuery(
+        'SELECT email, name, department, role, manager_email FROM users WHERE is_active = 1 ORDER BY name'
+      );
+    } else if (userRole === 'manager') {
+      // Managers can see users in their department and other managers/admins
+      users = await executeQuery(
+        `SELECT DISTINCT u.email, u.name, u.department, u.role, u.manager_email 
+         FROM users u 
+         WHERE u.is_active = 1 
+         AND (u.manager_email = ? OR u.role IN ('manager', 'admin') OR u.email = ?)
+         ORDER BY u.name`,
+        [userEmail, userEmail]
+      );
+    } else {
+      // Employees can see managers, admins, and themselves
+      users = await executeQuery(
+        `SELECT email, name, department, role, manager_email 
+         FROM users 
+         WHERE is_active = 1 
+         AND (role IN ('manager', 'admin') OR email = ?)
+         ORDER BY name`,
+        [userEmail]
+      );
+    }
 
     res.json({ success: true, users });
   } catch (error) {
