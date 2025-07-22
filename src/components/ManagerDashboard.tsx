@@ -33,30 +33,31 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
 
   const fetchTeamData = async () => {
     try {
-      // First, fetch leave requests to get team member emails
+      // Fetch leave requests - server already filters for manager's team
       const requestsResponse = await makeApiRequest(`${apiConfig.endpoints.leave}/requests`, {
         headers: getAuthHeaders()
       });
 
       if (requestsResponse.ok) {
         const requestsData = await requestsResponse.json();
-        const requestsArray = Array.isArray(requestsData) ? requestsData : (requestsData.data || requestsData.requests || []);
+        console.log('Raw requests data:', requestsData);
         
-        // Filter requests for team members managed by current user
-        const teamRequests = requestsArray.filter((request: any) => 
-          request.ManagerEmail === currentUser.email
-        );
+        // The server returns { success: true, requests: [...] }
+        const requestsArray = requestsData.success ? requestsData.requests : [];
+        
+        console.log('Processed requests array:', requestsArray);
 
-        const pending = teamRequests.filter((request: any) => request.Status === 'pending');
-        const historic = teamRequests.filter((request: any) => request.Status !== 'pending');
+        const pending = requestsArray.filter((request: any) => request.Status === 'pending');
+        const historic = requestsArray.filter((request: any) => request.Status !== 'pending');
         
         setPendingRequests(pending);
         setHistoricRequests(historic);
 
-        // Get unique team member emails for balance fetching
-        const teamMemberEmails = [...new Set(teamRequests.map((req: any) => req.EmployeeEmail))];
+        // Get unique team member emails for balance fetching (use Requester field)
+        const teamMemberEmails = [...new Set(requestsArray.map((req: any) => req.Requester))];
+        console.log('Team member emails:', teamMemberEmails);
         
-        // Fetch balances for each team member individually (managers can access individual balances)
+        // Fetch balances for each team member individually
         const balancePromises = teamMemberEmails.map(async (email: string) => {
           try {
             const response = await makeApiRequest(`${apiConfig.endpoints.balance}/${email}`, {
@@ -64,6 +65,7 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
             });
             if (response.ok) {
               const data = await response.json();
+              console.log(`Balance data for ${email}:`, data);
               return data.success ? { ...data.balance, EmployeeEmail: email } : null;
             }
             return null;
@@ -75,6 +77,7 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
 
         const teamBalancesResults = await Promise.all(balancePromises);
         const validBalances = teamBalancesResults.filter(balance => balance !== null);
+        console.log('Final team balances:', validBalances);
         setTeamMembers(validBalances);
       }
 
