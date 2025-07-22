@@ -99,3 +99,11 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .container-viewport {
+    width: 100%;
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+}
