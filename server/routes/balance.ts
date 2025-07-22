@@ -219,4 +219,74 @@ router.get('/', authenticateToken, requireRole(['admin']), async (req: AuthReque
   }
 });
 
+// Update complete balance record (admin only)
+router.put('/update-full', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+  try {
+    const balance = req.body;
+    
+    await executeQuery(`
+      UPDATE leave_balances SET
+        EmployeeName = ?, EmployeeEmail = ?, Department = ?, Year = ?,
+        Broughtforward = ?, Annual = ?, AccumulatedLeave = ?, AnnualUsed = ?, 
+        Forfeited = ?, Annual_leave_adjustments = ?, SickBroughtforward = ?, 
+        Sick = ?, SickUsed = ?, Maternity = ?, MaternityUsed = ?, Parental = ?, 
+        ParentalUsed = ?, Family = ?, FamilyUsed = ?, Adoption = ?, AdoptionUsed = ?, 
+        Study = ?, StudyUsed = ?, Wellness = ?, WellnessUsed = ?, PowerAppsId = ?,
+        Current_leave_balance = ?, Leave_balance_previous_month = ?, 
+        Contract_termination_date = ?, termination_balance = ?, Comment = ?, 
+        Annual_leave_adjustment_comments = ?, Manager = ?, Modified = NOW()
+      WHERE BalanceID = ?
+    `, [
+      balance.EmployeeName, balance.EmployeeEmail, balance.Department, balance.Year,
+      balance.Broughtforward, balance.Annual, balance.AccumulatedLeave, balance.AnnualUsed,
+      balance.Forfeited, balance.Annual_leave_adjustments, balance.SickBroughtforward,
+      balance.Sick, balance.SickUsed, balance.Maternity, balance.MaternityUsed,
+      balance.Parental, balance.ParentalUsed, balance.Family, balance.FamilyUsed,
+      balance.Adoption, balance.AdoptionUsed, balance.Study, balance.StudyUsed,
+      balance.Wellness, balance.WellnessUsed, balance.PowerAppsId,
+      balance.Current_leave_balance, balance.Leave_balance_previous_month,
+      balance.Contract_termination_date, balance.termination_balance, balance.Comment,
+      balance.Annual_leave_adjustment_comments, balance.Manager, balance.BalanceID
+    ]);
+
+    res.json({ success: true, message: 'Balance updated successfully' });
+  } catch (error) {
+    console.error('Error updating complete balance:', error);
+    res.status(500).json({ success: false, message: 'Failed to update balance' });
+  }
+});
+
+// Update single field (admin only)
+router.put('/update-field', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+  try {
+    const { BalanceID, field, value } = req.body;
+    
+    // Validate field name to prevent SQL injection
+    const allowedFields = [
+      'Department', 'Manager', 'Forfeited', 'EmployeeName', 'EmployeeEmail',
+      'Broughtforward', 'Annual', 'AccumulatedLeave', 'AnnualUsed', 
+      'Annual_leave_adjustments', 'SickBroughtforward', 'Sick', 'SickUsed',
+      'Maternity', 'MaternityUsed', 'Parental', 'ParentalUsed', 'Family',
+      'FamilyUsed', 'Adoption', 'AdoptionUsed', 'Study', 'StudyUsed',
+      'Wellness', 'WellnessUsed', 'Comment', 'Annual_leave_adjustment_comments',
+      'Contract_termination_date'
+    ];
+    
+    if (!allowedFields.includes(field)) {
+      return res.status(400).json({ success: false, message: 'Invalid field name' });
+    }
+
+    await executeQuery(`
+      UPDATE leave_balances 
+      SET ${field} = ?, Modified = NOW()
+      WHERE BalanceID = ?
+    `, [value, BalanceID]);
+
+    res.json({ success: true, message: 'Field updated successfully' });
+  } catch (error) {
+    console.error('Error updating field:', error);
+    res.status(500).json({ success: false, message: 'Failed to update field' });
+  }
+});
+
 export default router;

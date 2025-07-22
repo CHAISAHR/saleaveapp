@@ -193,29 +193,119 @@ export const AdminAllBalances = () => {
     checkAndAutoForfeit();
   }, []);
 
-  const handleForfeitedChange = (balanceId: number, value: string) => {
+  const handleForfeitedChange = async (balanceId: number, value: string) => {
     const numericValue = parseFloat(value) || 0;
-    setBalances(prev => prev.map(balance => 
-      balance.BalanceID === balanceId 
-        ? { ...balance, Forfeited: numericValue, Modified: new Date().toISOString() }
-        : balance
-    ));
+    const balance = balances.find(b => b.BalanceID === balanceId);
+    if (!balance) return;
+
+    const updatedBalance = { 
+      ...balance, 
+      Forfeited: numericValue, 
+      Modified: new Date().toISOString() 
+    };
+
+    try {
+      const response = await fetch(`${apiConfig.endpoints.balance}/update-field`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          BalanceID: balanceId,
+          field: 'Forfeited',
+          value: numericValue
+        })
+      });
+
+      if (response.ok) {
+        setBalances(prev => prev.map(balance => 
+          balance.BalanceID === balanceId ? updatedBalance : balance
+        ));
+      } else {
+        throw new Error('Failed to update forfeited amount');
+      }
+    } catch (error) {
+      console.error('Error updating forfeited amount:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to save forfeited amount. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDepartmentChange = (balanceId: number, value: string) => {
-    setBalances(prev => prev.map(balance => 
-      balance.BalanceID === balanceId 
-        ? { ...balance, Department: value, Modified: new Date().toISOString() }
-        : balance
-    ));
+  const handleDepartmentChange = async (balanceId: number, value: string) => {
+    const balance = balances.find(b => b.BalanceID === balanceId);
+    if (!balance) return;
+
+    const updatedBalance = { 
+      ...balance, 
+      Department: value, 
+      Modified: new Date().toISOString() 
+    };
+
+    try {
+      const response = await fetch(`${apiConfig.endpoints.balance}/update-field`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          BalanceID: balanceId,
+          field: 'Department',
+          value: value
+        })
+      });
+
+      if (response.ok) {
+        setBalances(prev => prev.map(balance => 
+          balance.BalanceID === balanceId ? updatedBalance : balance
+        ));
+      } else {
+        throw new Error('Failed to update department');
+      }
+    } catch (error) {
+      console.error('Error updating department:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to save department change. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleManagerChange = (balanceId: number, value: string) => {
-    setBalances(prev => prev.map(balance => 
-      balance.BalanceID === balanceId 
-        ? { ...balance, Manager: value, Modified: new Date().toISOString() }
-        : balance
-    ));
+  const handleManagerChange = async (balanceId: number, value: string) => {
+    const balance = balances.find(b => b.BalanceID === balanceId);
+    if (!balance) return;
+
+    const updatedBalance = { 
+      ...balance, 
+      Manager: value, 
+      Modified: new Date().toISOString() 
+    };
+
+    try {
+      const response = await fetch(`${apiConfig.endpoints.balance}/update-field`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          BalanceID: balanceId,
+          field: 'Manager',
+          value: value
+        })
+      });
+
+      if (response.ok) {
+        setBalances(prev => prev.map(balance => 
+          balance.BalanceID === balanceId ? updatedBalance : balance
+        ));
+      } else {
+        throw new Error('Failed to update manager');
+      }
+    } catch (error) {
+      console.error('Error updating manager:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to save manager change. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const downloadCSV = () => {
@@ -292,7 +382,7 @@ export const AdminAllBalances = () => {
     setShowEditDialog(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selectedBalance) return;
 
     // Calculate new current balance using the updated formula
@@ -312,19 +402,38 @@ export const AdminAllBalances = () => {
       Modified: new Date().toISOString()
     };
 
-    setBalances(prev => prev.map(b => 
-      b.BalanceID === updatedBalance.BalanceID ? updatedBalance : b
-    ));
+    try {
+      // Save to backend database
+      const response = await fetch(`${apiConfig.endpoints.balance}/update-full`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(updatedBalance)
+      });
 
-    console.log('Balance updated:', updatedBalance);
+      if (response.ok) {
+        // Update local state only after successful backend save
+        setBalances(prev => prev.map(b => 
+          b.BalanceID === updatedBalance.BalanceID ? updatedBalance : b
+        ));
 
-    toast({
-      title: "Balance Updated",
-      description: `${selectedBalance.EmployeeName}'s leave balance has been updated.`,
-    });
+        toast({
+          title: "Balance Updated",
+          description: `${selectedBalance.EmployeeName}'s leave balance has been saved to the database.`,
+        });
 
-    setShowEditDialog(false);
-    setSelectedBalance(null);
+        setShowEditDialog(false);
+        setSelectedBalance(null);
+      } else {
+        throw new Error('Failed to save balance');
+      }
+    } catch (error) {
+      console.error('Error saving balance:', error);
+      toast({
+        title: "Save Failed",
+        description: "Failed to save balance changes to the database. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleFieldChange = (field: keyof EmployeeBalance, value: string) => {
