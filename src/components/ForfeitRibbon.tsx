@@ -8,8 +8,7 @@ interface ForfeitRibbonProps {
 }
 
 export const ForfeitRibbon = ({ broughtforward, annualUsed }: ForfeitRibbonProps) => {
-  // Calculate unused brought forward days (assumes brought forward days are used first)
-  const daysToForfeit = Math.max(0, broughtforward - Math.min(broughtforward, annualUsed));
+  const daysToForfeit = Math.max(0, broughtforward - annualUsed);
   
   if (daysToForfeit === 0) {
     return null;

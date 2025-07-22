@@ -1,10 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { LeaveRequestForm } from "@/components/LeaveRequestForm";
 import { ForfeitRibbon } from "@/components/ForfeitRibbon";
 import { MainContent } from "./MainContent";
+import { balanceService, EmployeeBalance } from "@/services/balanceService";
 
 interface MainLayoutProps {
   currentUser: any;
@@ -15,12 +16,23 @@ interface MainLayoutProps {
 export const MainLayout = ({ currentUser, userRole, setUserRole }: MainLayoutProps) => {
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [employeeBalance, setEmployeeBalance] = useState<EmployeeBalance | null>(null);
 
-  // Employee balance data for forfeit ribbon
-  const employeeBalance = {
-    broughtForward: 5,
-    annualUsed: 3
-  };
+  // Fetch real employee balance data from database
+  useEffect(() => {
+    const fetchEmployeeBalance = async () => {
+      if (currentUser?.email && userRole === 'employee') {
+        try {
+          const balance = await balanceService.getEmployeeBalance(currentUser.email);
+          setEmployeeBalance(balance);
+        } catch (error) {
+          console.error('Failed to fetch employee balance:', error);
+        }
+      }
+    };
+
+    fetchEmployeeBalance();
+  }, [currentUser?.email, userRole]);
 
   return (
     <SidebarProvider>
@@ -49,10 +61,10 @@ export const MainLayout = ({ currentUser, userRole, setUserRole }: MainLayoutPro
           {/* Main Content */}
           <main className="flex-1 space-y-4 p-4 md:p-6">
             {/* Forfeit ribbon for employees */}
-            {userRole === 'employee' && (
+            {userRole === 'employee' && employeeBalance && (
               <ForfeitRibbon 
-                broughtforward={employeeBalance.broughtForward}
-                annualUsed={employeeBalance.annualUsed}
+                broughtforward={employeeBalance.Broughtforward}
+                annualUsed={employeeBalance.AnnualUsed}
               />
             )}
             
