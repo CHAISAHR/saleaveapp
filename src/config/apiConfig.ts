@@ -106,22 +106,22 @@ const createMockResponse = (url: string): Response => {
       {
         id: 1,
         employeeName: 'John Doe',
-        employeeEmail: 'john.doe@example.com',
+        Requester: 'john.doe@example.com',
         leaveType: 'Annual Leave',
         startDate: '2025-01-15',
         endDate: '2025-01-20',
-        status: 'approved',
+        Status: 'approved',
         daysRequested: 5,
         manager: 'jane.smith@example.com'
       },
       {
         id: 2,
         employeeName: 'Sarah Wilson',
-        employeeEmail: 'sarah.wilson@example.com',
+        Requester: 'sarah.wilson@example.com',
         leaveType: 'Sick Leave',
         startDate: '2025-01-18',
         endDate: '2025-01-19',
-        status: 'approved',
+        Status: 'approved',
         daysRequested: 2,
         manager: 'jane.smith@example.com'
       }
