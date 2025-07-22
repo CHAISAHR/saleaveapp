@@ -582,6 +582,12 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       formDataToSend.append('leaveType', backendLeaveType);
       formDataToSend.append('workingDays', leaveDuration.toString());
       
+      // Add alternative manager information if selected
+      if (formData.useAlternativeManager && formData.alternativeManager) {
+        formDataToSend.append('alternativeApprover', formData.alternativeManager);
+        formDataToSend.append('approverReason', formData.alternativeManagerReason);
+      }
+      
       attachedFiles.forEach((file, index) => {
         formDataToSend.append(`attachments`, file);
       });

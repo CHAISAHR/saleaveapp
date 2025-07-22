@@ -29,7 +29,7 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
       return res.status(401).json({ success: false, message: 'Authentication required' });
     }
 
-    const { title, detail, startDate, endDate, leaveType, workingDays } = req.body;
+    const { title, detail, startDate, endDate, leaveType, workingDays, alternativeApprover, approverReason } = req.body;
     const requester = (req as AuthRequest).user!.email;
     const files = req.files as Express.Multer.File[];
 
@@ -64,9 +64,9 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
     }
 
     const result = await executeQuery(
-      `INSERT INTO leave_taken (Title, Detail, StartDate, EndDate, LeaveType, Requester, Status, Created, workingDays) 
-       VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW(), ?)`,
-      [title, detail, formattedStartDate, formattedEndDate, leaveType, requester, workingDays]
+      `INSERT INTO leave_taken (Title, Detail, StartDate, EndDate, LeaveType, Requester, AlternativeApprover, ApproverReason, Status, Created, workingDays) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), ?)`,
+      [title, detail, formattedStartDate, formattedEndDate, leaveType, requester, alternativeApprover || null, approverReason || null, workingDays]
     );
 
     console.log('Leave request inserted successfully, ID:', result.insertId);
@@ -84,16 +84,24 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
       }
     }
 
-    // Get manager email from users table
+    // Determine the appropriate manager email for notifications
     console.log('Looking up manager for requester:', requester);
-    const managerQuery = await executeQuery(
-      'SELECT manager_email FROM users WHERE email = ?',
-      [requester]
-    );
-
-    console.log('Manager query result:', managerQuery);
-    const managerEmail = managerQuery[0]?.manager_email || 'chaisahr@clintonhealthaccess.org';
-    console.log('Manager email to use:', managerEmail);
+    let managerEmail = 'chaisahr@clintonhealthaccess.org'; // Default fallback
+    
+    if (alternativeApprover) {
+      // Use alternative approver if specified
+      managerEmail = alternativeApprover;
+      console.log('Using alternative approver:', managerEmail);
+    } else {
+      // Use default manager from users table
+      const managerQuery = await executeQuery(
+        'SELECT manager_email FROM users WHERE email = ?',
+        [requester]
+      );
+      console.log('Manager query result:', managerQuery);
+      managerEmail = managerQuery[0]?.manager_email || 'chaisahr@clintonhealthaccess.org';
+      console.log('Using default manager:', managerEmail);
+    }
     
     // Send email notification to manager (non-blocking)
     const leaveRequest = {
@@ -139,28 +147,28 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
     let params: any[] = [];
 
     if (req.user!.role === 'admin') {
-      // Admin can see all requests with attachments
+      // Admin can see all requests with attachments and alternative approver info
       query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
-               lt.Requester, lt.Approver, lt.Status, lt.Created, lt.Modified, lt.Modified_By,
+               lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, lt.Modified_By,
                lt.workingDays, COUNT(la.id) as attachment_count
                FROM leave_taken lt 
                LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
                GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
     } else if (req.user!.role === 'manager') {
-      // Manager can see their team's requests with attachments
+      // Manager can see their team's requests, requests where they're alternative approver, and their own requests
       query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
-               lt.Requester, lt.Approver, lt.Status, lt.Created, lt.Modified, lt.Modified_By,
+               lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, lt.Modified_By,
                lt.workingDays, COUNT(la.id) as attachment_count
                FROM leave_taken lt 
                LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
-               JOIN leave_balances lb ON lt.Requester = lb.EmployeeEmail 
-               WHERE lb.Manager = ? OR lt.Requester = ? 
+               LEFT JOIN leave_balances lb ON lt.Requester = lb.EmployeeEmail 
+               WHERE lb.Manager = ? OR lt.Requester = ? OR lt.AlternativeApprover = ?
                GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
-      params = [req.user!.email, req.user!.email];
+      params = [req.user!.email, req.user!.email, req.user!.email];
     } else {
-      // Employee can only see their own requests with attachments
+      // Employee can only see their own requests with attachments and alternative approver info
       query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
-               lt.Requester, lt.Approver, lt.Status, lt.Created, lt.Modified, lt.Modified_By,
+               lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, lt.Modified_By,
                lt.workingDays, COUNT(la.id) as attachment_count
                FROM leave_taken lt 
                LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
