@@ -39,12 +39,33 @@ export const EmployeeDashboard = ({
 
       if (response.ok) {
         const data = await response.json();
-        // Ensure data is an array
-        const dataArray = Array.isArray(data) ? data : (data.data || []);
+        console.log('API Response:', data);
+        console.log('Current user email:', currentUser.email);
+        
+        // Ensure data is an array - handle both direct array and wrapped response
+        const dataArray = Array.isArray(data) ? data : (data.requests || data.data || []);
+        console.log('Data array:', dataArray);
+        
         const userRequests = dataArray.filter((request: any) => 
           request.Requester === currentUser.email
         );
-        setLeaveRequests(userRequests);
+        console.log('Filtered user requests:', userRequests);
+        
+        // Transform API data to match component expectations
+        const transformedRequests = userRequests.map((request: any) => ({
+          id: request.LeaveID,
+          title: request.Title,
+          type: request.LeaveType,
+          startDate: new Date(request.StartDate).toLocaleDateString(),
+          endDate: new Date(request.EndDate).toLocaleDateString(),
+          days: request.workingDays,
+          status: request.Status,
+          submittedDate: new Date(request.Created).toLocaleDateString(),
+          description: request.Detail
+        }));
+        
+        console.log('Transformed requests:', transformedRequests);
+        setLeaveRequests(transformedRequests);
       } else {
         console.error('Failed to fetch leave requests');
       }
