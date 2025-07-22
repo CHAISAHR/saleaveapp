@@ -3,12 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 
 interface ForfeitRibbonProps {
-  broughtforward: number;
+  broughtForward: number;
   annualUsed: number;
 }
 
-export const ForfeitRibbon = ({ broughtforward, annualUsed }: ForfeitRibbonProps) => {
-  const daysToForfeit = Math.max(0, broughtforward - annualUsed);
+export const ForfeitRibbon = ({ broughtForward, annualUsed }: ForfeitRibbonProps) => {
+  const daysToForfeit = Math.max(0, broughtForward - annualUsed);
   
   if (daysToForfeit === 0) {
     return null;
