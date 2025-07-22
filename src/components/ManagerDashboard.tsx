@@ -57,8 +57,8 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
         setPendingRequests(pending);
         setHistoricRequests(historic);
 
-        // Get unique team member emails for balance fetching (use Requester field)
-        const teamMemberEmails = [...new Set(requestsArray.map((req: any) => req.Requester))];
+        // Get unique team member emails for balance fetching (handle both field names)
+        const teamMemberEmails = [...new Set(requestsArray.map((req: any) => req.Requester || req.employeeEmail).filter(Boolean))];
         console.log('Team member emails:', teamMemberEmails);
         
         // Log a sample request to check field names
