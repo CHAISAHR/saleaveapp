@@ -63,10 +63,25 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
       throw new Error('Database connection failed');
     }
 
+    // Determine who the request should be sent to for approval
+    let approverEmail = 'chaisahr@clintonhealthaccess.org'; // Default fallback
+    
+    if (alternativeApprover) {
+      // Use alternative approver if specified
+      approverEmail = alternativeApprover;
+    } else {
+      // Use default manager from users table
+      const managerQuery = await executeQuery(
+        'SELECT manager_email FROM users WHERE email = ?',
+        [requester]
+      );
+      approverEmail = managerQuery[0]?.manager_email || 'chaisahr@clintonhealthaccess.org';
+    }
+
     const result = await executeQuery(
-      `INSERT INTO leave_taken (Title, Detail, StartDate, EndDate, LeaveType, Requester, AlternativeApprover, ApproverReason, Status, Created, workingDays) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), ?)`,
-      [title, detail, formattedStartDate, formattedEndDate, leaveType, requester, alternativeApprover || null, approverReason || null, workingDays]
+      `INSERT INTO leave_taken (Title, Detail, StartDate, EndDate, LeaveType, Requester, Approver, AlternativeApprover, ApproverReason, Status, Created, workingDays) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), ?)`,
+      [title, detail, formattedStartDate, formattedEndDate, leaveType, requester, approverEmail, alternativeApprover || null, approverReason || null, workingDays]
     );
 
     console.log('Leave request inserted successfully, ID:', result.insertId);
@@ -84,24 +99,9 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
       }
     }
 
-    // Determine the appropriate manager email for notifications
-    console.log('Looking up manager for requester:', requester);
-    let managerEmail = 'chaisahr@clintonhealthaccess.org'; // Default fallback
-    
-    if (alternativeApprover) {
-      // Use alternative approver if specified
-      managerEmail = alternativeApprover;
-      console.log('Using alternative approver:', managerEmail);
-    } else {
-      // Use default manager from users table
-      const managerQuery = await executeQuery(
-        'SELECT manager_email FROM users WHERE email = ?',
-        [requester]
-      );
-      console.log('Manager query result:', managerQuery);
-      managerEmail = managerQuery[0]?.manager_email || 'chaisahr@clintonhealthaccess.org';
-      console.log('Using default manager:', managerEmail);
-    }
+    // Use the approver email for notifications (already determined above)
+    const managerEmail = approverEmail;
+    console.log('Sending notification to approver:', managerEmail);
     
     // Send email notification to manager (non-blocking)
     const leaveRequest = {
@@ -192,8 +192,8 @@ router.put('/requests/:id/status', authenticateToken, requireRole(['manager', 'a
     const { status, approver, reason } = req.body;
 
     await executeQuery(
-      'UPDATE leave_taken SET Status = ?, Approver = ?, Modified = NOW(), Modified_By = ? WHERE LeaveID = ?',
-      [status, approver || req.user!.email, req.user!.email, id]
+      'UPDATE leave_taken SET Status = ?, Modified = NOW(), Modified_By = ? WHERE LeaveID = ?',
+      [status, req.user!.email, id]
     );
 
     // Get leave request details for email notification
