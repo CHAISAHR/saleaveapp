@@ -10,6 +10,10 @@ import { CheckCircle, XCircle, AlertCircle, Clock, Users, Calendar, Mail, Ban, E
 import { useToast } from "@/hooks/use-toast";
 import { apiConfig, makeApiRequest } from "@/config/apiConfig";
 import { balanceService } from "@/services/balanceService";
+import { usePagination } from "@/hooks/usePagination";
+import { useSorting } from "@/hooks/useSorting";
+import { SortableTableHead } from "@/components/ui/sortable-table-head";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 interface ManagerDashboardProps {
   currentUser: any;
@@ -464,69 +468,167 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
       </Card>
 
       {/* Historic Leave Requests - Table Format */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Calendar className="h-5 w-5 text-blue-500" />
-            <span>Leave History - {new Date().getFullYear()}</span>
-          </CardTitle>
-          <CardDescription>All leave requests for the current year</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Detail</TableHead>
-                  <TableHead>Start Date</TableHead>
-                  <TableHead>End Date</TableHead>
-                  <TableHead>Leave Type</TableHead>
-                  <TableHead>Requester</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Working Days</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {historicRequests.map((request) => (
-                  <TableRow key={request.LeaveID}>
-                    <TableCell className="font-medium">{request.Title}</TableCell>
-                    <TableCell>
-                      <div className="max-w-[200px] truncate" title={request.Detail}>
-                        {request.Detail}
-                      </div>
-                    </TableCell>
-                    <TableCell>{new Date(request.StartDate).toLocaleDateString()}</TableCell>
-                    <TableCell>{new Date(request.EndDate).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {request.LeaveType}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{request.Requester}</TableCell>
-                    <TableCell>{getStatusBadge(request.Status)}</TableCell>
-                    <TableCell>{request.workingDays}</TableCell>
-                    <TableCell>
-                      {request.Status === 'approved' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleCancelApprovedLeave(request.LeaveID, request.Requester, request.Requester)}
-                          className="text-orange-600 border-orange-200 hover:bg-orange-50"
-                        >
-                          <Ban className="h-4 w-4 mr-1" />
-                          Cancel
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      <TeamRequestsTable 
+        requests={historicRequests}
+        onCancelApprovedLeave={handleCancelApprovedLeave}
+        getStatusBadge={getStatusBadge}
+      />
     </div>
+  );
+};
+
+// Team Requests Table Component with Pagination and Sorting
+const TeamRequestsTable = ({ requests, onCancelApprovedLeave, getStatusBadge }) => {
+  const { sortedData, sortConfig, handleSort } = useSorting(requests, 'Created', 'desc');
+  const {
+    paginatedData,
+    goToPage,
+    goToFirst,
+    goToLast,
+    goToNext,
+    goToPrevious,
+    hasNext,
+    hasPrevious,
+    totalPages,
+    startIndex,
+    endIndex,
+    pagination
+  } = usePagination(sortedData, 20);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <Calendar className="h-5 w-5 text-blue-500" />
+          <span>Leave History - {new Date().getFullYear()}</span>
+        </CardTitle>
+        <CardDescription>All leave requests for the current year</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <SortableTableHead
+                  sortKey="Title"
+                  currentSortKey={sortConfig.key}
+                  currentSortDirection={sortConfig.direction}
+                  onSort={handleSort}
+                >
+                  Title
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="Detail"
+                  currentSortKey={sortConfig.key}
+                  currentSortDirection={sortConfig.direction}
+                  onSort={handleSort}
+                >
+                  Detail
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="StartDate"
+                  currentSortKey={sortConfig.key}
+                  currentSortDirection={sortConfig.direction}
+                  onSort={handleSort}
+                >
+                  Start Date
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="EndDate"
+                  currentSortKey={sortConfig.key}
+                  currentSortDirection={sortConfig.direction}
+                  onSort={handleSort}
+                >
+                  End Date
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="LeaveType"
+                  currentSortKey={sortConfig.key}
+                  currentSortDirection={sortConfig.direction}
+                  onSort={handleSort}
+                >
+                  Leave Type
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="Requester"
+                  currentSortKey={sortConfig.key}
+                  currentSortDirection={sortConfig.direction}
+                  onSort={handleSort}
+                >
+                  Requester
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="Status"
+                  currentSortKey={sortConfig.key}
+                  currentSortDirection={sortConfig.direction}
+                  onSort={handleSort}
+                >
+                  Status
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="workingDays"
+                  currentSortKey={sortConfig.key}
+                  currentSortDirection={sortConfig.direction}
+                  onSort={handleSort}
+                >
+                  Working Days
+                </SortableTableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedData.map((request) => (
+                <TableRow key={request.LeaveID}>
+                  <TableCell className="font-medium">{request.Title}</TableCell>
+                  <TableCell>
+                    <div className="max-w-[200px] truncate" title={request.Detail}>
+                      {request.Detail}
+                    </div>
+                  </TableCell>
+                  <TableCell>{new Date(request.StartDate).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(request.EndDate).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-xs">
+                      {request.LeaveType}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{request.Requester}</TableCell>
+                  <TableCell>{getStatusBadge(request.Status)}</TableCell>
+                  <TableCell>{request.workingDays}</TableCell>
+                  <TableCell>
+                    {request.Status === 'approved' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onCancelApprovedLeave(request.LeaveID, request.Requester, request.Requester)}
+                        className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                      >
+                        <Ban className="h-4 w-4 mr-1" />
+                        Cancel
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        
+        <TablePagination
+          currentPage={pagination.page}
+          totalPages={totalPages}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          totalItems={pagination.total}
+          onPageChange={goToPage}
+          onFirst={goToFirst}
+          onLast={goToLast}
+          onNext={goToNext}
+          onPrevious={goToPrevious}
+          hasNext={hasNext}
+          hasPrevious={hasPrevious}
+        />
+      </CardContent>
+    </Card>
   );
 };
