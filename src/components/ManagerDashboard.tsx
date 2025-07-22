@@ -6,12 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TablePagination } from "@/components/ui/table-pagination";
-import { SortableTableHead } from "@/components/ui/sortable-table-head";
 import { CheckCircle, XCircle, AlertCircle, Clock, Users, Calendar, Mail, Ban, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { usePagination } from "@/hooks/usePagination";
-import { useSorting } from "@/hooks/useSorting";
 import { apiConfig, makeApiRequest } from "@/config/apiConfig";
 import { balanceService } from "@/services/balanceService";
 
@@ -26,14 +22,6 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
   const [pendingRequests, setPendingRequests] = useState([]);
   const [historicRequests, setHistoricRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Apply sorting to data
-  const sortedHistoricRequests = useSorting(historicRequests, 'Created', 'desc');
-  const sortedTeamMembers = useSorting(teamMembers, 'EmployeeName', 'asc');
-
-  // Apply pagination to sorted data
-  const requestsPagination = usePagination(sortedHistoricRequests.sortedData);
-  const balancesPagination = usePagination(sortedTeamMembers.sortedData);
 
   const getAuthHeaders = () => {
     const authToken = localStorage.getItem('auth_token');
@@ -258,132 +246,82 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
           </div>
         </div>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <div className="text-sm text-muted-foreground">
-                  Showing {balancesPagination.startIndex}-{balancesPagination.endIndex} of {balancesPagination.pagination.total} team members
-                </div>
-              </div>
-
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <SortableTableHead 
-                      sortKey="EmployeeName"
-                      currentSortKey={sortedTeamMembers.sortConfig?.key}
-                      currentSortDirection={sortedTeamMembers.sortConfig?.direction}
-                      onSort={sortedTeamMembers.handleSort}
-                    >
-                      Employee
-                    </SortableTableHead>
-                    <SortableTableHead 
-                      sortKey="EmployeeEmail"
-                      currentSortKey={sortedTeamMembers.sortConfig?.key}
-                      currentSortDirection={sortedTeamMembers.sortConfig?.direction}
-                      onSort={sortedTeamMembers.handleSort}
-                    >
-                      Email
-                    </SortableTableHead>
-                    <TableHead>Annual Leave</TableHead>
-                    <TableHead>Study Leave</TableHead>
-                    <TableHead>Wellness Leave</TableHead>
-                    <SortableTableHead 
-                      sortKey="AnnualUsed"
-                      currentSortKey={sortedTeamMembers.sortConfig?.key}
-                      currentSortDirection={sortedTeamMembers.sortConfig?.direction}
-                      onSort={sortedTeamMembers.handleSort}
-                    >
-                      Annual Used
-                    </SortableTableHead>
-                    <SortableTableHead 
-                      sortKey="Broughtforward"
-                      currentSortKey={sortedTeamMembers.sortConfig?.key}
-                      currentSortDirection={sortedTeamMembers.sortConfig?.direction}
-                      onSort={sortedTeamMembers.handleSort}
-                    >
-                      Brought Forward
-                    </SortableTableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {balancesPagination.paginatedData.map((member) => {
-                    const annualBalance = calculateLeaveBalance(member, 'annual');
-                    const studyBalance = calculateLeaveBalance(member, 'study');
-                    const wellnessBalance = calculateLeaveBalance(member, 'wellness');
+        <div className="grid grid-cols-1 gap-6">
+          {teamMembers.map((member) => {
+            const annualBalance = calculateLeaveBalance(member, 'annual');
+            const studyBalance = calculateLeaveBalance(member, 'study');
+            const wellnessBalance = calculateLeaveBalance(member, 'wellness');
+            
+            return (
+              <Card key={member.BalanceID} className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center space-x-4">
+                    <Avatar>
+                      <AvatarFallback className="bg-blue-100 text-blue-600">
+                        {member.EmployeeName.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <CardTitle className="text-lg">{member.EmployeeName}</CardTitle>
+                      <CardDescription>{member.EmployeeEmail}</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-600">Annual Leave</span>
+                        <span className="text-sm text-gray-500">
+                          {annualBalance} days
+                        </span>
+                      </div>
+                      <Progress 
+                        value={((20 - annualBalance) / 20) * 100} 
+                        className="h-2"
+                      />
+                      <div className="text-xs text-gray-400">
+                        Used: {member.AnnualUsed} | BF: {member.Broughtforward}
+                      </div>
+                    </div>
                     
-                    return (
-                      <TableRow key={member.BalanceID}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center space-x-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback className="bg-blue-100 text-blue-600 text-sm">
-                                {member.EmployeeName.split(' ').map(n => n[0]).join('')}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span>{member.EmployeeName}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>{member.EmployeeEmail}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium">{annualBalance} days</span>
-                            <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-blue-500" 
-                                style={{ width: `${Math.max(0, Math.min(100, ((20 - annualBalance) / 20) * 100))}%` }}
-                              />
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium">{studyBalance} days</span>
-                            <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-green-500" 
-                                style={{ width: `${Math.max(0, Math.min(100, ((6 - studyBalance) / 6) * 100))}%` }}
-                              />
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium">{wellnessBalance} days</span>
-                            <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-purple-500" 
-                                style={{ width: `${Math.max(0, Math.min(100, ((2 - wellnessBalance) / 2) * 100))}%` }}
-                              />
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{member.AnnualUsed}</TableCell>
-                        <TableCell>{member.Broughtforward}</TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-
-              <TablePagination
-                currentPage={balancesPagination.pagination.page}
-                totalPages={balancesPagination.totalPages}
-                totalItems={balancesPagination.pagination.total}
-                startIndex={balancesPagination.startIndex}
-                endIndex={balancesPagination.endIndex}
-                onPageChange={balancesPagination.goToPage}
-                onFirst={balancesPagination.goToFirst}
-                onPrevious={balancesPagination.goToPrevious}
-                onNext={balancesPagination.goToNext}
-                onLast={balancesPagination.goToLast}
-                hasNext={balancesPagination.hasNext}
-                hasPrevious={balancesPagination.hasPrevious}
-              />
-            </div>
-          </CardContent>
-        </Card>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-600">Study Leave</span>
+                        <span className="text-sm text-gray-500">
+                          {studyBalance} days
+                        </span>
+                      </div>
+                      <Progress 
+                        value={((6 - studyBalance) / 6) * 100} 
+                        className="h-2"
+                      />
+                      <div className="text-xs text-gray-400">
+                        Used: {member.StudyUsed}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-600">Wellness Leave</span>
+                        <span className="text-sm text-gray-500">
+                          {wellnessBalance} days
+                        </span>
+                      </div>
+                      <Progress 
+                        value={((2 - wellnessBalance) / 2) * 100} 
+                        className="h-2"
+                      />
+                      <div className="text-xs text-gray-400">
+                        Used: {member.WellnessUsed}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -535,78 +473,23 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
           <CardDescription>All leave requests for the current year</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-muted-foreground">
-                Showing {requestsPagination.startIndex}-{requestsPagination.endIndex} of {requestsPagination.pagination.total} requests
-              </div>
-            </div>
-
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <SortableTableHead
-                    sortKey="Title"
-                    currentSortKey={sortedHistoricRequests.sortConfig?.key}
-                    currentSortDirection={sortedHistoricRequests.sortConfig?.direction}
-                    onSort={sortedHistoricRequests.handleSort}
-                  >
-                    Title
-                  </SortableTableHead>
+                  <TableHead>Title</TableHead>
                   <TableHead>Detail</TableHead>
-                  <SortableTableHead
-                    sortKey="StartDate"
-                    currentSortKey={sortedHistoricRequests.sortConfig?.key}
-                    currentSortDirection={sortedHistoricRequests.sortConfig?.direction}
-                    onSort={sortedHistoricRequests.handleSort}
-                  >
-                    Start Date
-                  </SortableTableHead>
-                  <SortableTableHead
-                    sortKey="EndDate"
-                    currentSortKey={sortedHistoricRequests.sortConfig?.key}
-                    currentSortDirection={sortedHistoricRequests.sortConfig?.direction}
-                    onSort={sortedHistoricRequests.handleSort}
-                  >
-                    End Date
-                  </SortableTableHead>
-                  <SortableTableHead
-                    sortKey="LeaveType"
-                    currentSortKey={sortedHistoricRequests.sortConfig?.key}
-                    currentSortDirection={sortedHistoricRequests.sortConfig?.direction}
-                    onSort={sortedHistoricRequests.handleSort}
-                  >
-                    Leave Type
-                  </SortableTableHead>
-                  <SortableTableHead
-                    sortKey="Requester"
-                    currentSortKey={sortedHistoricRequests.sortConfig?.key}
-                    currentSortDirection={sortedHistoricRequests.sortConfig?.direction}
-                    onSort={sortedHistoricRequests.handleSort}
-                  >
-                    Requester
-                  </SortableTableHead>
-                  <SortableTableHead
-                    sortKey="Status"
-                    currentSortKey={sortedHistoricRequests.sortConfig?.key}
-                    currentSortDirection={sortedHistoricRequests.sortConfig?.direction}
-                    onSort={sortedHistoricRequests.handleSort}
-                  >
-                    Status
-                  </SortableTableHead>
-                  <SortableTableHead
-                    sortKey="workingDays"
-                    currentSortKey={sortedHistoricRequests.sortConfig?.key}
-                    currentSortDirection={sortedHistoricRequests.sortConfig?.direction}
-                    onSort={sortedHistoricRequests.handleSort}
-                  >
-                    Working Days
-                  </SortableTableHead>
+                  <TableHead>Start Date</TableHead>
+                  <TableHead>End Date</TableHead>
+                  <TableHead>Leave Type</TableHead>
+                  <TableHead>Requester</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Working Days</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {requestsPagination.paginatedData.map((request) => (
+                {historicRequests.map((request) => (
                   <TableRow key={request.LeaveID}>
                     <TableCell className="font-medium">{request.Title}</TableCell>
                     <TableCell>
@@ -641,21 +524,6 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
                 ))}
               </TableBody>
             </Table>
-
-            <TablePagination
-              currentPage={requestsPagination.pagination.page}
-              totalPages={requestsPagination.totalPages}
-              totalItems={requestsPagination.pagination.total}
-              startIndex={requestsPagination.startIndex}
-              endIndex={requestsPagination.endIndex}
-              onPageChange={requestsPagination.goToPage}
-              onFirst={requestsPagination.goToFirst}
-              onPrevious={requestsPagination.goToPrevious}
-              onNext={requestsPagination.goToNext}
-              onLast={requestsPagination.goToLast}
-              hasNext={requestsPagination.hasNext}
-              hasPrevious={requestsPagination.hasPrevious}
-            />
           </div>
         </CardContent>
       </Card>
