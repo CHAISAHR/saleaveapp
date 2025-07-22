@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Edit } from "lucide-react";
 import { BalanceCalculations } from "@/services/balance/balanceCalculations";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { SortableTableHead } from "@/components/ui/sortable-table-head";
 
 interface EmployeeBalance {
   BalanceID: number;
@@ -46,6 +48,25 @@ interface EmployeeBalance {
 
 interface AdminAllBalancesTableProps {
   balances: EmployeeBalance[];
+  totalBalances?: number;
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    startIndex: number;
+    endIndex: number;
+    totalItems: number;
+    onPageChange: (page: number) => void;
+    onFirst: () => void;
+    onLast: () => void;
+    onNext: () => void;
+    onPrevious: () => void;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
+  sorting?: {
+    sortConfig: { key: string; direction: 'asc' | 'desc' } | null;
+    onSort: (key: string) => void;
+  };
   calculateCurrentBalance: (balance: EmployeeBalance) => number;
   calculateTerminationBalance: (balance: EmployeeBalance) => number | null;
   getEmployeeStatus: (balance: EmployeeBalance) => string;
@@ -57,6 +78,9 @@ interface AdminAllBalancesTableProps {
 
 export const AdminAllBalancesTable = ({
   balances,
+  totalBalances,
+  pagination,
+  sorting,
   calculateCurrentBalance,
   calculateTerminationBalance,
   getEmployeeStatus,
@@ -69,24 +93,99 @@ export const AdminAllBalancesTable = ({
     <Card>
       <CardHeader>
         <CardTitle>Employee Leave Balances</CardTitle>
+        {pagination && totalBalances && (
+          <p className="text-sm text-muted-foreground">
+            Showing {pagination.startIndex}-{pagination.endIndex} of {totalBalances} employees
+          </p>
+        )}
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Balance ID</TableHead>
-                <TableHead>Employee Name</TableHead>
-                <TableHead>Employee Email</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Year</TableHead>
-                <TableHead>Brought Forward</TableHead>
-                <TableHead>Annual</TableHead>
+                <SortableTableHead 
+                  sortKey="BalanceID" 
+                  currentSortKey={sorting?.sortConfig?.key} 
+                  currentSortDirection={sorting?.sortConfig?.direction} 
+                  onSort={sorting?.onSort || (() => {})}
+                >
+                  Balance ID
+                </SortableTableHead>
+                <SortableTableHead 
+                  sortKey="EmployeeName" 
+                  currentSortKey={sorting?.sortConfig?.key} 
+                  currentSortDirection={sorting?.sortConfig?.direction} 
+                  onSort={sorting?.onSort || (() => {})}
+                >
+                  Employee Name
+                </SortableTableHead>
+                <SortableTableHead 
+                  sortKey="EmployeeEmail" 
+                  currentSortKey={sorting?.sortConfig?.key} 
+                  currentSortDirection={sorting?.sortConfig?.direction} 
+                  onSort={sorting?.onSort || (() => {})}
+                >
+                  Employee Email
+                </SortableTableHead>
+                <SortableTableHead 
+                  sortKey="Department" 
+                  currentSortKey={sorting?.sortConfig?.key} 
+                  currentSortDirection={sorting?.sortConfig?.direction} 
+                  onSort={sorting?.onSort || (() => {})}
+                >
+                  Department
+                </SortableTableHead>
+                <SortableTableHead 
+                  sortKey="Status" 
+                  currentSortKey={sorting?.sortConfig?.key} 
+                  currentSortDirection={sorting?.sortConfig?.direction} 
+                  onSort={sorting?.onSort || (() => {})}
+                >
+                  Status
+                </SortableTableHead>
+                <SortableTableHead 
+                  sortKey="Year" 
+                  currentSortKey={sorting?.sortConfig?.key} 
+                  currentSortDirection={sorting?.sortConfig?.direction} 
+                  onSort={sorting?.onSort || (() => {})}
+                >
+                  Year
+                </SortableTableHead>
+                <SortableTableHead 
+                  sortKey="Broughtforward" 
+                  currentSortKey={sorting?.sortConfig?.key} 
+                  currentSortDirection={sorting?.sortConfig?.direction} 
+                  onSort={sorting?.onSort || (() => {})}
+                >
+                  Brought Forward
+                </SortableTableHead>
+                <SortableTableHead 
+                  sortKey="Annual" 
+                  currentSortKey={sorting?.sortConfig?.key} 
+                  currentSortDirection={sorting?.sortConfig?.direction} 
+                  onSort={sorting?.onSort || (() => {})}
+                >
+                  Annual
+                </SortableTableHead>
                 <TableHead>Accumulated Leave</TableHead>
-                <TableHead>Annual Used</TableHead>
+                <SortableTableHead 
+                  sortKey="AnnualUsed" 
+                  currentSortKey={sorting?.sortConfig?.key} 
+                  currentSortDirection={sorting?.sortConfig?.direction} 
+                  onSort={sorting?.onSort || (() => {})}
+                >
+                  Annual Used
+                </SortableTableHead>
                 <TableHead>Forfeited</TableHead>
-                <TableHead>Annual Adjustments</TableHead>
+                <SortableTableHead 
+                  sortKey="Annual_leave_adjustments" 
+                  currentSortKey={sorting?.sortConfig?.key} 
+                  currentSortDirection={sorting?.sortConfig?.direction} 
+                  onSort={sorting?.onSort || (() => {})}
+                >
+                  Annual Adjustments
+                </SortableTableHead>
                 <TableHead>Sick BF</TableHead>
                 <TableHead>Sick</TableHead>
                 <TableHead>Sick Used</TableHead>
@@ -104,11 +203,25 @@ export const AdminAllBalancesTable = ({
                 <TableHead>Wellness Used</TableHead>
                 <TableHead>Current Balance</TableHead>
                 <TableHead>Previous Month</TableHead>
-                <TableHead>Contract Term Date</TableHead>
+                <SortableTableHead 
+                  sortKey="Contract_termination_date" 
+                  currentSortKey={sorting?.sortConfig?.key} 
+                  currentSortDirection={sorting?.sortConfig?.direction} 
+                  onSort={sorting?.onSort || (() => {})}
+                >
+                  Contract Term Date
+                </SortableTableHead>
                 <TableHead>Termination Balance</TableHead>
                 <TableHead>Comment</TableHead>
                 <TableHead>Adjustment Comments</TableHead>
-                <TableHead>Manager</TableHead>
+                <SortableTableHead 
+                  sortKey="Manager" 
+                  currentSortKey={sorting?.sortConfig?.key} 
+                  currentSortDirection={sorting?.sortConfig?.direction} 
+                  onSort={sorting?.onSort || (() => {})}
+                >
+                  Manager
+                </SortableTableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -209,6 +322,24 @@ export const AdminAllBalancesTable = ({
               ))}
             </TableBody>
           </Table>
+          
+          {/* Pagination */}
+          {pagination && (
+            <TablePagination
+              currentPage={pagination.currentPage}
+              totalPages={pagination.totalPages}
+              startIndex={pagination.startIndex}
+              endIndex={pagination.endIndex}
+              totalItems={pagination.totalItems}
+              onPageChange={pagination.onPageChange}
+              onFirst={pagination.onFirst}
+              onLast={pagination.onLast}
+              onNext={pagination.onNext}
+              onPrevious={pagination.onPrevious}
+              hasNext={pagination.hasNext}
+              hasPrevious={pagination.hasPrevious}
+            />
+          )}
         </div>
       </CardContent>
     </Card>

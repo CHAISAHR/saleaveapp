@@ -7,6 +7,8 @@ import { AdminAllBalancesTable } from "./admin/AdminAllBalancesTable";
 import { EditBalanceDialog } from "./admin/EditBalanceDialog";
 import { WarningDialogs } from "./admin/WarningDialogs";
 import { apiConfig } from "@/config/apiConfig";
+import { usePagination } from "@/hooks/usePagination";
+import { useSorting } from "@/hooks/useSorting";
 
 interface EmployeeBalance {
   BalanceID: number;
@@ -483,6 +485,29 @@ export const AdminAllBalances = () => {
     });
   };
 
+  // Apply sorting to balances
+  const { sortedData: sortedBalances, sortConfig, handleSort } = useSorting(
+    balances,
+    'EmployeeName', // Default sort by employee name
+    'asc' // Alphabetical order
+  );
+
+  // Apply pagination to sorted data
+  const {
+    paginatedData: displayBalances,
+    pagination,
+    goToPage,
+    goToFirst,
+    goToLast,
+    goToNext,
+    goToPrevious,
+    hasNext,
+    hasPrevious,
+    totalPages,
+    startIndex,
+    endIndex,
+  } = usePagination(sortedBalances, 20);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -502,7 +527,26 @@ export const AdminAllBalances = () => {
       />
 
       <AdminAllBalancesTable
-        balances={balances}
+        balances={displayBalances}
+        totalBalances={balances.length}
+        pagination={{
+          currentPage: pagination.page,
+          totalPages,
+          startIndex,
+          endIndex,
+          totalItems: balances.length,
+          onPageChange: goToPage,
+          onFirst: goToFirst,
+          onLast: goToLast,
+          onNext: goToNext,
+          onPrevious: goToPrevious,
+          hasNext,
+          hasPrevious,
+        }}
+        sorting={{
+          sortConfig,
+          onSort: handleSort,
+        }}
         calculateCurrentBalance={calculateCurrentBalance}
         calculateTerminationBalance={calculateTerminationBalance}
         getEmployeeStatus={getEmployeeStatus}

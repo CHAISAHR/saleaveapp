@@ -10,6 +10,10 @@ import { CheckCircle, XCircle, AlertCircle, Edit, Save, X, Download, Ban, Filter
 import { useToast } from "@/hooks/use-toast";
 import { balanceService } from "@/services/balanceService";
 import { apiConfig, makeApiRequest } from "@/config/apiConfig";
+import { usePagination } from "@/hooks/usePagination";
+import { useSorting } from "@/hooks/useSorting";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { SortableTableHead } from "@/components/ui/sortable-table-head";
 
 interface LeaveRequest {
   LeaveID: number;
@@ -228,6 +232,29 @@ export const AdminAllRequests = () => {
     });
   }, [requests, filters]);
 
+  // Apply sorting to filtered data
+  const { sortedData: sortedRequests, sortConfig, handleSort, getSortIcon } = useSorting(
+    filteredRequests,
+    'Created', // Default sort by created date
+    'desc' // Newest first
+  );
+
+  // Apply pagination to sorted data
+  const {
+    paginatedData: displayRequests,
+    pagination,
+    goToPage,
+    goToFirst,
+    goToLast,
+    goToNext,
+    goToPrevious,
+    hasNext,
+    hasPrevious,
+    totalPages,
+    startIndex,
+    endIndex,
+  } = usePagination(sortedRequests, 20);
+
   const clearFilters = () => {
     setFilters({
       status: 'all',
@@ -395,24 +422,108 @@ export const AdminAllRequests = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Leave ID</TableHead>
-                    <TableHead>Title</TableHead>
+                    <SortableTableHead 
+                      sortKey="LeaveID" 
+                      currentSortKey={sortConfig?.key} 
+                      currentSortDirection={sortConfig?.direction} 
+                      onSort={handleSort}
+                    >
+                      Leave ID
+                    </SortableTableHead>
+                    <SortableTableHead 
+                      sortKey="Title" 
+                      currentSortKey={sortConfig?.key} 
+                      currentSortDirection={sortConfig?.direction} 
+                      onSort={handleSort}
+                    >
+                      Title
+                    </SortableTableHead>
                     <TableHead>Detail</TableHead>
-                    <TableHead>Start Date</TableHead>
-                    <TableHead>End Date</TableHead>
-                    <TableHead>Leave Type</TableHead>
-                    <TableHead>Requester</TableHead>
-                    <TableHead>Approver</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Working Days</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Modified</TableHead>
-                    <TableHead>Modified By</TableHead>
+                    <SortableTableHead 
+                      sortKey="StartDate" 
+                      currentSortKey={sortConfig?.key} 
+                      currentSortDirection={sortConfig?.direction} 
+                      onSort={handleSort}
+                    >
+                      Start Date
+                    </SortableTableHead>
+                    <SortableTableHead 
+                      sortKey="EndDate" 
+                      currentSortKey={sortConfig?.key} 
+                      currentSortDirection={sortConfig?.direction} 
+                      onSort={handleSort}
+                    >
+                      End Date
+                    </SortableTableHead>
+                    <SortableTableHead 
+                      sortKey="LeaveType" 
+                      currentSortKey={sortConfig?.key} 
+                      currentSortDirection={sortConfig?.direction} 
+                      onSort={handleSort}
+                    >
+                      Leave Type
+                    </SortableTableHead>
+                    <SortableTableHead 
+                      sortKey="Requester" 
+                      currentSortKey={sortConfig?.key} 
+                      currentSortDirection={sortConfig?.direction} 
+                      onSort={handleSort}
+                    >
+                      Requester
+                    </SortableTableHead>
+                    <SortableTableHead 
+                      sortKey="Approver" 
+                      currentSortKey={sortConfig?.key} 
+                      currentSortDirection={sortConfig?.direction} 
+                      onSort={handleSort}
+                    >
+                      Approver
+                    </SortableTableHead>
+                    <SortableTableHead 
+                      sortKey="Status" 
+                      currentSortKey={sortConfig?.key} 
+                      currentSortDirection={sortConfig?.direction} 
+                      onSort={handleSort}
+                    >
+                      Status
+                    </SortableTableHead>
+                    <SortableTableHead 
+                      sortKey="workingDays" 
+                      currentSortKey={sortConfig?.key} 
+                      currentSortDirection={sortConfig?.direction} 
+                      onSort={handleSort}
+                    >
+                      Working Days
+                    </SortableTableHead>
+                    <SortableTableHead 
+                      sortKey="Created" 
+                      currentSortKey={sortConfig?.key} 
+                      currentSortDirection={sortConfig?.direction} 
+                      onSort={handleSort}
+                    >
+                      Created
+                    </SortableTableHead>
+                    <SortableTableHead 
+                      sortKey="Modified" 
+                      currentSortKey={sortConfig?.key} 
+                      currentSortDirection={sortConfig?.direction} 
+                      onSort={handleSort}
+                    >
+                      Modified
+                    </SortableTableHead>
+                    <SortableTableHead 
+                      sortKey="ModifiedBy" 
+                      currentSortKey={sortConfig?.key} 
+                      currentSortDirection={sortConfig?.direction} 
+                      onSort={handleSort}
+                    >
+                      Modified By
+                    </SortableTableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRequests.map((request) => (
+                  {displayRequests.map((request) => (
                     <TableRow key={request.LeaveID}>
                       <TableCell className="font-medium">{request.LeaveID}</TableCell>
                       <TableCell>
@@ -552,6 +663,24 @@ export const AdminAllRequests = () => {
                   ))}
                 </TableBody>
               </Table>
+              
+              {/* Pagination */}
+              {filteredRequests.length > 0 && (
+                <TablePagination
+                  currentPage={pagination.page}
+                  totalPages={totalPages}
+                  startIndex={startIndex}
+                  endIndex={endIndex}
+                  totalItems={filteredRequests.length}
+                  onPageChange={goToPage}
+                  onFirst={goToFirst}
+                  onLast={goToLast}
+                  onNext={goToNext}
+                  onPrevious={goToPrevious}
+                  hasNext={hasNext}
+                  hasPrevious={hasPrevious}
+                />
+              )}
             </div>
           )}
         </CardContent>
