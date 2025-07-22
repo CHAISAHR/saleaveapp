@@ -82,6 +82,14 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
             balance: balanceService.calculateCurrentBalance(employeeBalance, 'parental')
           },
           {
+            type: 'Family',
+            used: employeeBalance.FamilyUsed || 0,
+            total: 3,
+            accrued: 3,
+            unit: 'days',
+            balance: balanceService.calculateCurrentBalance(employeeBalance, 'family')
+          },
+          {
             type: 'Adoption',
             used: employeeBalance.AdoptionUsed || 0,
             total: 4,
@@ -156,6 +164,14 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
       accrued: 4,
       unit: 'weeks',
       balance: 4
+    },
+    {
+      type: 'Family',
+      used: 0,
+      total: 5,
+      accrued: 5,
+      unit: 'days',
+      balance: 5
     },
     {
       type: 'Adoption',
