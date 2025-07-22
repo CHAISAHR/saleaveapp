@@ -36,7 +36,6 @@ interface EmployeeBalance {
   StudyUsed: number;
   Wellness: number;
   WellnessUsed: number;
-  PowerAppsId?: string;
   Current_leave_balance: number;
   Leave_balance_previous_month: number;
   Contract_termination_date?: string;
@@ -314,7 +313,7 @@ export const AdminAllBalances = () => {
       'Broughtforward', 'Annual', 'AccumulatedLeave', 'AnnualUsed', 'Forfeited', 'Annual_leave_adjustments',
       'SickBroughtforward', 'Sick', 'SickUsed', 'Maternity', 'MaternityUsed',
       'Parental', 'ParentalUsed', 'Family', 'FamilyUsed', 'Adoption', 'AdoptionUsed',
-      'Study', 'StudyUsed', 'Wellness', 'WellnessUsed', 'PowerAppsId',
+      'Study', 'StudyUsed', 'Wellness', 'WellnessUsed',
       'Current_leave_balance', 'Leave_balance_previous_month', 'Contract_termination_date',
       'termination_balance', 'Comment', 'Annual_leave_adjustment_comments', 'Manager', 'Modified'
     ];
@@ -349,7 +348,6 @@ export const AdminAllBalances = () => {
         balance.StudyUsed,
         balance.Wellness,
         balance.WellnessUsed,
-        balance.PowerAppsId || '',
         calculateCurrentBalance(balance),
         balance.Leave_balance_previous_month,
         balance.Contract_termination_date || '',

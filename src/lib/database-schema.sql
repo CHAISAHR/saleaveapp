@@ -63,7 +63,6 @@ CREATE TABLE leave_taken (
     ApproverReason TEXT NULL, -- Reason for alternative approver
     Status ENUM('pending', 'approved', 'rejected', 'cancelled') DEFAULT 'pending',
     workingDays DECIMAL(8,3) DEFAULT 0, -- Fixed column name to match API
-    __PowerAppsId__ VARCHAR(255) NULL,
     Created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     Modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     Modified_By VARCHAR(255) NULL
@@ -117,7 +116,6 @@ CREATE TABLE leave_balances (
     StudyUsed DECIMAL(8,3) DEFAULT 0, -- Days - allows negative values
     Wellness DECIMAL(8,3) DEFAULT 2, -- Days - wellness leave
     WellnessUsed DECIMAL(8,3) DEFAULT 0, -- Days - allows negative values
-    __PowerAppsId__ VARCHAR(255) NULL,
     Current_leave_balance DECIMAL(8,3) GENERATED ALWAYS AS (
         Broughtforward + AccumulatedLeave - AnnualUsed - Forfeited - Annual_leave_adjustments
     ) STORED,

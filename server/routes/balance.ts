@@ -235,7 +235,7 @@ router.put('/update-full', authenticateToken, requireRole(['admin']), async (req
         Forfeited = ?, Annual_leave_adjustments = ?, SickBroughtforward = ?, 
         Sick = ?, SickUsed = ?, Maternity = ?, MaternityUsed = ?, Parental = ?, 
         ParentalUsed = ?, Family = ?, FamilyUsed = ?, Adoption = ?, AdoptionUsed = ?, 
-        Study = ?, StudyUsed = ?, Wellness = ?, WellnessUsed = ?, PowerAppsId = ?,
+        Study = ?, StudyUsed = ?, Wellness = ?, WellnessUsed = ?,
         Leave_balance_previous_month = ?, Contract_termination_date = ?, 
         termination_balance = ?, Comment = ?, Annual_leave_adjustment_comments = ?, 
         Manager = ?, Modified = NOW()
@@ -266,8 +266,7 @@ router.put('/update-full', authenticateToken, requireRole(['admin']), async (req
       convertUndefinedToNull(balance.StudyUsed),
       convertUndefinedToNull(balance.Wellness), 
       convertUndefinedToNull(balance.WellnessUsed), 
-      convertUndefinedToNull(balance.PowerAppsId),
-      convertUndefinedToNull(balance.Leave_balance_previous_month), 
+      convertUndefinedToNull(balance.Leave_balance_previous_month),
       convertUndefinedToNull(balance.Contract_termination_date), 
       convertUndefinedToNull(balance.termination_balance), 
       convertUndefinedToNull(balance.Comment), 

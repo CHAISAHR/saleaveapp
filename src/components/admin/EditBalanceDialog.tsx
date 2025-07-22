@@ -34,7 +34,6 @@ interface EmployeeBalance {
   StudyUsed: number;
   Wellness: number;
   WellnessUsed: number;
-  PowerAppsId?: string;
   Current_leave_balance: number;
   Leave_balance_previous_month: number;
   Contract_termination_date?: string;
