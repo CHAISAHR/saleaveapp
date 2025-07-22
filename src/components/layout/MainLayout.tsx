@@ -51,7 +51,7 @@ export const MainLayout = ({ currentUser, userRole, setUserRole }: MainLayoutPro
             {/* Forfeit ribbon for employees */}
             {userRole === 'employee' && (
               <ForfeitRibbon 
-                broughtForward={employeeBalance.broughtForward}
+                broughtforward={employeeBalance.broughtForward}
                 annualUsed={employeeBalance.annualUsed}
               />
             )}

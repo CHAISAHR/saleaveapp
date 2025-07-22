@@ -222,7 +222,7 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
       {/* Forfeit ribbon */}
       {annualLeave && (
         <ForfeitRibbon 
-          broughtForward={annualLeave.broughtForward || 0}
+          broughtforward={annualLeave.broughtForward || 0}
           annualUsed={annualLeave.used}
         />
       )}
