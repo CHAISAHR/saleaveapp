@@ -47,8 +47,12 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
         
         console.log('Processed requests array:', requestsArray);
 
-        const pending = requestsArray.filter((request: any) => request.Status === 'pending');
-        const historic = requestsArray.filter((request: any) => request.Status !== 'pending');
+        const pending = requestsArray.filter((request: any) => 
+          (request.Status || request.status || '').toLowerCase() === 'pending'
+        );
+        const historic = requestsArray.filter((request: any) => 
+          (request.Status || request.status || '').toLowerCase() !== 'pending'
+        );
         
         setPendingRequests(pending);
         setHistoricRequests(historic);
