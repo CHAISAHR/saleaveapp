@@ -61,6 +61,12 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
         const teamMemberEmails = [...new Set(requestsArray.map((req: any) => req.Requester))];
         console.log('Team member emails:', teamMemberEmails);
         
+        // Log a sample request to check field names
+        if (requestsArray.length > 0) {
+          console.log('Sample request fields:', Object.keys(requestsArray[0]));
+          console.log('Sample request:', requestsArray[0]);
+        }
+        
         // Fetch balances for each team member individually
         const balancePromises = teamMemberEmails.map(async (email: string) => {
           try {
