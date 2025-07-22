@@ -402,12 +402,26 @@ export const AdminAllBalances = () => {
       Modified: new Date().toISOString()
     };
 
+    console.log('Attempting to save balance:', {
+      balanceId: updatedBalance.BalanceID,
+      employeeName: updatedBalance.EmployeeName,
+      endpoint: `${apiConfig.endpoints.balance}/update-full`,
+      authToken: localStorage.getItem('auth_token') ? 'Present' : 'Missing'
+    });
+
     try {
       // Save to backend database
       const response = await fetch(`${apiConfig.endpoints.balance}/update-full`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify(updatedBalance)
+      });
+
+      console.log('Response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
       });
 
       if (response.ok) {
@@ -424,13 +438,22 @@ export const AdminAllBalances = () => {
         setShowEditDialog(false);
         setSelectedBalance(null);
       } else {
-        throw new Error('Failed to save balance');
+        const errorText = await response.text();
+        console.error('Server error response:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
     } catch (error) {
-      console.error('Error saving balance:', error);
+      console.error('Detailed error saving balance:', {
+        error: error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace',
+        balanceId: selectedBalance.BalanceID,
+        endpoint: `${apiConfig.endpoints.balance}/update-full`
+      });
+      
       toast({
         title: "Save Failed",
-        description: "Failed to save balance changes to the database. Please try again.",
+        description: `Failed to save balance changes: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     }
