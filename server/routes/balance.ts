@@ -224,6 +224,7 @@ router.put('/update-full', authenticateToken, requireRole(['admin']), async (req
   try {
     const balance = req.body;
     
+    // Exclude generated columns that cannot be manually updated
     await executeQuery(`
       UPDATE leave_balances SET
         EmployeeName = ?, EmployeeEmail = ?, Department = ?, Year = ?,
@@ -232,9 +233,9 @@ router.put('/update-full', authenticateToken, requireRole(['admin']), async (req
         Sick = ?, SickUsed = ?, Maternity = ?, MaternityUsed = ?, Parental = ?, 
         ParentalUsed = ?, Family = ?, FamilyUsed = ?, Adoption = ?, AdoptionUsed = ?, 
         Study = ?, StudyUsed = ?, Wellness = ?, WellnessUsed = ?, PowerAppsId = ?,
-        Current_leave_balance = ?, Leave_balance_previous_month = ?, 
-        Contract_termination_date = ?, termination_balance = ?, Comment = ?, 
-        Annual_leave_adjustment_comments = ?, Manager = ?, Modified = NOW()
+        Leave_balance_previous_month = ?, Contract_termination_date = ?, 
+        termination_balance = ?, Comment = ?, Annual_leave_adjustment_comments = ?, 
+        Manager = ?, Modified = NOW()
       WHERE BalanceID = ?
     `, [
       balance.EmployeeName, balance.EmployeeEmail, balance.Department, balance.Year,
@@ -244,9 +245,9 @@ router.put('/update-full', authenticateToken, requireRole(['admin']), async (req
       balance.Parental, balance.ParentalUsed, balance.Family, balance.FamilyUsed,
       balance.Adoption, balance.AdoptionUsed, balance.Study, balance.StudyUsed,
       balance.Wellness, balance.WellnessUsed, balance.PowerAppsId,
-      balance.Current_leave_balance, balance.Leave_balance_previous_month,
-      balance.Contract_termination_date, balance.termination_balance, balance.Comment,
-      balance.Annual_leave_adjustment_comments, balance.Manager, balance.BalanceID
+      balance.Leave_balance_previous_month, balance.Contract_termination_date, 
+      balance.termination_balance, balance.Comment, balance.Annual_leave_adjustment_comments, 
+      balance.Manager, balance.BalanceID
     ]);
 
     res.json({ success: true, message: 'Balance updated successfully' });
@@ -262,6 +263,7 @@ router.put('/update-field', authenticateToken, requireRole(['admin']), async (re
     const { BalanceID, field, value } = req.body;
     
     // Validate field name to prevent SQL injection
+    // Exclude generated/computed columns like Current_leave_balance
     const allowedFields = [
       'Department', 'Manager', 'Forfeited', 'EmployeeName', 'EmployeeEmail',
       'Broughtforward', 'Annual', 'AccumulatedLeave', 'AnnualUsed', 
@@ -269,7 +271,7 @@ router.put('/update-field', authenticateToken, requireRole(['admin']), async (re
       'Maternity', 'MaternityUsed', 'Parental', 'ParentalUsed', 'Family',
       'FamilyUsed', 'Adoption', 'AdoptionUsed', 'Study', 'StudyUsed',
       'Wellness', 'WellnessUsed', 'Comment', 'Annual_leave_adjustment_comments',
-      'Contract_termination_date'
+      'Contract_termination_date', 'termination_balance', 'Leave_balance_previous_month'
     ];
     
     if (!allowedFields.includes(field)) {
