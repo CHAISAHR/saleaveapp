@@ -37,6 +37,22 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
       title, detail, startDate, endDate, leaveType, requester, workingDays
     });
 
+    // Convert ISO date strings to MySQL DATE format (YYYY-MM-DD)
+    const formatDateForMySQL = (dateString: string) => {
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0]; // Gets YYYY-MM-DD part
+    };
+
+    const formattedStartDate = formatDateForMySQL(startDate);
+    const formattedEndDate = formatDateForMySQL(endDate);
+
+    console.log('Date formatting:', { 
+      originalStartDate: startDate, 
+      formattedStartDate,
+      originalEndDate: endDate,
+      formattedEndDate 
+    });
+
     // Test database connection first
     console.log('Testing database connection...');
     try {
@@ -50,7 +66,7 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
     const result = await executeQuery(
       `INSERT INTO leave_taken (Title, Detail, StartDate, EndDate, LeaveType, Requester, Status, Created, workingDays) 
        VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW(), ?)`,
-      [title, detail, startDate, endDate, leaveType, requester, workingDays]
+      [title, detail, formattedStartDate, formattedEndDate, leaveType, requester, workingDays]
     );
 
     console.log('Leave request inserted successfully, ID:', result.insertId);
