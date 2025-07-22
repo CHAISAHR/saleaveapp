@@ -224,6 +224,9 @@ router.put('/update-full', authenticateToken, requireRole(['admin']), async (req
   try {
     const balance = req.body;
     
+    // Convert undefined values to null for MySQL compatibility
+    const convertUndefinedToNull = (value: any) => value === undefined ? null : value;
+    
     // Exclude generated columns that cannot be manually updated
     await executeQuery(`
       UPDATE leave_balances SET
@@ -238,16 +241,39 @@ router.put('/update-full', authenticateToken, requireRole(['admin']), async (req
         Manager = ?, Modified = NOW()
       WHERE BalanceID = ?
     `, [
-      balance.EmployeeName, balance.EmployeeEmail, balance.Department, balance.Year,
-      balance.Broughtforward, balance.Annual, balance.AccumulatedLeave, balance.AnnualUsed,
-      balance.Forfeited, balance.Annual_leave_adjustments, balance.SickBroughtforward,
-      balance.Sick, balance.SickUsed, balance.Maternity, balance.MaternityUsed,
-      balance.Parental, balance.ParentalUsed, balance.Family, balance.FamilyUsed,
-      balance.Adoption, balance.AdoptionUsed, balance.Study, balance.StudyUsed,
-      balance.Wellness, balance.WellnessUsed, balance.PowerAppsId,
-      balance.Leave_balance_previous_month, balance.Contract_termination_date, 
-      balance.termination_balance, balance.Comment, balance.Annual_leave_adjustment_comments, 
-      balance.Manager, balance.BalanceID
+      convertUndefinedToNull(balance.EmployeeName), 
+      convertUndefinedToNull(balance.EmployeeEmail), 
+      convertUndefinedToNull(balance.Department), 
+      convertUndefinedToNull(balance.Year),
+      convertUndefinedToNull(balance.Broughtforward), 
+      convertUndefinedToNull(balance.Annual), 
+      convertUndefinedToNull(balance.AccumulatedLeave), 
+      convertUndefinedToNull(balance.AnnualUsed),
+      convertUndefinedToNull(balance.Forfeited), 
+      convertUndefinedToNull(balance.Annual_leave_adjustments), 
+      convertUndefinedToNull(balance.SickBroughtforward),
+      convertUndefinedToNull(balance.Sick), 
+      convertUndefinedToNull(balance.SickUsed), 
+      convertUndefinedToNull(balance.Maternity), 
+      convertUndefinedToNull(balance.MaternityUsed),
+      convertUndefinedToNull(balance.Parental), 
+      convertUndefinedToNull(balance.ParentalUsed), 
+      convertUndefinedToNull(balance.Family), 
+      convertUndefinedToNull(balance.FamilyUsed),
+      convertUndefinedToNull(balance.Adoption), 
+      convertUndefinedToNull(balance.AdoptionUsed), 
+      convertUndefinedToNull(balance.Study), 
+      convertUndefinedToNull(balance.StudyUsed),
+      convertUndefinedToNull(balance.Wellness), 
+      convertUndefinedToNull(balance.WellnessUsed), 
+      convertUndefinedToNull(balance.PowerAppsId),
+      convertUndefinedToNull(balance.Leave_balance_previous_month), 
+      convertUndefinedToNull(balance.Contract_termination_date), 
+      convertUndefinedToNull(balance.termination_balance), 
+      convertUndefinedToNull(balance.Comment), 
+      convertUndefinedToNull(balance.Annual_leave_adjustment_comments), 
+      convertUndefinedToNull(balance.Manager), 
+      convertUndefinedToNull(balance.BalanceID)
     ]);
 
     res.json({ success: true, message: 'Balance updated successfully' });
