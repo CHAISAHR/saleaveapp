@@ -33,35 +33,18 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
 
   const fetchTeamData = async () => {
     try {
-      // Fetch team balances
-      const balanceResponse = await makeApiRequest(`${apiConfig.endpoints.balance}`, {
-        headers: getAuthHeaders()
-      });
-
-      if (balanceResponse.ok) {
-        const balanceData = await balanceResponse.json();
-        // Ensure balanceData is an array
-        const balanceArray = Array.isArray(balanceData) ? balanceData : (balanceData.data || []);
-        const teamBalances = balanceArray.filter((balance: any) => 
-          balance.Manager === currentUser.email
-        );
-        setTeamMembers(teamBalances);
-      }
-
-      // Fetch leave requests
+      // First, fetch leave requests to get team member emails
       const requestsResponse = await makeApiRequest(`${apiConfig.endpoints.leave}/requests`, {
         headers: getAuthHeaders()
       });
 
       if (requestsResponse.ok) {
         const requestsData = await requestsResponse.json();
-        // Ensure requestsData is an array
-        const requestsArray = Array.isArray(requestsData) ? requestsData : (requestsData.data || []);
+        const requestsArray = Array.isArray(requestsData) ? requestsData : (requestsData.data || requestsData.requests || []);
         
-        // Filter requests for team members
-        const teamEmails = teamMembers.map(member => member.EmployeeEmail);
+        // Filter requests for team members managed by current user
         const teamRequests = requestsArray.filter((request: any) => 
-          teamEmails.includes(request.Requester)
+          request.ManagerEmail === currentUser.email
         );
 
         const pending = teamRequests.filter((request: any) => request.Status === 'pending');
@@ -69,6 +52,30 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
         
         setPendingRequests(pending);
         setHistoricRequests(historic);
+
+        // Get unique team member emails for balance fetching
+        const teamMemberEmails = [...new Set(teamRequests.map((req: any) => req.EmployeeEmail))];
+        
+        // Fetch balances for each team member individually (managers can access individual balances)
+        const balancePromises = teamMemberEmails.map(async (email: string) => {
+          try {
+            const response = await makeApiRequest(`${apiConfig.endpoints.balance}/${email}`, {
+              headers: getAuthHeaders(),
+            });
+            if (response.ok) {
+              const data = await response.json();
+              return data.success ? { ...data.balance, EmployeeEmail: email } : null;
+            }
+            return null;
+          } catch (error) {
+            console.error(`Error fetching balance for ${email}:`, error);
+            return null;
+          }
+        });
+
+        const teamBalancesResults = await Promise.all(balancePromises);
+        const validBalances = teamBalancesResults.filter(balance => balance !== null);
+        setTeamMembers(validBalances);
       }
 
     } catch (error) {
