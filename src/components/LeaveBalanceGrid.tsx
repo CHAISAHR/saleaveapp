@@ -219,14 +219,6 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
 
   return (
     <div className="space-y-6">
-      {/* Forfeit ribbon */}
-      {annualLeave && (
-        <ForfeitRibbon 
-          broughtforward={annualLeave.broughtForward || 0}
-          annualUsed={annualLeave.used}
-        />
-      )}
-
       <div className="grid grid-cols-4 gap-4">
         {leaveBalances.map(balance => {
           return (
