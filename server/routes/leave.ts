@@ -69,12 +69,15 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
     }
 
     // Get manager email from users table
+    console.log('Looking up manager for requester:', requester);
     const managerQuery = await executeQuery(
       'SELECT manager_email FROM users WHERE email = ?',
       [requester]
     );
 
+    console.log('Manager query result:', managerQuery);
     const managerEmail = managerQuery[0]?.manager_email || 'chaisahr@clintonhealthaccess.org';
+    console.log('Manager email to use:', managerEmail);
     
     // Send email notification to manager (non-blocking)
     const leaveRequest = {
