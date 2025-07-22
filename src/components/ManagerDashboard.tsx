@@ -424,51 +424,78 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
           ) : (
             <div className="container-viewport max-h-[600px]">
               <ScrollArea className="w-full h-full">
-                <div className="space-y-4 p-1">
-                  {pendingRequests.map((request) => (
-                    <div key={request.LeaveID} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <Avatar>
-                            <AvatarFallback className="bg-blue-100 text-blue-600">
-                              {request.Requester.split('@')[0].charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h4 className="font-medium text-gray-900">{request.Title}</h4>
-                            <p className="text-sm text-gray-600">{request.Requester} • {request.Detail}</p>
-                            <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
-                              <span>{request.StartDate} to {request.EndDate}</span>
-                              <span>{request.workingDays} day{request.workingDays > 1 ? 's' : ''}</span>
-                              <Badge variant="outline" className="text-xs">
-                                {request.LeaveType} Leave
-                              </Badge>
+                <div className="w-full">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Employee</TableHead>
+                        <TableHead>Leave Type</TableHead>
+                        <TableHead>Dates</TableHead>
+                        <TableHead>Days</TableHead>
+                        <TableHead>Reason</TableHead>
+                        <TableHead className="w-[200px]">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {pendingRequests.map((request) => (
+                        <TableRow key={request.LeaveID}>
+                          <TableCell>
+                            <div className="flex items-center space-x-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback className="bg-blue-100 text-blue-600">
+                                  {request.Requester.split('@')[0].charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium text-sm">{request.Title}</p>
+                                <p className="text-xs text-muted-foreground">{request.Requester}</p>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleReject(request.LeaveID, request.Requester, request.Requester)}
-                            className="text-red-600 border-red-200 hover:bg-red-50"
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Reject
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handleApprove(request.LeaveID, request.Requester, request.Requester)}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Approve
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs">
+                              {request.LeaveType}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <div>{new Date(request.StartDate).toLocaleDateString()}</div>
+                              <div className="text-xs text-muted-foreground">to {new Date(request.EndDate).toLocaleDateString()}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <span className="font-medium">{request.workingDays}</span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="max-w-[150px] truncate text-sm" title={request.Detail}>
+                              {request.Detail}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleReject(request.LeaveID, request.Requester, request.Requester)}
+                                className="text-red-600 border-red-200 hover:bg-red-50"
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Reject
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleApprove(request.LeaveID, request.Requester, request.Requester)}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Approve
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               </ScrollArea>
             </div>
