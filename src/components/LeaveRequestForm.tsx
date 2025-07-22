@@ -575,8 +575,8 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       const formDataToSend = new FormData();
       formDataToSend.append('title', formData.title);
       formDataToSend.append('detail', formData.description);
-      formDataToSend.append('startDate', formData.startDate!.toISOString());
-      formDataToSend.append('endDate', formData.endDate!.toISOString());
+      formDataToSend.append('startDate', formData.startDate!.toLocaleDateString('en-CA')); // YYYY-MM-DD format
+      formDataToSend.append('endDate', formData.endDate!.toLocaleDateString('en-CA')); // YYYY-MM-DD format
       formDataToSend.append('leaveType', selectedLeaveType?.label || '');
       formDataToSend.append('workingDays', leaveDuration.toString());
       
