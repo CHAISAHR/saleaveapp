@@ -251,81 +251,85 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6">
-          {teamMembers.map((member) => {
-            const annualBalance = calculateLeaveBalance(member, 'annual');
-            const studyBalance = calculateLeaveBalance(member, 'study');
-            const wellnessBalance = calculateLeaveBalance(member, 'wellness');
-            
-            return (
-              <Card key={member.BalanceID} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-center space-x-4">
-                    <Avatar>
-                      <AvatarFallback className="bg-blue-100 text-blue-600">
-                        {member.EmployeeName.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <CardTitle className="text-lg">{member.EmployeeName}</CardTitle>
-                      <CardDescription>{member.EmployeeEmail}</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-600">Annual Leave</span>
-                        <span className="text-sm text-gray-500">
-                          {annualBalance} days
-                        </span>
+        <div className="container-viewport max-h-[800px]">
+          <ScrollArea className="w-full h-full">
+            <div className="grid grid-cols-1 gap-6 p-1">
+              {teamMembers.map((member) => {
+                const annualBalance = calculateLeaveBalance(member, 'annual');
+                const studyBalance = calculateLeaveBalance(member, 'study');
+                const wellnessBalance = calculateLeaveBalance(member, 'wellness');
+                
+                return (
+                  <Card key={member.BalanceID} className="hover:shadow-md transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-center space-x-4">
+                        <Avatar>
+                          <AvatarFallback className="bg-blue-100 text-blue-600">
+                            {member.EmployeeName.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <CardTitle className="text-lg">{member.EmployeeName}</CardTitle>
+                          <CardDescription>{member.EmployeeEmail}</CardDescription>
+                        </div>
                       </div>
-                      <Progress 
-                        value={((20 - annualBalance) / 20) * 100} 
-                        className="h-2"
-                      />
-                      <div className="text-xs text-gray-400">
-                        Used: {member.AnnualUsed} | BF: {member.Broughtforward}
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-600">Annual Leave</span>
+                            <span className="text-sm text-gray-500">
+                              {annualBalance} days
+                            </span>
+                          </div>
+                          <Progress 
+                            value={((20 - annualBalance) / 20) * 100} 
+                            className="h-2"
+                          />
+                          <div className="text-xs text-gray-400">
+                            Used: {member.AnnualUsed} | BF: {member.Broughtforward}
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-600">Study Leave</span>
+                            <span className="text-sm text-gray-500">
+                              {studyBalance} days
+                            </span>
+                          </div>
+                          <Progress 
+                            value={((6 - studyBalance) / 6) * 100} 
+                            className="h-2"
+                          />
+                          <div className="text-xs text-gray-400">
+                            Used: {member.StudyUsed}
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-600">Wellness Leave</span>
+                            <span className="text-sm text-gray-500">
+                              {wellnessBalance} days
+                            </span>
+                          </div>
+                          <Progress 
+                            value={((2 - wellnessBalance) / 2) * 100} 
+                            className="h-2"
+                          />
+                          <div className="text-xs text-gray-400">
+                            Used: {member.WellnessUsed}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-600">Study Leave</span>
-                        <span className="text-sm text-gray-500">
-                          {studyBalance} days
-                        </span>
-                      </div>
-                      <Progress 
-                        value={((6 - studyBalance) / 6) * 100} 
-                        className="h-2"
-                      />
-                      <div className="text-xs text-gray-400">
-                        Used: {member.StudyUsed}
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-600">Wellness Leave</span>
-                        <span className="text-sm text-gray-500">
-                          {wellnessBalance} days
-                        </span>
-                      </div>
-                      <Progress 
-                        value={((2 - wellnessBalance) / 2) * 100} 
-                        className="h-2"
-                      />
-                      <div className="text-xs text-gray-400">
-                        Used: {member.WellnessUsed}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </ScrollArea>
         </div>
       </div>
     );
@@ -418,51 +422,55 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
               <p>All caught up! No pending requests to review.</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {pendingRequests.map((request) => (
-                <div key={request.LeaveID} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <Avatar>
-                        <AvatarFallback className="bg-blue-100 text-blue-600">
-                          {request.Requester.split('@')[0].charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h4 className="font-medium text-gray-900">{request.Title}</h4>
-                        <p className="text-sm text-gray-600">{request.Requester} • {request.Detail}</p>
-                        <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
-                          <span>{request.StartDate} to {request.EndDate}</span>
-                          <span>{request.workingDays} day{request.workingDays > 1 ? 's' : ''}</span>
-                          <Badge variant="outline" className="text-xs">
-                            {request.LeaveType} Leave
-                          </Badge>
+            <div className="container-viewport max-h-[600px]">
+              <ScrollArea className="w-full h-full">
+                <div className="space-y-4 p-1">
+                  {pendingRequests.map((request) => (
+                    <div key={request.LeaveID} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <Avatar>
+                            <AvatarFallback className="bg-blue-100 text-blue-600">
+                              {request.Requester.split('@')[0].charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h4 className="font-medium text-gray-900">{request.Title}</h4>
+                            <p className="text-sm text-gray-600">{request.Requester} • {request.Detail}</p>
+                            <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
+                              <span>{request.StartDate} to {request.EndDate}</span>
+                              <span>{request.workingDays} day{request.workingDays > 1 ? 's' : ''}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {request.LeaveType} Leave
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleReject(request.LeaveID, request.Requester, request.Requester)}
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Reject
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleApprove(request.LeaveID, request.Requester, request.Requester)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Approve
+                          </Button>
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleReject(request.LeaveID, request.Requester, request.Requester)}
-                        className="text-red-600 border-red-200 hover:bg-red-50"
-                      >
-                        <XCircle className="h-4 w-4 mr-1" />
-                        Reject
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleApprove(request.LeaveID, request.Requester, request.Requester)}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <CheckCircle className="h-4 w-4 mr-1" />
-                        Approve
-                      </Button>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              </ScrollArea>
             </div>
           )}
         </CardContent>
