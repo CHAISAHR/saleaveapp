@@ -108,8 +108,8 @@ class EmailService {
         Employee: ${leaveRequest.submittedBy}
         Leave Type: ${leaveRequest.leaveType}
         Title: ${leaveRequest.title}
-        Start Date: ${leaveRequest.startDate}
-        End Date: ${leaveRequest.endDate}
+        Start Date: ${this.formatDateForDisplay(leaveRequest.startDate)}
+        End Date: ${this.formatDateForDisplay(leaveRequest.endDate)}
         Calendar Days: ${this.calculateCalendarDays(leaveRequest.startDate, leaveRequest.endDate)}
         Working Days Applied: ${leaveRequest.workingDays}
         Description: ${leaveRequest.description}
@@ -139,8 +139,8 @@ class EmailService {
 
         Leave Details:
         - Leave Type: ${leaveRequest.LeaveType || leaveRequest.leaveType}
-        - Start Date: ${leaveRequest.StartDate || leaveRequest.startDate}
-        - End Date: ${leaveRequest.EndDate || leaveRequest.endDate}
+        - Start Date: ${this.formatDateForDisplay(leaveRequest.StartDate || leaveRequest.startDate)}
+        - End Date: ${this.formatDateForDisplay(leaveRequest.EndDate || leaveRequest.endDate)}
         - Working Days: ${leaveRequest.workingDays} days
         - Approved by: ${approverName}
 
@@ -170,8 +170,8 @@ class EmailService {
 
         Leave Details:
         - Leave Type: ${leaveRequest.LeaveType || leaveRequest.leaveType}
-        - Start Date: ${leaveRequest.StartDate || leaveRequest.startDate}
-        - End Date: ${leaveRequest.EndDate || leaveRequest.endDate}
+        - Start Date: ${this.formatDateForDisplay(leaveRequest.StartDate || leaveRequest.startDate)}
+        - End Date: ${this.formatDateForDisplay(leaveRequest.EndDate || leaveRequest.endDate)}
         - Rejected by: ${approverName}
         ${reason ? `- Reason: ${reason}` : ''}
 
@@ -193,6 +193,17 @@ class EmailService {
     const end = new Date(endDate);
     const timeDiff = end.getTime() - start.getTime();
     return Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+  }
+
+  // Helper method to format date for display
+  private formatDateForDisplay(dateString: string): string {
+    // Handle both YYYY-MM-DD and ISO format
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric' 
+    });
   }
 
   // Generic method to send email using nodemailer

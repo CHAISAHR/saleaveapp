@@ -99,8 +99,8 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
     const leaveRequest = {
       title,
       description: detail,
-      startDate,
-      endDate,
+      startDate: formattedStartDate,
+      endDate: formattedEndDate,
       leaveType,
       workingDays,
       submittedBy: requester
