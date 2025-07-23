@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,10 +7,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, Save, X, AlertTriangle, RefreshCw } from "lucide-react";
+import { Edit, Save, X, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { balanceService } from "@/services/balanceService";
-import { makeApiRequest } from "@/config/apiConfig";
 
 interface LeaveRequest {
   LeaveID: number;
@@ -36,36 +35,38 @@ export const StaffLeaveEditor = ({ userEmail }: StaffLeaveEditorProps) => {
   const { toast } = useToast();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingRequest, setEditingRequest] = useState<LeaveRequest | null>(null);
-  const [requests, setRequests] = useState<LeaveRequest[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  const fetchLeaveRequests = async () => {
-    try {
-      setLoading(true);
-      const data = await makeApiRequest('/api/leave/requests', {
-        method: 'GET',
-      });
-      
-      if (data && Array.isArray(data)) {
-        // Filter to only show current user's requests
-        const userRequests = data.filter((request: any) => request.Requester === userEmail);
-        setRequests(userRequests);
-      }
-    } catch (error) {
-      console.error('Error fetching leave requests:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load your leave requests.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
+  // Mock data - in real app this would fetch user's requests
+  const [requests, setRequests] = useState<LeaveRequest[]>([
+    {
+      LeaveID: 1,
+      Title: "Family Vacation",
+      Detail: "Summer vacation with family",
+      StartDate: "2025-07-15",
+      EndDate: "2025-07-19",
+      LeaveType: "Annual",
+      Requester: userEmail,
+      Status: "pending",
+      workingDays: 5,
+      Created: "2024-06-15T10:00:00Z",
+      Modified: "2024-06-16T14:30:00Z",
+      ModifiedBy: userEmail
+    },
+    {
+      LeaveID: 2,
+      Title: "Medical Appointment",
+      Detail: "Regular health check-up",
+      StartDate: "2024-06-20",
+      EndDate: "2024-06-20",
+      LeaveType: "Sick",
+      Requester: userEmail,
+      Status: "approved",
+      workingDays: 1,
+      Created: "2024-06-18T09:15:00Z",
+      Modified: "2024-06-18T09:15:00Z",
+      ModifiedBy: userEmail
     }
-  };
-
-  useEffect(() => {
-    fetchLeaveRequests();
-  }, [userEmail]);
+  ]);
 
   const canEditRequest = (request: LeaveRequest): boolean => {
     return balanceService.canStaffEditLeave(request);
@@ -80,8 +81,8 @@ export const StaffLeaveEditor = ({ userEmail }: StaffLeaveEditorProps) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    if (startDate <= today) {
-      return "Cannot edit requests where the first day has passed";
+    if (startDate < today) {
+      return "Cannot edit requests for past dates";
     }
     
     return "";
@@ -101,74 +102,28 @@ export const StaffLeaveEditor = ({ userEmail }: StaffLeaveEditorProps) => {
     setEditingRequest({ ...request });
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!editingRequest) return;
 
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast({
-          title: "Authentication Error",
-          description: "Please log in again.",
-          variant: "destructive"
-        });
-        return;
-      }
+    const updatedRequest = {
+      ...editingRequest,
+      Modified: new Date().toISOString(),
+      ModifiedBy: userEmail
+    };
 
-      const response = await fetch(`/api/leave/requests/${editingRequest.LeaveID}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          title: editingRequest.Title,
-          detail: editingRequest.Detail,
-          startDate: editingRequest.StartDate,
-          endDate: editingRequest.EndDate,
-          leaveType: editingRequest.LeaveType,
-          workingDays: editingRequest.workingDays
-        })
-      });
+    setRequests(prev => prev.map(r => 
+      r.LeaveID === updatedRequest.LeaveID ? updatedRequest : r
+    ));
 
-      const result = await response.json();
+    console.log('Request updated by staff:', updatedRequest);
 
-      if (result.success) {
-        const updatedRequest = {
-          ...editingRequest,
-          Modified: new Date().toISOString(),
-          ModifiedBy: userEmail
-        };
+    toast({
+      title: "Request Updated",
+      description: "Your leave request has been successfully updated.",
+    });
 
-        setRequests(prev => prev.map(r => 
-          r.LeaveID === updatedRequest.LeaveID ? updatedRequest : r
-        ));
-
-        toast({
-          title: "Request Updated",
-          description: "Your leave request has been successfully updated and your manager has been notified.",
-        });
-
-        setEditingId(null);
-        setEditingRequest(null);
-        
-        // Refresh the requests list
-        fetchLeaveRequests();
-      } else {
-        toast({
-          title: "Update Failed",
-          description: result.message || "Failed to update leave request.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error('Error updating leave request:', error);
-      toast({
-        title: "Update Failed",
-        description: "An error occurred while updating your leave request.",
-        variant: "destructive"
-      });
-    }
+    setEditingId(null);
+    setEditingRequest(null);
   };
 
   const handleCancel = () => {
@@ -193,33 +148,13 @@ export const StaffLeaveEditor = ({ userEmail }: StaffLeaveEditorProps) => {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>My Leave Requests</CardTitle>
-          <CardDescription>View and edit your pending leave requests</CardDescription>
-        </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={fetchLeaveRequests}
-          disabled={loading}
-        >
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-        </Button>
+      <CardHeader>
+        <CardTitle>My Leave Requests</CardTitle>
+        <CardDescription>View and edit your pending leave requests</CardDescription>
       </CardHeader>
       <CardContent>
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <RefreshCw className="h-6 w-6 animate-spin mr-2" />
-            Loading your leave requests...
-          </div>
-        ) : requests.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No leave requests found.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
+        <div className="overflow-x-auto">
+          <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Title</TableHead>
@@ -340,7 +275,6 @@ export const StaffLeaveEditor = ({ userEmail }: StaffLeaveEditorProps) => {
             </TableBody>
           </Table>
         </div>
-        )}
       </CardContent>
     </Card>
   );

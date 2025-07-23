@@ -94,16 +94,16 @@ class EmailService {
   }
 
   // Send email notification to manager when leave is submitted
-  async notifyManagerOfLeaveRequest(leaveRequest: any, managerEmail: string, isEdit: boolean = false): Promise<void> {
+  async notifyManagerOfLeaveRequest(leaveRequest: any, managerEmail: string): Promise<void> {
     const notification: EmailNotification = {
       recipient_email: managerEmail,
       sender_email: this.FROM_EMAIL,
       cc_email: this.ADMIN_EMAIL,
-      subject: `${isEdit ? 'Updated' : 'New'} Leave Request: ${leaveRequest.title}`,
+      subject: `New Leave Request: ${leaveRequest.title}`,
       message: `
         Good day,
 
-        ${isEdit ? 'An existing leave request has been updated' : 'A new leave request has been submitted'} and requires your approval:
+        A new leave request has been submitted and requires your approval:
 
         Employee: ${leaveRequest.submittedBy}
         Leave Type: ${leaveRequest.leaveType}
