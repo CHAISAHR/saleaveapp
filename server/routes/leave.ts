@@ -155,14 +155,14 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
                LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
                GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
     } else if (req.user!.role === 'manager') {
-      // Manager can see their team's requests, requests where they're alternative approver, and their own requests
+      // Manager can see their team's requests and requests where they're alternative approver (but NOT their own requests for approval)
       query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
                lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, lt.Modified_By,
                lt.workingDays, COUNT(la.id) as attachment_count
                FROM leave_taken lt 
                LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
                LEFT JOIN leave_balances lb ON lt.Requester = lb.EmployeeEmail 
-               WHERE lb.Manager = ? OR lt.Requester = ? OR lt.AlternativeApprover = ?
+               WHERE (lb.Manager = ? OR lt.AlternativeApprover = ?) AND lt.Requester != ?
                GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
       params = [req.user!.email, req.user!.email, req.user!.email];
     } else {
