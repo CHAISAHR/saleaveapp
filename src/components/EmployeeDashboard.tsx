@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { LeaveBalanceGrid } from "@/components/LeaveBalanceGrid";
 import { LeaveStatsCards } from "@/components/LeaveStatsCards";
-import { LeaveRequestsList } from "@/components/LeaveRequestsList";
+import { StaffLeaveEditor } from "@/components/StaffLeaveEditor";
 import { apiConfig, makeApiRequest } from "@/config/apiConfig";
 import { useToast } from "@/hooks/use-toast";
 
@@ -134,7 +134,7 @@ export const EmployeeDashboard = ({
       </div>
 
       <LeaveStatsCards leaveRequests={leaveRequests} />
-      <LeaveRequestsList leaveRequests={leaveRequests} />
+      <StaffLeaveEditor userEmail={currentUser.email} />
     </div>
   );
 };
