@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,9 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, Save, X, AlertTriangle } from "lucide-react";
+import { Edit, Save, X, AlertTriangle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { balanceService } from "@/services/balanceService";
+import { makeApiRequest } from "@/config/apiConfig";
 
 interface LeaveRequest {
   LeaveID: number;
@@ -35,38 +36,36 @@ export const StaffLeaveEditor = ({ userEmail }: StaffLeaveEditorProps) => {
   const { toast } = useToast();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingRequest, setEditingRequest] = useState<LeaveRequest | null>(null);
+  const [requests, setRequests] = useState<LeaveRequest[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - in real app this would fetch user's requests
-  const [requests, setRequests] = useState<LeaveRequest[]>([
-    {
-      LeaveID: 1,
-      Title: "Family Vacation",
-      Detail: "Summer vacation with family",
-      StartDate: "2025-07-15",
-      EndDate: "2025-07-19",
-      LeaveType: "Annual",
-      Requester: userEmail,
-      Status: "pending",
-      workingDays: 5,
-      Created: "2024-06-15T10:00:00Z",
-      Modified: "2024-06-16T14:30:00Z",
-      ModifiedBy: userEmail
-    },
-    {
-      LeaveID: 2,
-      Title: "Medical Appointment",
-      Detail: "Regular health check-up",
-      StartDate: "2024-06-20",
-      EndDate: "2024-06-20",
-      LeaveType: "Sick",
-      Requester: userEmail,
-      Status: "approved",
-      workingDays: 1,
-      Created: "2024-06-18T09:15:00Z",
-      Modified: "2024-06-18T09:15:00Z",
-      ModifiedBy: userEmail
+  const fetchLeaveRequests = async () => {
+    try {
+      setLoading(true);
+      const data = await makeApiRequest('/api/leave/requests', {
+        method: 'GET',
+      });
+      
+      if (data && Array.isArray(data)) {
+        // Filter to only show current user's requests
+        const userRequests = data.filter((request: any) => request.Requester === userEmail);
+        setRequests(userRequests);
+      }
+    } catch (error) {
+      console.error('Error fetching leave requests:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load your leave requests.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    fetchLeaveRequests();
+  }, [userEmail]);
 
   const canEditRequest = (request: LeaveRequest): boolean => {
     return balanceService.canStaffEditLeave(request);
@@ -152,6 +151,9 @@ export const StaffLeaveEditor = ({ userEmail }: StaffLeaveEditorProps) => {
 
         setEditingId(null);
         setEditingRequest(null);
+        
+        // Refresh the requests list
+        fetchLeaveRequests();
       } else {
         toast({
           title: "Update Failed",
@@ -191,13 +193,33 @@ export const StaffLeaveEditor = ({ userEmail }: StaffLeaveEditorProps) => {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>My Leave Requests</CardTitle>
-        <CardDescription>View and edit your pending leave requests</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>My Leave Requests</CardTitle>
+          <CardDescription>View and edit your pending leave requests</CardDescription>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={fetchLeaveRequests}
+          disabled={loading}
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+        </Button>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+            Loading your leave requests...
+          </div>
+        ) : requests.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No leave requests found.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Title</TableHead>
@@ -318,6 +340,7 @@ export const StaffLeaveEditor = ({ userEmail }: StaffLeaveEditorProps) => {
             </TableBody>
           </Table>
         </div>
+        )}
       </CardContent>
     </Card>
   );
