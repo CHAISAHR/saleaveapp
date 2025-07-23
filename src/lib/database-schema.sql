@@ -77,7 +77,7 @@ CREATE TABLE leave_attachments (
     file_data LONGBLOB NOT NULL,
     file_type VARCHAR(100) NOT NULL,
     file_size INT NOT NULL,
-    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (leave_id) REFERENCES leave_taken(LeaveID) ON DELETE CASCADE
 );
 

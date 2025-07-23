@@ -337,7 +337,7 @@ router.get('/documents', authenticateToken, requireRole(['manager', 'admin']), a
         SELECT 
           la.id, la.leave_id, la.filename, la.original_name, la.file_type, la.file_size, la.created_at as uploaded_at,
           lt.Title as leave_title, lt.LeaveType as leave_type, lt.Requester as requester_email,
-          u.name as requester_name
+          u.name as requester_name, u.email as requester_email
         FROM leave_attachments la
         JOIN leave_taken lt ON la.leave_id = lt.LeaveID
         JOIN users u ON lt.Requester = u.email
@@ -349,7 +349,7 @@ router.get('/documents', authenticateToken, requireRole(['manager', 'admin']), a
         SELECT 
           la.id, la.leave_id, la.filename, la.original_name, la.file_type, la.file_size, la.created_at as uploaded_at,
           lt.Title as leave_title, lt.LeaveType as leave_type, lt.Requester as requester_email,
-          u.name as requester_name
+          u.name as requester_name, u.email as requester_email
         FROM leave_attachments la
         JOIN leave_taken lt ON la.leave_id = lt.LeaveID
         JOIN users u ON lt.Requester = u.email
