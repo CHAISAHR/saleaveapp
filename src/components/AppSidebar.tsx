@@ -16,7 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, Settings, Database, LogOut, User } from "lucide-react";
+import { Calendar, Users, Settings, Database, LogOut, User, FileText } from "lucide-react";
 
 interface AppSidebarProps {
   currentUser: any;
@@ -75,9 +75,23 @@ export const AppSidebar = ({
         label: "All Balances"
       });
       baseItems.splice(3, 0, {
+        value: "documents",
+        icon: FileText,
+        label: "Documents"
+      });
+      baseItems.splice(4, 0, {
         value: "user-management",
         icon: Users,
         label: "User Management"
+      });
+    }
+
+    // Add documents tab for managers
+    if (userRole === 'manager') {
+      baseItems.splice(2, 0, {
+        value: "documents",
+        icon: FileText,
+        label: "Documents"
       });
     }
 
