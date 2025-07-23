@@ -81,8 +81,8 @@ export const StaffLeaveEditor = ({ userEmail }: StaffLeaveEditorProps) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    if (startDate < today) {
-      return "Cannot edit requests for past dates";
+    if (startDate <= today) {
+      return "Cannot edit requests where the first day has passed";
     }
     
     return "";
@@ -102,28 +102,71 @@ export const StaffLeaveEditor = ({ userEmail }: StaffLeaveEditorProps) => {
     setEditingRequest({ ...request });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editingRequest) return;
 
-    const updatedRequest = {
-      ...editingRequest,
-      Modified: new Date().toISOString(),
-      ModifiedBy: userEmail
-    };
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast({
+          title: "Authentication Error",
+          description: "Please log in again.",
+          variant: "destructive"
+        });
+        return;
+      }
 
-    setRequests(prev => prev.map(r => 
-      r.LeaveID === updatedRequest.LeaveID ? updatedRequest : r
-    ));
+      const response = await fetch(`/api/leave/requests/${editingRequest.LeaveID}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: editingRequest.Title,
+          detail: editingRequest.Detail,
+          startDate: editingRequest.StartDate,
+          endDate: editingRequest.EndDate,
+          leaveType: editingRequest.LeaveType,
+          workingDays: editingRequest.workingDays
+        })
+      });
 
-    console.log('Request updated by staff:', updatedRequest);
+      const result = await response.json();
 
-    toast({
-      title: "Request Updated",
-      description: "Your leave request has been successfully updated.",
-    });
+      if (result.success) {
+        const updatedRequest = {
+          ...editingRequest,
+          Modified: new Date().toISOString(),
+          ModifiedBy: userEmail
+        };
 
-    setEditingId(null);
-    setEditingRequest(null);
+        setRequests(prev => prev.map(r => 
+          r.LeaveID === updatedRequest.LeaveID ? updatedRequest : r
+        ));
+
+        toast({
+          title: "Request Updated",
+          description: "Your leave request has been successfully updated and your manager has been notified.",
+        });
+
+        setEditingId(null);
+        setEditingRequest(null);
+      } else {
+        toast({
+          title: "Update Failed",
+          description: result.message || "Failed to update leave request.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error updating leave request:', error);
+      toast({
+        title: "Update Failed",
+        description: "An error occurred while updating your leave request.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleCancel = () => {

@@ -21,7 +21,8 @@ export class BalanceValidations {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    return startDate >= today;
+    // Can only edit if the first day of leave has not passed
+    return startDate > today;
   }
 
   // Validate if employee has sufficient balance
