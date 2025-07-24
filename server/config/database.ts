@@ -75,12 +75,21 @@ export const executeQuery = async (query: string, params?: any[]): Promise<any> 
     return results;
   } catch (error) {
     console.error('Query execution failed:', error);
-    // Try to reconnect once if connection was lost
-    if (error instanceof Error && error.message.includes('Connection lost')) {
-      console.log('Connection lost, attempting to reconnect...');
-      await connectDatabase();
-      const [results] = await connection.execute(query, params);
-      return results;
+    // Try to reconnect if connection was lost or is in closed state
+    if (error instanceof Error && (
+      error.message.includes('Connection lost') || 
+      error.message.includes('closed state') ||
+      error.message.includes('PROTOCOL_CONNECTION_LOST')
+    )) {
+      console.log('Connection lost or closed, attempting to reconnect...');
+      try {
+        await connectDatabase();
+        const [results] = await connection.execute(query, params);
+        return results;
+      } catch (reconnectError) {
+        console.error('Reconnection failed:', reconnectError);
+        throw reconnectError;
+      }
     }
     throw error;
   }
