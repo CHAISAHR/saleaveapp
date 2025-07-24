@@ -60,11 +60,13 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
 
   const [newUser, setNewUser] = useState({
     name: "",
+    surname: "",
     email: "",
     department: "",
     role: "employee",
     password: "",
-    manager_email: ""
+    manager_email: "",
+    gender: ""
   });
 
   const [editUser, setEditUser] = useState({
@@ -237,10 +239,10 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
   }, []);
 
   const handleAddUser = async () => {
-    if (!newUser.name || !newUser.email || !newUser.department || !newUser.password) {
+    if (!newUser.name || !newUser.surname || !newUser.email || !newUser.department || !newUser.password || !newUser.gender) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields.",
+        description: "Please fill in all required fields including name, surname, email, department, password, and gender.",
         variant: "destructive",
       });
       return;
@@ -263,9 +265,11 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
         headers: getAuthHeaders(),
         body: JSON.stringify({
           name: newUser.name,
+          surname: newUser.surname,
           email: newUser.email,
           department: newUser.department,
-          password: newUser.password
+          password: newUser.password,
+          gender: newUser.gender
         })
       });
 
@@ -288,11 +292,13 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
         // Reset form
         setNewUser({
           name: "",
+          surname: "",
           email: "",
           department: "",
           role: "employee",
           password: "",
-          manager_email: ""
+          manager_email: "",
+          gender: ""
         });
         setShowUserForm(false);
 
@@ -575,14 +581,25 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name *</Label>
-                    <Input
-                      id="name"
-                      placeholder="e.g., John Smith"
-                      value={newUser.name}
-                      onChange={(e) => setNewUser(prev => ({ ...prev, name: e.target.value }))}
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">First Name *</Label>
+                      <Input
+                        id="name"
+                        placeholder="e.g., John"
+                        value={newUser.name}
+                        onChange={(e) => setNewUser(prev => ({ ...prev, name: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="surname">Last Name *</Label>
+                      <Input
+                        id="surname"
+                        placeholder="e.g., Smith"
+                        value={newUser.surname}
+                        onChange={(e) => setNewUser(prev => ({ ...prev, surname: e.target.value }))}
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -607,7 +624,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="department">Department *</Label>
                       <Select value={newUser.department} onValueChange={(value) => setNewUser(prev => ({ ...prev, department: value }))}>
@@ -634,6 +651,20 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                           <SelectItem value="employee">Employee</SelectItem>
                           <SelectItem value="manager">Manager</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="gender">Gender *</Label>
+                      <Select value={newUser.gender} onValueChange={(value) => setNewUser(prev => ({ ...prev, gender: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
