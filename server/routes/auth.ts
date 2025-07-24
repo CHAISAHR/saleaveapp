@@ -87,18 +87,37 @@ router.post('/register', async (req, res) => {
     );
     console.log('User inserted successfully with ID:', result.insertId);
 
-    // Create initial leave balance with gender-based maternity allocation
+    // Create initial leave balance with gender-based maternity allocation and prorated accumulated leave
     const currentYear = new Date().getFullYear();
     const maternityAllocation = gender === 'male' ? 0 : 90;
-    console.log('Creating leave balance with maternity allocation:', maternityAllocation);
+    
+    // Calculate prorated accumulated leave based on hire date (today)
+    const hireDate = new Date(); // Using current date as hire date
+    const startOfYear = new Date(currentYear, 0, 1);
+    const endOfYear = new Date(currentYear, 11, 31);
+    
+    // Calculate days from start of year to hire date
+    const daysFromStartOfYear = Math.floor((hireDate.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const totalDaysInYear = Math.floor((endOfYear.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    
+    // Calculate prorated accumulated leave: 20 * (days from start of year / total days in year)
+    const proratedAccumulatedLeave = Number((20 * (daysFromStartOfYear / totalDaysInYear)).toFixed(1));
+    
+    console.log('Creating leave balance:', {
+      maternityAllocation,
+      hireDate: hireDate.toISOString().split('T')[0],
+      daysFromStartOfYear,
+      totalDaysInYear,
+      proratedAccumulatedLeave
+    });
 
     try {
       await executeQuery(
         `INSERT INTO leave_balances (
           EmployeeName, EmployeeEmail, Department, Year, 
           Maternity, AccumulatedLeave
-        ) VALUES (?, ?, ?, ?, ?, 0)`,
-        [fullName, email, department, currentYear, maternityAllocation]
+        ) VALUES (?, ?, ?, ?, ?, ?)`,
+        [fullName, email, department, currentYear, maternityAllocation, proratedAccumulatedLeave]
       );
       console.log('Leave balance created successfully');
     } catch (balanceError) {
