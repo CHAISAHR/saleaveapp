@@ -49,8 +49,8 @@ class BalanceService {
     return BalanceCalculations.hasTerminationDatePassed(terminationDate);
   }
 
-  calculateMonthlyAccumulation(currentMonth: number = new Date().getMonth() + 1, terminationDate?: string): number {
-    return BalanceCalculations.calculateMonthlyAccumulation(currentMonth, terminationDate);
+  calculateMonthlyAccumulation(currentMonth: number = new Date().getMonth() + 1, terminationDate?: string, startDate?: string): number {
+    return BalanceCalculations.calculateMonthlyAccumulation(currentMonth, terminationDate, startDate);
   }
 
   calculateProratedAccumulationFromStartDate(startDate: string, currentYear: number = new Date().getFullYear()): number {

@@ -93,6 +93,7 @@ CREATE TABLE leave_balances (
     EmployeeName VARCHAR(255) NOT NULL,
     EmployeeEmail VARCHAR(255) NOT NULL,
     Department VARCHAR(100) NOT NULL,
+    start_date DATE NOT NULL DEFAULT '2024-01-01',
     Status VARCHAR(50) DEFAULT 'Active',
     Year INT NOT NULL,
     Broughtforward DECIMAL(8,3) DEFAULT 0, -- Days - allows negative values
@@ -210,9 +211,9 @@ INSERT INTO company_holidays (name, date, type, description, office_status, is_r
 -- Create initial leave balance for admin user
 -- NOTE: Maternity set to 0 for admin (gender-based), Parental and Adoption in weeks
 INSERT INTO leave_balances (
-    EmployeeName, EmployeeEmail, Department, Year, 
+    EmployeeName, EmployeeEmail, Department, start_date, Year, 
     Maternity, Parental, Adoption, AccumulatedLeave
-) VALUES ('System Administrator', 'chaisahr@clintonhealthaccess.org', 'Ops Team', YEAR(CURRENT_DATE), 0, 4, 4, 20);
+) VALUES ('System Administrator', 'chaisahr@clintonhealthaccess.org', 'Ops Team', '2024-01-01', YEAR(CURRENT_DATE), 0, 4, 4, 20);
 
 -- Create views for common queries
 CREATE VIEW employee_current_balances AS

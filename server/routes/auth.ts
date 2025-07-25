@@ -96,7 +96,8 @@ router.post('/register', async (req, res) => {
     
     // Calculate accumulated leave using the proper monthly accrual logic (1.667 on 27th of each month)
     const hireDate = new Date(); // Using current date as hire date
-    const proratedAccumulatedLeave = AccumulatedLeaveCalculations.calculateAccumulatedLeave(hireDate);
+    const hireDateString = hireDate.toISOString().split('T')[0];
+    const proratedAccumulatedLeave = AccumulatedLeaveCalculations.calculateAccumulatedLeave(hireDate, undefined, hireDateString);
     
     console.log('Creating leave balance:', {
       maternityAllocation,
@@ -107,10 +108,10 @@ router.post('/register', async (req, res) => {
     try {
       await executeQuery(
         `INSERT INTO leave_balances (
-          EmployeeName, EmployeeEmail, Department, Year, 
+          EmployeeName, EmployeeEmail, Department, start_date, Year, 
           Maternity, AccumulatedLeave
-        ) VALUES (?, ?, ?, ?, ?, ?)`,
-        [fullName, email, department, currentYear, maternityAllocation, proratedAccumulatedLeave]
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [fullName, email, department, hireDateString, currentYear, maternityAllocation, proratedAccumulatedLeave]
       );
       console.log('Leave balance created successfully');
     } catch (balanceError) {

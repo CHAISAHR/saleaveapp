@@ -10,8 +10,8 @@ export class BalanceCalculations {
     return TerminationCalculations.hasTerminationDatePassed(terminationDate);
   }
 
-  static calculateAccumulatedLeave(currentDate: Date = new Date(), terminationDate?: string): number {
-    return AccumulatedLeaveCalculations.calculateAccumulatedLeave(currentDate, terminationDate);
+  static calculateAccumulatedLeave(currentDate: Date = new Date(), terminationDate?: string, startDate?: string): number {
+    return AccumulatedLeaveCalculations.calculateAccumulatedLeave(currentDate, terminationDate, startDate);
   }
 
   static calculateAccumulatedLeaveAtTerminationDate(terminationDate: string): number {
@@ -50,13 +50,13 @@ export class BalanceCalculations {
 
   // Legacy methods for backward compatibility
   static calculateProratedAccumulationFromStartDate(startDate: string, currentYear: number = new Date().getFullYear()): number {
-    // For new system, this should use the calculateAccumulatedLeave method
-    return this.calculateAccumulatedLeave(new Date());
+    // For new system, this should use the calculateAccumulatedLeave method with the provided start date
+    return this.calculateAccumulatedLeave(new Date(), undefined, startDate);
   }
 
-  static calculateMonthlyAccumulation(currentMonth: number = new Date().getMonth() + 1, terminationDate?: string): number {
+  static calculateMonthlyAccumulation(currentMonth: number = new Date().getMonth() + 1, terminationDate?: string, startDate?: string): number {
     // For new system, convert to use calculateAccumulatedLeave
-    return this.calculateAccumulatedLeave(new Date(), terminationDate);
+    return this.calculateAccumulatedLeave(new Date(), terminationDate, startDate);
   }
 
   static calculateProRatedAccumulation(terminationDate: string): number {
