@@ -65,6 +65,7 @@ export const MainLayout = ({ currentUser, userRole, setUserRole }: MainLayoutPro
               <ForfeitRibbon 
                 broughtforward={employeeBalance.Broughtforward}
                 annualUsed={employeeBalance.AnnualUsed}
+                annualLeaveAdjustments={employeeBalance.Annual_leave_adjustments}
               />
             )}
             

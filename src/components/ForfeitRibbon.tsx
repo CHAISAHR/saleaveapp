@@ -5,10 +5,11 @@ import { AlertTriangle } from "lucide-react";
 interface ForfeitRibbonProps {
   broughtforward: number;
   annualUsed: number;
+  annualLeaveAdjustments: number;
 }
 
-export const ForfeitRibbon = ({ broughtforward, annualUsed }: ForfeitRibbonProps) => {
-  const daysToForfeit = Math.max(0, broughtforward - annualUsed);
+export const ForfeitRibbon = ({ broughtforward, annualUsed, annualLeaveAdjustments }: ForfeitRibbonProps) => {
+  const daysToForfeit = Math.max(0, broughtforward - annualLeaveAdjustments - annualUsed);
   
   if (daysToForfeit === 0) {
     return null;
