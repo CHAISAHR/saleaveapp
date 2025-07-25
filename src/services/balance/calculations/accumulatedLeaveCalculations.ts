@@ -46,31 +46,47 @@ export class AccumulatedLeaveCalculations {
       calculationDay: calculationDate.getDate()
     });
     
-    // Calculate months from employee start date to calculation date
-    let monthsWorked = 0;
+    // Calculate accumulated leave from employee start date to calculation date
+    let totalAccumulated = 0;
     
     // Start from the month the employee began
     let currentMonth = employeeStartDate.getMonth();
     let currentYear = employeeStartDate.getFullYear();
     
-    // If employee started in current year, need to check if they earned leave for their first month
-    if (employeeStartDate.getFullYear() === year) {
-      // If employee started after the 27th of their first month, they don't earn that month's leave
-      if (employeeStartDate.getDate() > 27) {
-        currentMonth += 1; // Skip the first month
-      }
-    }
-    
-    // Count completed months where leave was earned (on or after 27th)
     while (currentYear < calculationDate.getFullYear() || 
            (currentYear === calculationDate.getFullYear() && currentMonth <= calculationDate.getMonth())) {
       
-      // Check if this month's leave has been earned
-      if (currentYear < calculationDate.getFullYear() || 
-          (currentYear === calculationDate.getFullYear() && currentMonth < calculationDate.getMonth()) ||
-          (currentYear === calculationDate.getFullYear() && currentMonth === calculationDate.getMonth() && calculationDate.getDate() >= 27)) {
-        monthsWorked += 1;
+      const monthStart = new Date(currentYear, currentMonth, 1);
+      const monthEnd = new Date(currentYear, currentMonth + 1, 0); // Last day of month
+      
+      // Determine the actual period worked in this month
+      const periodStart = currentYear === employeeStartDate.getFullYear() && currentMonth === employeeStartDate.getMonth() 
+        ? employeeStartDate 
+        : monthStart;
+      
+      const periodEnd = currentYear === calculationDate.getFullYear() && currentMonth === calculationDate.getMonth()
+        ? calculationDate
+        : monthEnd;
+      
+      // Calculate days worked in this month
+      const daysInMonth = monthEnd.getDate();
+      const daysWorked = Math.floor((periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      
+      // Calculate prorated leave for this month (1.667 days per full month)
+      const monthlyLeave = 1.667 * (daysWorked / daysInMonth);
+      
+      // Only add leave if the 27th has passed (or if we're calculating for a past month)
+      const monthEarningDate = new Date(currentYear, currentMonth, 27);
+      if (calculationDate >= monthEarningDate || currentMonth < calculationDate.getMonth() || currentYear < calculationDate.getFullYear()) {
+        totalAccumulated += monthlyLeave;
       }
+      
+      console.log(`Month ${currentMonth + 1}/${currentYear}:`, {
+        daysInMonth,
+        daysWorked,
+        monthlyLeave: Number(monthlyLeave.toFixed(3)),
+        earned: calculationDate >= monthEarningDate || currentMonth < calculationDate.getMonth() || currentYear < calculationDate.getFullYear()
+      });
       
       currentMonth += 1;
       if (currentMonth > 11) {
@@ -79,21 +95,15 @@ export class AccumulatedLeaveCalculations {
       }
     }
     
-    console.log(`Months calculation:`, {
-      employeeStartDate: employeeStartDate.toISOString().split('T')[0],
-      calculationDate: calculationDate.toISOString().split('T')[0],
-      monthsWorked
-    });
+    // Cap at 20 days maximum
+    const accumulated = Math.min(totalAccumulated, 20);
     
-    // Accumulate 1.667 for each completed month, max 20 days (12 months * 1.667 = 20.004)
-    const accumulated = Math.min(monthsWorked * 1.667, 20);
     
     console.log(`AccumulatedLeave final calculation:`, {
       year,
       calculationDate: calculationDate.toISOString().split('T')[0],
       employeeStartDate: employeeStartDate.toISOString().split('T')[0],
-      monthsWorked,
-      rawAccumulated: monthsWorked * 1.667,
+      totalAccumulated: Number(totalAccumulated.toFixed(3)),
       accumulated: Number(accumulated.toFixed(1))
     });
     
