@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Eye } from 'lucide-react';
+import { FileText, Download } from 'lucide-react';
 import { makeApiRequest } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -11,15 +10,8 @@ import { format } from 'date-fns';
 interface DocumentAttachment {
   id: number;
   leave_id: number;
-  filename: string;
   original_name: string;
-  file_type: string;
-  file_size: number;
   uploaded_at: string;
-  requester_name: string;
-  requester_email: string;
-  leave_title: string;
-  leave_type: string;
 }
 
 interface DocumentManagerProps {
@@ -86,20 +78,6 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
     }
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const getFileIcon = (fileType: string) => {
-    if (fileType.startsWith('image/')) {
-      return <Eye className="h-4 w-4" />;
-    }
-    return <FileText className="h-4 w-4" />;
-  };
 
   useEffect(() => {
     fetchDocuments();
@@ -148,11 +126,8 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Requester</TableHead>
-                    <TableHead>Leave Request</TableHead>
+                    <TableHead>Leave ID</TableHead>
                     <TableHead>File Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Size</TableHead>
                     <TableHead>Upload Date</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -160,33 +135,14 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
                 <TableBody>
                   {documents.map((doc) => (
                     <TableRow key={doc.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{doc.requester_name}</div>
-                          <div className="text-sm text-muted-foreground">{doc.requester_email}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{doc.leave_title}</div>
-                          <Badge variant="outline" className="text-xs">
-                            {doc.leave_type}
-                          </Badge>
-                        </div>
+                      <TableCell className="font-medium">
+                        #{doc.leave_id}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {getFileIcon(doc.file_type)}
+                          <FileText className="h-4 w-4" />
                           <span className="font-medium">{doc.original_name}</span>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="text-xs">
-                          {doc.file_type.split('/')[1]?.toUpperCase() || 'FILE'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {formatFileSize(doc.file_size)}
                       </TableCell>
                       <TableCell className="text-sm">
                         {format(new Date(doc.uploaded_at), 'MMM dd, yyyy HH:mm')}
