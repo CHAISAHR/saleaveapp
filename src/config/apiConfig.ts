@@ -15,9 +15,9 @@ const getApiBaseUrl = () => {
   if (!viteApiUrl) {
     console.warn('VITE_API_URL environment variable is not set, using fallback');
     
-    // In development, use localhost
+    // In development, use localhost on port 3001 (where the server runs)
     if (import.meta.env.DEV) {
-      const fallbackUrl = 'http://localhost:3000';
+      const fallbackUrl = 'http://localhost:3001';
       console.log('Using development fallback:', fallbackUrl);
       return fallbackUrl;
     }
@@ -49,7 +49,8 @@ export const apiConfig = {
     balance: `${API_BASE_URL}/api/balance`,
     holiday: `${API_BASE_URL}/api/holiday`,
     rollover: `${API_BASE_URL}/api/rollover`,
-    departments: `${API_BASE_URL}/api/departments`
+    departments: `${API_BASE_URL}/api/departments`,
+    audit: `${API_BASE_URL}/api/audit`
   }
 };
 
@@ -189,6 +190,52 @@ const createMockResponse = (url: string): Response => {
         manager: null
       }
     ];
+  } else if (url.includes('/api/audit')) {
+    mockData = {
+      success: true,
+      activity: [
+        {
+          id: 1,
+          table_name: 'leave_taken',
+          record_id: '123',
+          action: 'INSERT',
+          old_values: null,
+          new_values: '{"title":"Vacation","leaveType":"Annual Leave"}',
+          changed_by: 'john.doe@example.com',
+          changed_by_name: 'John Doe',
+          changed_at: '2025-01-26T10:00:00Z'
+        },
+        {
+          id: 2,
+          table_name: 'leave_taken',
+          record_id: '124',
+          action: 'UPDATE',
+          old_values: '{"status":"pending"}',
+          new_values: '{"status":"approved"}',
+          changed_by: 'manager@example.com',
+          changed_by_name: 'Manager User',
+          changed_at: '2025-01-26T11:00:00Z'
+        }
+      ]
+    };
+  } else if (url.includes('/api/leave/documents')) {
+    mockData = {
+      success: true,
+      documents: [
+        {
+          id: 1,
+          leave_id: 123,
+          original_name: 'medical_certificate.pdf',
+          uploaded_at: '2025-01-26T09:00:00Z'
+        },
+        {
+          id: 2,
+          leave_id: 124,
+          original_name: 'travel_booking.pdf',
+          uploaded_at: '2025-01-26T10:30:00Z'
+        }
+      ]
+    };
   }
   
   return new Response(JSON.stringify(mockData), {
