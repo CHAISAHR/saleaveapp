@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import { executeQuery } from '../config/database';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { emailService } from '../services/emailService';
+import { AuditService } from '../services/auditService';
 
 const router = express.Router();
 
@@ -86,6 +87,15 @@ router.post('/register', async (req, res) => {
       [email, fullName, department, gender, hashedPassword]
     );
     console.log('User inserted successfully with ID:', result.insertId);
+
+    // Log user creation to audit
+    await AuditService.logInsert('users', result.insertId, {
+      email,
+      name: fullName,
+      department,
+      gender,
+      hire_date: new Date().toISOString().split('T')[0]
+    }, email);
 
     // Create initial leave balance with gender-based maternity allocation and prorated accumulated leave
     const currentYear = new Date().getFullYear();
@@ -368,6 +378,13 @@ router.post('/reset-password-confirm', async (req, res) => {
     await executeQuery(
       'UPDATE users SET password_hash = ? WHERE id = ?',
       [hashedPassword, user.id]
+    );
+
+    // Log password reset to audit
+    await AuditService.logUpdate('users', user.id, 
+      { action: 'password_reset_via_email' }, 
+      { password_changed_at: new Date().toISOString() }, 
+      user.email
     );
 
     console.log('Password updated successfully for user:', user.email);

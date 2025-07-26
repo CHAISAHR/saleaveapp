@@ -2,6 +2,7 @@
 import express from 'express';
 import { executeQuery } from '../config/database';
 import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
+import { AuditService } from '../services/auditService';
 
 const router = express.Router();
 
@@ -172,8 +173,29 @@ router.put('/update', authenticateToken, requireRole(['manager', 'admin']), asyn
     }
 
     if (updateQuery) {
+      // Get current balance before update for audit
+      const currentBalances = await executeQuery(
+        'SELECT * FROM leave_balances WHERE EmployeeEmail = ? AND Year = ?',
+        [employeeEmail, currentYear]
+      );
+      const oldBalance = currentBalances[0];
+
       params = [daysUsed, employeeEmail, currentYear];
       await executeQuery(updateQuery, params);
+
+      // Log the balance update to audit
+      await AuditService.logUpdate(
+        'leave_balances', 
+        oldBalance?.BalanceID || employeeEmail, 
+        { [`${leaveType}Used`]: oldBalance?.[`${leaveType}Used`] || 0 },
+        { 
+          [`${leaveType}Used`]: (oldBalance?.[`${leaveType}Used`] || 0) + (action === 'approve' ? daysUsed : -daysUsed),
+          action,
+          leaveType,
+          daysUsed
+        },
+        req.user!.email
+      );
     }
 
     res.json({ success: true, message: 'Balance updated successfully' });

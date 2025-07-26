@@ -3,6 +3,7 @@ import multer from 'multer';
 import { executeQuery } from '../config/database';
 import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
 import { emailService } from '../services/emailService';
+import { AuditService } from '../services/auditService';
 
 const router = express.Router();
 
@@ -87,6 +88,20 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
     console.log('Leave request inserted successfully, ID:', result.insertId);
 
     const leaveId = result.insertId;
+
+    // Log leave request creation to audit
+    await AuditService.logInsert('leave_taken', leaveId, {
+      title,
+      detail,
+      startDate: formattedStartDate,
+      endDate: formattedEndDate,
+      leaveType,
+      requester,
+      approver: approverEmail,
+      alternativeApprover,
+      status: 'pending',
+      workingDays
+    }, requester);
 
     // Store file attachments if any
     if (files && files.length > 0) {
@@ -191,10 +206,27 @@ router.put('/requests/:id/status', authenticateToken, requireRole(['manager', 'a
     const { id } = req.params;
     const { status, approver, reason } = req.body;
 
+    // Get current leave request for audit
+    const currentLeave = await executeQuery(
+      'SELECT * FROM leave_taken WHERE LeaveID = ?',
+      [id]
+    );
+
     await executeQuery(
       'UPDATE leave_taken SET Status = ?, Modified = NOW(), Modified_By = ? WHERE LeaveID = ?',
       [status, req.user!.email, id]
     );
+
+    // Log status change to audit
+    if (currentLeave.length > 0) {
+      await AuditService.logUpdate(
+        'leave_taken',
+        id,
+        { status: currentLeave[0].Status },
+        { status, modified_by: req.user!.email, reason },
+        req.user!.email
+      );
+    }
 
     // Get leave request details for email notification
     const leaveDetails = await executeQuery(
