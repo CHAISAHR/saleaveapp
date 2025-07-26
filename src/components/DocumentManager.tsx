@@ -29,8 +29,9 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
         method: 'GET'
       });
 
-      if (response && (response as any).success) {
-        setDocuments((response as any).documents || []);
+      const data = await response.json();
+      if (data && data.success) {
+        setDocuments(data.documents || []);
       } else {
         toast.error('Failed to fetch documents');
       }
@@ -48,15 +49,16 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
         method: 'GET'
       });
 
-      if (response && (response as any).success && (response as any).fileData) {
+      const data = await response.json();
+      if (data && data.success && data.fileData) {
         // Convert base64 to blob
-        const byteCharacters = atob((response as any).fileData);
+        const byteCharacters = atob(data.fileData);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
           byteNumbers[i] = byteCharacters.charCodeAt(i);
         }
         const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: (response as any).fileType });
+        const blob = new Blob([byteArray], { type: data.fileType });
 
         // Create download link
         const url = window.URL.createObjectURL(blob);

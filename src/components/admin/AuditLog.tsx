@@ -31,8 +31,9 @@ export const AuditLog = () => {
         method: 'GET'
       });
 
-      if (response && (response as any).success) {
-        setAuditEntries((response as any).activity || []);
+      const data = await response.json();
+      if (data && data.success) {
+        setAuditEntries(data.activity || []);
       } else {
         toast.error('Failed to fetch audit activity');
       }
