@@ -142,7 +142,7 @@ export const AdminAllBalances = () => {
     setShowForfeitWarning(false);
     
     const updatedBalances = balances.map(balance => {
-      const forfeitAmount = Math.max(0, balance.Broughtforward - balance.AnnualUsed);
+      const forfeitAmount = Math.max(0, balance.Broughtforward - balance.Annual_leave_adjustments - balance.AnnualUsed);
       return {
         ...balance,
         Forfeited: forfeitAmount,

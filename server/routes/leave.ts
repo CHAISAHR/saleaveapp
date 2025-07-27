@@ -274,9 +274,9 @@ router.post('/auto-forfeit', authenticateToken, requireRole(['admin']), async (r
 
     // Get all balances where brought forward leave should be forfeited
     const balancesToUpdate = await executeQuery(
-      `SELECT BalanceID, EmployeeName, EmployeeEmail, Broughtforward, AnnualUsed, Forfeited
+      `SELECT BalanceID, EmployeeName, EmployeeEmail, Broughtforward, AnnualUsed, Forfeited, Annual_leave_adjustments
        FROM leave_balances 
-       WHERE Year = ? AND (Broughtforward - AnnualUsed - Forfeited) > 0`,
+       WHERE Year = ? AND (Broughtforward - Annual_leave_adjustments - AnnualUsed - Forfeited) > 0`,
       [currentYear]
     );
 
@@ -284,7 +284,7 @@ router.post('/auto-forfeit', authenticateToken, requireRole(['admin']), async (r
     const updatedEmployees = [];
 
     for (const balance of balancesToUpdate) {
-      const forfeitAmount = Math.max(0, balance.Broughtforward - balance.AnnualUsed - balance.Forfeited);
+      const forfeitAmount = Math.max(0, balance.Broughtforward - balance.Annual_leave_adjustments - balance.AnnualUsed - balance.Forfeited);
       
       if (forfeitAmount > 0) {
         await executeQuery(
