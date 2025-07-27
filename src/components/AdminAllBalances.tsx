@@ -138,26 +138,40 @@ export const AdminAllBalances = () => {
     setShowForfeitWarning(true);
   };
 
-  const confirmForfeit = () => {
+  const confirmForfeit = async () => {
     setShowForfeitWarning(false);
     
-    const updatedBalances = balances.map(balance => {
-      const forfeitAmount = Math.max(0, balance.Broughtforward - balance.Annual_leave_adjustments - balance.AnnualUsed);
-      return {
-        ...balance,
-        Forfeited: forfeitAmount,
-        Modified: new Date().toISOString()
-      };
-    });
+    try {
+      // Call the backend API to forfeit leave
+      const response = await fetch(`${apiConfig.endpoints.leave}/forfeit`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          year: currentYear
+        })
+      });
 
-    setBalances(updatedBalances);
-
-    const totalForfeited = updatedBalances.reduce((sum, balance) => sum + balance.Forfeited, 0);
-    
-    toast({
-      title: "Leave Forfeited",
-      description: `Successfully forfeited ${totalForfeited} days of brought forward leave across all employees.`,
-    });
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Refresh the balances from the backend to get the updated data
+        await fetchBalances();
+        
+        toast({
+          title: "Leave Forfeited",
+          description: `Successfully forfeited brought forward leave for ${result.employeesAffected} employees.`,
+        });
+      } else {
+        throw new Error('Failed to forfeit leave');
+      }
+    } catch (error) {
+      console.error('Error forfeiting leave:', error);
+      toast({
+        title: "Error",
+        description: "Failed to forfeit leave. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Auto-forfeit functionality
