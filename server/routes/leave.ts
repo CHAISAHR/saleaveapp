@@ -171,14 +171,15 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
                GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
     } else if (req.user!.role === 'manager') {
       // Manager can see requests where they are the approver, alternative approver, OR their own requests
+      // But exclude cases where they are both requester and approver (can't approve own leave)
       query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
                lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, lt.Modified_By,
                lt.workingDays, COUNT(la.id) as attachment_count
                FROM leave_taken lt 
                LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
-               WHERE lt.Approver = ? OR lt.AlternativeApprover = ? OR lt.Requester = ?
+               WHERE (lt.Approver = ? AND lt.Requester != ?) OR lt.AlternativeApprover = ? OR (lt.Requester = ? AND lt.Approver != ?)
                GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
-      params = [req.user!.email, req.user!.email, req.user!.email];
+      params = [req.user!.email, req.user!.email, req.user!.email, req.user!.email, req.user!.email];
     } else {
       // Employee can only see their own requests with attachments and alternative approver info
       query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
