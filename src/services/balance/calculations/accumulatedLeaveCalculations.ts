@@ -75,8 +75,8 @@ export class AccumulatedLeaveCalculations {
       // Calculate prorated leave for this month (1.667 days per full month)
       const monthlyLeave = 1.667 * (daysWorked / daysInMonth);
       
-      // Only add leave if the 27th has passed (or if we're calculating for a past month)
-      const monthEarningDate = new Date(currentYear, currentMonth, 27);
+      // Only add leave if the month has ended (or if we're calculating for a past month)
+      const monthEarningDate = new Date(currentYear, currentMonth + 1, 0); // Last day of month
       if (calculationDate >= monthEarningDate || currentMonth < calculationDate.getMonth() || currentYear < calculationDate.getFullYear()) {
         totalAccumulated += monthlyLeave;
       }
