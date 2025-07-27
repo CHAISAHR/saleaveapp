@@ -74,7 +74,7 @@ export const WarningDialogs = ({
                   <strong>Warning:</strong> This action will forfeit brought forward leave for all employees where:
                 </p>
                 <p className="font-mono bg-gray-100 p-2 rounded">
-                  (Brought Forward - Annual Used) &gt; 0
+                  (Brought Forward - Annual Leave Adjustments - Annual Used) &gt; 0
                 </p>
                 <ul className="list-disc list-inside space-y-1 text-sm">
                   <li>This will update the "Forfeited" column for affected employees</li>
