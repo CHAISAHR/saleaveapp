@@ -35,7 +35,7 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
     const fetchDocuments = async () => {
         try {
             setLoading(true);
-            const response = await makeApiRequest('/api/leave-documents', { // Adjusted endpoint as per previous backend code
+            const response = await makeApiRequest('/api/leave/documents, { // Adjusted endpoint as per previous backend code
                 method: 'GET'
             });
 

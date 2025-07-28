@@ -135,7 +135,7 @@ const createMockResponse = (url: string, responseType?: 'json' | 'blob' | 'text'
     let mockData: any = null;
     let contentType = 'application/json';
 
-    if (url.includes('/api/leave-documents') && url.includes('/download')) {
+    if (url.includes('/api/leave/documents) && url.includes('/download')) {
         // Mock binary file download for /api/leave-documents/:id/download
         if (responseType === 'blob') {
             const mockPdfContent = '%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Count 0>>endobj\nxref\n0 3\n0000000000 65535 f\n0000000009 00000 n\n0000000054 00000 n\ntrailer<</Size 3/Root 1 0 R>>startxref\n104\n%%EOF'; // A very basic, minimal valid PDF structure as a string
@@ -154,7 +154,7 @@ const createMockResponse = (url: string, responseType?: 'json' | 'blob' | 'text'
             success: false,
             message: 'Mock download: Please set responseType to "blob" for actual file content.',
         };
-    } else if (url.includes('/api/leave-documents')) {
+    } else if (url.includes('/api/leave/documents)) {
         // Mock document metadata list
         mockData = [
             {
