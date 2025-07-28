@@ -143,7 +143,7 @@ export const AdminAllBalances = () => {
     
     try {
       // Call the backend API to forfeit leave
-      const response = await fetch(`${apiConfig.endpoints.leave}/forfeit`, {
+      const response = await fetch(`${apiConfig.endpoints.leave}/auto-forfeit`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
