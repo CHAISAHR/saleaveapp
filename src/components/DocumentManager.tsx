@@ -1,31 +1,27 @@
+// src/components/DocumentManager.tsx
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { FileText, Download } from 'lucide-react';
-// Assuming makeApiRequest is a wrapper around fetch or axios that handles headers, etc.
-import { makeApiRequest } from '@/config/apiConfig';
+import { makeApiRequest, apiConfig } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
-// REVISED: Add mime_type, employee_name, department_name to the interface
 interface DocumentAttachment {
     id: number;
     leave_id: number;
-    original_name: string; // This will map to file_name from backend for display
-    file_name: string; // The alias from backend for display
-    mime_type: string; // Crucial for handling downloads/previews
+    original_name: string;
+    file_name: string;
+    mime_type: string;
     uploaded_at: string;
-    employee_name: string; // From backend join
-    department_name: string; // From backend join
-    employee_id: number; // From backend join
+    employee_name: string;
+    department_name: string;
+    employee_id: number;
 }
 
 interface DocumentManagerProps {
     userRole: 'manager' | 'admin';
-    // You'll likely need to pass the user's department_name here for managers
-    // or ensure makeApiRequest adds the auth token which carries this info.
-    // For now, assuming userRole is sufficient and auth token handles internal checks.
 }
 
 export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
@@ -35,62 +31,40 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
     const fetchDocuments = async () => {
         try {
             setLoading(true);
-            const response = await makeApiRequest('/api/leave/documents, { // Adjusted endpoint as per previous backend code
+            // REVISED: Use the correct endpoint from apiConfig
+            const response = await makeApiRequest(apiConfig.endpoints.leaveDocuments, {
                 method: 'GET'
             });
 
-            // MakeApiRequest should handle json() parsing if it's a JSON response
-            // The backend's /leave-documents endpoint returns JSON directly
             const data = await response.json();
-            console.log('Document fetch response:', data); // Debugging
+            console.log('Document fetch response:', data);
 
-            // The backend returns an array of documents directly, not an object with { success: true, documents: [...] }
             if (Array.isArray(data)) {
                 setDocuments(data);
             } else {
-                // Handle cases where backend might send an error object instead of array
                 toast.error(data?.message ? `Failed to fetch documents: ${data.message}` : 'Failed to fetch documents');
             }
         } catch (error: any) {
             console.error('Error fetching documents:', error);
-            const errorMessage = error.response?.data?.message || 'Failed to fetch documents. Network error or server issue.';
+            const errorMessage = error.message || 'Failed to fetch documents. Network error or server issue.';
             toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
     };
 
-    // REVISED: This function now handles direct binary responses from the backend
     const downloadDocument = async (document: DocumentAttachment) => {
         try {
-            const response = await makeApiRequest(`/api/leave-documents/${document.id}/download`, { // Adjusted endpoint
+            // REVISED: Construct the download URL using the correct endpoint
+            const downloadUrl = `${apiConfig.endpoints.leaveDocuments}/${document.id}/download`;
+            const response = await makeApiRequest(downloadUrl, {
                 method: 'GET',
-                responseType: 'blob' // IMPORTANT: Tell makeApiRequest to expect a blob, not JSON
-                                    // You'll need to modify makeApiRequest to support this.
-                                    // If makeApiRequest uses fetch, you'd check response.blob()
-                                    // If makeApiRequest uses axios, this option is standard.
+                responseType: 'blob'
             });
 
-            // Check if the request was successful
-            if (!response.ok) { // For fetch API, check 'ok' status
-                // Attempt to read error message if it's JSON
-                const errorText = await response.text();
-                let errorMessage = `Failed to download document: Status ${response.status}`;
-                try {
-                    const errorJson = JSON.parse(errorText);
-                    errorMessage = errorJson.message || errorMessage;
-                } catch (e) {
-                    // Not JSON, use generic message
-                }
-                toast.error(errorMessage);
-                return;
-            }
-
-            // Get the blob data from the response
             const blob = await response.blob();
             const fileURL = window.URL.createObjectURL(blob);
 
-            // Determine if the file should be displayed or downloaded
             const isDisplayable = document.mime_type.includes('pdf') || document.mime_type.includes('image') || document.mime_type.includes('text');
 
             if (isDisplayable) {
@@ -99,31 +73,30 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
             } else {
                 const link = document.createElement('a');
                 link.href = fileURL;
-                link.download = document.original_name; // Use original_name for the downloaded file
+                link.download = document.original_name;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
                 toast.success('Document downloaded successfully');
             }
 
-            window.URL.revokeObjectURL(fileURL); // Clean up the object URL
+            window.URL.revokeObjectURL(fileURL);
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error downloading document:', error);
-            toast.error('Failed to download document. Please try again.');
+            const errorMessage = error.message || 'Failed to download document. Please try again.';
+            toast.error(errorMessage);
         }
     };
 
-
     useEffect(() => {
-        // Only fetch if the user has the required role
         if (userRole === 'admin' || userRole === 'manager') {
             fetchDocuments();
         } else {
             setLoading(false);
             toast.error("You don't have permission to view documents.");
         }
-    }, [userRole]); // Rerun effect if userRole changes
+    }, [userRole]);
 
     if (loading) {
         return (
@@ -169,8 +142,8 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Leave ID</TableHead>
-                                        <TableHead>Employee</TableHead> {/* NEW */}
-                                        <TableHead>Department</TableHead> {/* NEW */}
+                                        <TableHead>Employee</TableHead>
+                                        <TableHead>Department</TableHead>
                                         <TableHead>File Name</TableHead>
                                         <TableHead>Upload Date</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
@@ -182,23 +155,22 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
                                             <TableCell className="font-medium">
                                                 #{doc.leave_id}
                                             </TableCell>
-                                            <TableCell>{doc.employee_name}</TableCell> {/* NEW */}
-                                            <TableCell>{doc.department_name}</TableCell> {/* NEW */}
+                                            <TableCell>{doc.employee_name}</TableCell>
+                                            <TableCell>{doc.department_name}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <FileText className="h-4 w-4" />
-                                                    <span className="font-medium">{doc.original_name}</span> {/* Use original_name for display */}
+                                                    <span className="font-medium">{doc.original_name}</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-sm">
-                                                {/* Ensure doc.uploaded_at is a valid date string */}
                                                 {doc.uploaded_at ? format(new Date(doc.uploaded_at), 'MMM dd, yyyy HH:mm') : 'N/A'}
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    onClick={() => downloadDocument(doc)} // Pass the whole doc object
+                                                    onClick={() => downloadDocument(doc)}
                                                     className="flex items-center gap-1"
                                                 >
                                                     <Download className="h-3 w-3" />

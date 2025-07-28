@@ -45,8 +45,9 @@ export const apiConfig = {
     endpoints: {
         auth: `${API_BASE_URL}/api/auth`,
         users: `${API_BASE_URL}/api/users`,
-        leave: `${API_BASE_URL}/api/leave`, // Base URL for general leave operations
-        leaveDocuments: `${API_BASE_URL}/api/leave-documents`, // Specific endpoint for documents
+        leave: `${API_BASE_URL}/api/leave`, // Base URL for general leave operations (if used)
+        // REVISED: Corrected endpoint for leave documents
+        leaveDocuments: `${API_BASE_URL}/api/leave/documents`,
         balance: `${API_BASE_URL}/api/balance`,
         holiday: `${API_BASE_URL}/api/holiday`,
         rollover: `${API_BASE_URL}/api/rollover`,
@@ -55,36 +56,29 @@ export const apiConfig = {
     }
 };
 
-// REVISED: Add responseType to RequestInit options
 interface ApiRequestOptions extends RequestInit {
     responseType?: 'json' | 'blob' | 'text';
 }
 
-// Helper function for making API requests with proper error handling and fallback to mock data
-export const makeApiRequest = async (url: string, options: ApiRequestOptions = {}): Promise<Response> => { // Explicitly return Promise<Response>
+export const makeApiRequest = async (url: string, options: ApiRequestOptions = {}): Promise<Response> => {
     try {
         console.log('Making API request to:', url);
         console.log('Request options:', options);
 
-        // If API URL is missing, immediately return mock data
         if (url.includes('MISSING_API_URL')) {
             console.warn('API URL not configured, returning mock data');
-            return createMockResponse(url, options.responseType); // Pass responseType to mock
+            return createMockResponse(url, options.responseType);
         }
 
         const headers: HeadersInit = {
-            // Only set Content-Type: application/json if not explicitly overridden or if body is not FormData
             ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
             ...options.headers,
         };
 
-        // Add Authorization header if a token is available (assuming you have a way to get it)
-        // You need to implement getAuthToken() or pass the token explicitly if needed for ALL requests
         const token = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!).token : null;
         if (token) {
              headers['Authorization'] = `Bearer ${token}`;
         }
-
 
         const response = await fetch(url, {
             ...options,
@@ -95,50 +89,43 @@ export const makeApiRequest = async (url: string, options: ApiRequestOptions = {
         console.log('Response ok:', response.ok);
 
         if (!response.ok) {
-            // For error responses, always try to get text to see if there's a message
             const errorText = await response.text();
             console.error('API Error Response:', errorText);
             let errorMessage = `HTTP error! status: ${response.status}`;
             try {
                 const errorJson = JSON.parse(errorText);
-                errorMessage = errorJson.message || errorMessage; // Use backend message if available
+                errorMessage = errorJson.message || errorMessage;
             } catch (e) {
-                // Not JSON, just use the raw text
                 errorMessage = errorText || errorMessage;
             }
             throw new Error(errorMessage);
         }
 
-        // REVISED: Handle different response types
         if (options.responseType === 'blob') {
-            return response; // Return the raw Response object for blob
+            return response;
         }
-        // Default behavior: return the raw Response object for json(), text() to be called by caller
         return response;
 
     } catch (error) {
         console.error('API request failed:', error);
 
-        // Check if this is a network error (backend unavailable)
         if (error instanceof Error && (error.message === 'Failed to fetch' || error.message.includes('fetch'))) {
             console.warn('Backend unavailable or network error, falling back to mock data');
-            return createMockResponse(url, options.responseType); // Pass responseType to mock
+            return createMockResponse(url, options.responseType);
         }
 
         throw error;
     }
 };
 
-// Mock data generator for when backend is unavailable
-// REVISED: Added responseType parameter
 const createMockResponse = (url: string, responseType?: 'json' | 'blob' | 'text'): Response => {
     let mockData: any = null;
     let contentType = 'application/json';
 
-    if (url.includes('/api/leave/documents) && url.includes('/download')) {
-        // Mock binary file download for /api/leave-documents/:id/download
+    // REVISED: Mock data for '/api/leave/documents/:id/download'
+    if (url.includes('/api/leave/documents') && url.includes('/download')) {
         if (responseType === 'blob') {
-            const mockPdfContent = '%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Count 0>>endobj\nxref\n0 3\n0000000000 65535 f\n0000000009 00000 n\n0000000054 00000 n\ntrailer<</Size 3/Root 1 0 R>>startxref\n104\n%%EOF'; // A very basic, minimal valid PDF structure as a string
+            const mockPdfContent = '%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Count 0>>endobj\nxref\n0 3\n0000000000 65535 f\n0000000009 00000 n\n0000000054 00000 n\ntrailer<</Size 3/Root 1 0 R>>startxref\n104\n%%EOF';
             const blob = new Blob([mockPdfContent], { type: 'application/pdf' });
             return new Response(blob, {
                 status: 200,
@@ -149,19 +136,18 @@ const createMockResponse = (url: string, responseType?: 'json' | 'blob' | 'text'
                 },
             });
         }
-        // Fallback for download if not expecting blob, e.g., if UI didn't specify responseType correctly
         mockData = {
             success: false,
             message: 'Mock download: Please set responseType to "blob" for actual file content.',
         };
-    } else if (url.includes('/api/leave/documents)) {
-        // Mock document metadata list
+    // REVISED: Mock data for '/api/leave/documents' list
+    } else if (url.includes('/api/leave/documents')) {
         mockData = [
             {
                 id: 1,
                 leave_id: 123,
                 original_name: 'medical_certificate.pdf',
-                file_name: 'medical_certificate.pdf', // Alias for consistency
+                file_name: 'medical_certificate.pdf',
                 mime_type: 'application/pdf',
                 uploaded_at: '2025-01-26T09:00:00Z',
                 employee_name: 'Mock Employee One',
@@ -187,101 +173,31 @@ const createMockResponse = (url: string, responseType?: 'json' | 'blob' | 'text'
                 mime_type: 'image/png',
                 uploaded_at: '2025-01-27T11:00:00Z',
                 employee_name: 'Mock Employee Three',
-                department_name: 'Marketing', // Same department as Mock Employee Two for manager test
+                department_name: 'Marketing',
                 employee_id: 103,
             }
         ];
-        // Note: Backend might return { success: true, documents: [...] } or just [...]
-        // Frontend expects direct array, so mock should return array directly
     } else if (url.includes('/api/leave')) {
         mockData = [
-            {
-                id: 1,
-                employeeName: 'John Doe',
-                Requester: 'john.doe@example.com',
-                leaveType: 'Annual Leave',
-                startDate: '2025-01-15',
-                endDate: '2025-01-20',
-                Status: 'approved',
-                daysRequested: 5,
-                manager: 'jane.smith@example.com'
-            },
-            {
-                id: 2,
-                employeeName: 'Sarah Wilson',
-                Requester: 'sarah.wilson@example.com',
-                leaveType: 'Sick Leave',
-                startDate: '2025-01-18',
-                endDate: '2025-01-19',
-                Status: 'approved',
-                daysRequested: 2,
-                manager: 'jane.smith@example.com'
-            }
+            { id: 1, employeeName: 'John Doe', Requester: 'john.doe@example.com', leaveType: 'Annual Leave', startDate: '2025-01-15', endDate: '2025-01-20', Status: 'approved', daysRequested: 5, manager: 'jane.smith@example.com' },
+            { id: 2, employeeName: 'Sarah Wilson', Requester: 'sarah.wilson@example.com', leaveType: 'Sick Leave', startDate: '2025-01-18', endDate: '2025-01-19', Status: 'approved', daysRequested: 2, manager: 'jane.smith@example.com' }
         ];
     } else if (url.includes('/api/balance')) {
         mockData = [
-            {
-                email: 'john.doe@example.com',
-                name: 'John Doe',
-                department: 'Engineering',
-                annualLeave: 15.5,
-                sickLeave: 8,
-                familyResponsibility: 3,
-                maternityLeave: 0,
-                paternityLeave: 0,
-                studyLeave: 5
-            }
+            { email: 'john.doe@example.com', name: 'John Doe', department: 'Engineering', annualLeave: 15.5, sickLeave: 8, familyResponsibility: 3, maternityLeave: 0, paternityLeave: 0, studyLeave: 5 }
         ];
     } else if (url.includes('/api/users')) {
         mockData = [
-            {
-                id: 1,
-                email: 'john.doe@example.com',
-                name: 'John Doe',
-                department: 'Engineering',
-                role: 'employee',
-                manager: 'jane.smith@example.com'
-            },
-            {
-                id: 2,
-                email: 'sarah.wilson@example.com',
-                name: 'Sarah Wilson',
-                department: 'Marketing',
-                role: 'employee',
-                manager: 'jane.smith@example.com'
-            },
-            {
-                id: 3,
-                email: 'jane.smith@example.com',
-                name: 'Jane Smith',
-                department: 'Marketing', // Important for manager role test
-                role: 'manager',
-                manager: null
-            },
-            {
-                id: 4,
-                email: 'admin@example.com',
-                name: 'Admin User',
-                department: 'IT',
-                role: 'admin',
-                manager: null
-            }
+            { id: 1, email: 'john.doe@example.com', name: 'John Doe', department: 'Engineering', role: 'employee', manager: 'jane.smith@example.com' },
+            { id: 2, email: 'sarah.wilson@example.com', name: 'Sarah Wilson', department: 'Marketing', role: 'employee', manager: 'jane.smith@example.com' },
+            { id: 3, email: 'jane.smith@example.com', name: 'Jane Smith', department: 'Marketing', role: 'manager', manager: null },
+            { id: 4, email: 'admin@example.com', name: 'Admin User', department: 'IT', role: 'admin', manager: null }
         ];
     } else if (url.includes('/api/audit')) {
         mockData = {
             success: true,
             activity: [
-                {
-                    id: 1,
-                    table_name: 'leave_taken',
-                    record_id: '123',
-                    action: 'INSERT',
-                    old_values: null,
-                    new_values: '{"title":"Vacation","leaveType":"Annual Leave"}',
-                    changed_by: 'john.doe@example.com',
-                    changed_by_name: 'John Doe',
-                    changed_at: '2025-01-26T10:00:00Z'
-                },
+                { id: 1, table_name: 'leave_taken', record_id: '123', action: 'INSERT', old_values: null, new_values: '{"title":"Vacation","leaveType":"Annual Leave"}', changed_by: 'john.doe@example.com', changed_by_name: 'John Doe', changed_at: '2025-01-26T10:00:00Z' },
             ]
         };
     } else {
