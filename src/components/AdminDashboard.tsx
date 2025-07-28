@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AdminBalanceManager } from "./AdminBalanceManager";
 
 import { CurrentlyOnLeaveTable } from "./admin/CurrentlyOnLeaveTable";
+import { ForfeitedLeavesTable } from "./admin/ForfeitedLeavesTable";
 import { AdminStatsCards } from "./admin/AdminStatsCards";
 import { apiConfig, makeApiRequest } from "@/config/apiConfig";
 import { useToast } from "@/hooks/use-toast";
@@ -204,6 +205,9 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
 
       {/* Staff Currently on Leave Table */}
       <CurrentlyOnLeaveTable />
+      
+      {/* Forfeited Leaves Table */}
+      <ForfeitedLeavesTable />
     </div>
   );
 };
