@@ -357,108 +357,116 @@ router.get('/api/external/requests/:email', async (req, res) => {
 
 // Get documents for managers and admins
 router.get('/documents', authenticateToken, requireRole(['manager', 'admin']), async (req: AuthRequest, res) => {
-  try {
-    console.log(`[Documents] ${req.method} ${req.path} - User: ${req.user!.email} (${req.user!.role})`);
-    
-    let query = '';
-    let params: any[] = [];
+    try {
+        console.log(`[Documents] ${req.method} ${req.path} - User: ${req.user!.email} (${req.user!.role})`);
 
-    if (req.user!.role === 'admin') {
-      // Admin can see all documents
-      query = `
-        SELECT 
-          la.id, la.leave_id, la.filename, la.original_name, la.file_type, la.file_size, la.created_at as uploaded_at,
-          lt.Title as leave_title, lt.LeaveType as leave_type, lt.Requester as requester_email,
-          u.name as requester_name
-        FROM leave_attachments la
-        JOIN leave_taken lt ON la.leave_id = lt.LeaveID
-        JOIN users u ON lt.Requester = u.email
-        ORDER BY la.created_at DESC
-      `;
-    } else if (req.user!.role === 'manager') {
-      // Manager can see documents from their team and alternative approvals
-      query = `
-        SELECT 
-          la.id, la.leave_id, la.filename, la.original_name, la.file_type, la.file_size, la.created_at as uploaded_at,
-          lt.Title as leave_title, lt.LeaveType as leave_type, lt.Requester as requester_email,
-          u.name as requester_name
-        FROM leave_attachments la
-        JOIN leave_taken lt ON la.leave_id = lt.LeaveID
-        JOIN users u ON lt.Requester = u.email
-        LEFT JOIN leave_balances lb ON lt.Requester = lb.EmployeeEmail
-        WHERE (lb.Manager = ? OR lt.AlternativeApprover = ?) AND lt.Requester != ?
-        ORDER BY la.created_at DESC
-      `;
-      params = [req.user!.email, req.user!.email, req.user!.email];
+        let query = '';
+        let params: any[] = [];
+
+        if (req.user!.role === 'admin') {
+            // Admin can see all documents
+            query = `
+                SELECT
+                    la.id, la.leave_id, la.filename, la.original_name, la.file_type, la.file_size, la.created_at as uploaded_at,
+                    lt.Title as leave_title, lt.LeaveType as leave_type, lt.Requester as requester_email,
+                    u.name as requester_name,
+                    u.department as department_name -- <--- ADDED: Fetch department name for display
+                FROM leave_attachments la
+                JOIN leave_taken lt ON la.leave_id = lt.LeaveID
+                JOIN users u ON lt.Requester = u.email
+                ORDER BY la.created_at DESC
+            `;
+        } else if (req.user!.role === 'manager') {
+            // Manager can see documents from their team and alternative approvals
+            query = `
+                SELECT
+                    la.id, la.leave_id, la.filename, la.original_name, la.file_type, la.file_size, la.created_at as uploaded_at,
+                    lt.Title as leave_title, lt.LeaveType as leave_type, lt.Requester as requester_email,
+                    u.name as requester_name,
+                    u.department as department_name -- <--- ADDED: Fetch department name for display
+                FROM leave_attachments la
+                JOIN leave_taken lt ON la.leave_id = lt.LeaveID
+                JOIN users u ON lt.Requester = u.email
+                LEFT JOIN leave_balances lb ON lt.Requester = lb.EmployeeEmail
+                WHERE (lb.Manager = ? OR lt.AlternativeApprover = ?) AND lt.Requester != ?
+                ORDER BY la.created_at DESC
+            `;
+            params = [req.user!.email, req.user!.email, req.user!.email];
+        } else {
+            // If an employee role tries to access this endpoint without manager/admin role
+            return res.status(403).json({ success: false, message: 'Forbidden: Insufficient permissions to view documents.' });
+        }
+
+        const documents = await executeQuery(query, params);
+
+        console.log(`[Documents] Found ${documents.length} documents`);
+
+        res.json({
+            success: true,
+            documents: documents
+        });
+    } catch (error) {
+        console.error('[Documents] Error fetching documents:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch documents' });
     }
-
-    const documents = await executeQuery(query, params);
-
-    console.log(`[Documents] Found ${documents.length} documents`);
-
-    res.json({
-      success: true,
-      documents: documents
-    });
-  } catch (error) {
-    console.error('[Documents] Error fetching documents:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch documents' });
-  }
 });
 
 // Download specific document
 router.get('/documents/:id/download', authenticateToken, requireRole(['manager', 'admin']), async (req: AuthRequest, res) => {
-  try {
-    const documentId = req.params.id;
-    console.log(`[Documents] Download request for document ID: ${documentId} by user: ${req.user!.email}`);
+    try {
+        const documentId = req.params.id;
+        console.log(`[Documents] Download request for document ID: ${documentId} by user: ${req.user!.email}`);
 
-    // Get document with permission check
-    let query = '';
-    let params: any[] = [documentId];
+        // Get document with permission check
+        let query = '';
+        let params: any[] = [documentId];
 
-    if (req.user!.role === 'admin') {
-      // Admin can download any document
-      query = `
-        SELECT la.*, lt.Requester 
-        FROM leave_attachments la
-        JOIN leave_taken lt ON la.leave_id = lt.LeaveID
-        WHERE la.id = ?
-      `;
-    } else if (req.user!.role === 'manager') {
-      // Manager can only download documents from their team
-      query = `
-        SELECT la.*, lt.Requester 
-        FROM leave_attachments la
-        JOIN leave_taken lt ON la.leave_id = lt.LeaveID
-        LEFT JOIN leave_balances lb ON lt.Requester = lb.EmployeeEmail
-        WHERE la.id = ? AND (lb.Manager = ? OR lt.AlternativeApprover = ?) AND lt.Requester != ?
-      `;
-      params = [documentId, req.user!.email, req.user!.email, req.user!.email];
+        // Manager specific authorization - ensure they can only access their team's docs
+        // The previous manager query for download endpoint:
+        // SELECT la.*, lt.Requester FROM leave_attachments la JOIN leave_taken lt ON la.leave_id = lt.LeaveID LEFT JOIN leave_balances lb ON lt.Requester = lb.EmployeeEmail WHERE la.id = ? AND (lb.Manager = ? OR lt.AlternativeApprover = ?) AND lt.Requester != ?
+        // This query implicitly includes the permission check.
+        // For admin, it's simpler.
+
+        if (req.user!.role === 'admin') {
+            query = `
+                SELECT la.original_name, la.file_type, la.file_data, lt.Requester
+                FROM leave_attachments la
+                JOIN leave_taken lt ON la.leave_id = lt.LeaveID
+                WHERE la.id = ?
+            `;
+        } else if (req.user!.role === 'manager') {
+            query = `
+                SELECT la.original_name, la.file_type, la.file_data, lt.Requester
+                FROM leave_attachments la
+                JOIN leave_taken lt ON la.leave_id = lt.LeaveID
+                LEFT JOIN leave_balances lb ON lt.Requester = lb.EmployeeEmail
+                WHERE la.id = ? AND (lb.Manager = ? OR lt.AlternativeApprover = ?) AND lt.Requester != ?
+            `;
+            params = [documentId, req.user!.email, req.user!.email, req.user!.email];
+        } else {
+            return res.status(403).json({ success: false, message: 'Forbidden: Insufficient permissions to download documents.' });
+        }
+
+
+        const documents = await executeQuery(query, params);
+
+        if (documents.length === 0) {
+            console.log(`[Documents] Document not found or access denied for ID: ${documentId}`);
+            return res.status(404).json({ success: false, message: 'Document not found or access denied' });
+        }
+
+        const document = documents[0];
+        console.log(`[Documents] Document found: ${document.original_name} (${document.file_type})`);
+
+        // --- IMPORTANT: REVISED TO STREAM BINARY DATA DIRECTLY ---
+        res.setHeader('Content-Type', document.file_type); // Set the actual MIME type
+        res.setHeader('Content-Disposition', `inline; filename="${document.original_name}"`); // 'inline' for browser display, 'attachment' for forced download
+        res.send(document.file_data); // Send the raw Buffer directly
+
+    } catch (error) {
+        console.error('[Documents] Error downloading document:', error);
+        res.status(500).json({ success: false, message: 'Failed to download document' });
     }
-
-    const documents = await executeQuery(query, params);
-
-    if (documents.length === 0) {
-      console.log(`[Documents] Document not found or access denied for ID: ${documentId}`);
-      return res.status(404).json({ success: false, message: 'Document not found or access denied' });
-    }
-
-    const document = documents[0];
-    console.log(`[Documents] Document found: ${document.original_name} (${document.file_type})`);
-
-    // Convert buffer to base64
-    const fileData = document.file_data.toString('base64');
-
-    res.json({
-      success: true,
-      fileData: fileData,
-      fileType: document.file_type,
-      filename: document.original_name
-    });
-  } catch (error) {
-    console.error('[Documents] Error downloading document:', error);
-    res.status(500).json({ success: false, message: 'Failed to download document' });
-  }
 });
 
 export default router;

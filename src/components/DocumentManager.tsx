@@ -1,4 +1,5 @@
 // src/components/DocumentManager.tsx
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,13 +12,16 @@ import { format } from 'date-fns';
 interface DocumentAttachment {
     id: number;
     leave_id: number;
+    filename: string;
     original_name: string;
-    file_name: string;
-    mime_type: string;
+    file_type: string;
+    file_size: number;
     uploaded_at: string;
-    employee_name: string;
-    department_name: string;
-    employee_id: number;
+    leave_title: string;
+    leave_type: string;
+    requester_email: string;
+    requester_name: string;
+    department_name: string; // <--- ADDED: To receive department from backend
 }
 
 interface DocumentManagerProps {
@@ -31,7 +35,6 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
     const fetchDocuments = async () => {
         try {
             setLoading(true);
-            // REVISED: Use the correct endpoint from apiConfig
             const response = await makeApiRequest(apiConfig.endpoints.leaveDocuments, {
                 method: 'GET'
             });
@@ -39,8 +42,8 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
             const data = await response.json();
             console.log('Document fetch response:', data);
 
-            if (Array.isArray(data)) {
-                setDocuments(data);
+            if (data && data.success && Array.isArray(data.documents)) {
+                setDocuments(data.documents);
             } else {
                 toast.error(data?.message ? `Failed to fetch documents: ${data.message}` : 'Failed to fetch documents');
             }
@@ -55,17 +58,18 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
 
     const downloadDocument = async (document: DocumentAttachment) => {
         try {
-            // REVISED: Construct the download URL using the correct endpoint
             const downloadUrl = `${apiConfig.endpoints.leaveDocuments}/${document.id}/download`;
+
             const response = await makeApiRequest(downloadUrl, {
                 method: 'GET',
-                responseType: 'blob'
+                responseType: 'blob' // IMPORTANT: Request blob response
             });
 
             const blob = await response.blob();
             const fileURL = window.URL.createObjectURL(blob);
 
-            const isDisplayable = document.mime_type.includes('pdf') || document.mime_type.includes('image') || document.mime_type.includes('text');
+            // Use document.file_type for content type check
+            const isDisplayable = document.file_type.includes('pdf') || document.file_type.includes('image') || document.file_type.includes('text');
 
             if (isDisplayable) {
                 window.open(fileURL, '_blank');
@@ -80,7 +84,7 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
                 toast.success('Document downloaded successfully');
             }
 
-            window.URL.revokeObjectURL(fileURL);
+            window.URL.revokeObjectURL(fileURL); // Clean up the object URL
 
         } catch (error: any) {
             console.error('Error downloading document:', error);
@@ -142,8 +146,9 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Leave ID</TableHead>
-                                        <TableHead>Employee</TableHead>
-                                        <TableHead>Department</TableHead>
+                                        <TableHead>Requester</TableHead>
+                                        <TableHead>Department</TableHead> {/* Display department */}
+                                        <TableHead>Leave Type</TableHead>
                                         <TableHead>File Name</TableHead>
                                         <TableHead>Upload Date</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
@@ -155,8 +160,12 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
                                             <TableCell className="font-medium">
                                                 #{doc.leave_id}
                                             </TableCell>
-                                            <TableCell>{doc.employee_name}</TableCell>
-                                            <TableCell>{doc.department_name}</TableCell>
+                                            <TableCell>
+                                                <div className="font-medium">{doc.requester_name}</div>
+                                                <div className="text-sm text-muted-foreground">{doc.requester_email}</div>
+                                            </TableCell>
+                                            <TableCell>{doc.department_name}</TableCell> {/* Display department */}
+                                            <TableCell>{doc.leave_type}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <FileText className="h-4 w-4" />
