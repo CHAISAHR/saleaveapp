@@ -2,9 +2,11 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Download } from "lucide-react";
 import { apiConfig, makeApiRequest } from "@/config/apiConfig";
+import * as XLSX from 'xlsx';
 
 export const CurrentlyOnLeaveTable = () => {
   const [currentlyOnLeave, setCurrentlyOnLeave] = useState([]);
@@ -105,6 +107,24 @@ export const CurrentlyOnLeaveTable = () => {
     fetchCurrentlyOnLeave();
   }, []);
 
+  const downloadToExcel = () => {
+    const exportData = currentlyOnLeave.map(staff => ({
+      'Employee Name': staff.employeeName,
+      'Email': staff.employeeEmail,
+      'Leave Type': staff.leaveType,
+      'Start Date': new Date(staff.startDate).toLocaleDateString(),
+      'End Date': new Date(staff.endDate).toLocaleDateString(),
+      'Days Remaining': staff.daysRemaining
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Currently On Leave');
+    
+    const today = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(workbook, `currently-on-leave-${today}.xlsx`);
+  };
+
   if (loading) {
     return (
       <Card className="lg:col-span-2">
@@ -128,11 +148,26 @@ export const CurrentlyOnLeaveTable = () => {
   return (
     <Card className="lg:col-span-2">
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <CalendarIcon className="h-5 w-5" />
-          <span>Staff Currently on Leave</span>
-        </CardTitle>
-        <CardDescription>Employees currently on approved leave today ({currentlyOnLeave.length})</CardDescription>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="flex items-center space-x-2">
+              <CalendarIcon className="h-5 w-5" />
+              <span>Staff Currently on Leave</span>
+            </CardTitle>
+            <CardDescription>Employees currently on approved leave today ({currentlyOnLeave.length})</CardDescription>
+          </div>
+          {currentlyOnLeave.length > 0 && (
+            <Button
+              onClick={downloadToExcel}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export to Excel
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {currentlyOnLeave.length === 0 ? (

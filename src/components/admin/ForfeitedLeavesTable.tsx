@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { apiConfig, makeApiRequest } from "@/config/apiConfig";
-import { Loader2 } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
+import * as XLSX from 'xlsx';
 
 interface ForfeitedLeave {
   EmployeeName: string;
@@ -66,6 +68,23 @@ export const ForfeitedLeavesTable = () => {
     fetchForfeitedLeaves();
   }, []);
 
+  const downloadToExcel = () => {
+    const exportData = forfeitedLeaves.map(employee => ({
+      'Employee Name': employee.EmployeeName,
+      'Email': employee.EmployeeEmail,
+      'Department': employee.Department,
+      'Brought Forward': employee.Broughtforward,
+      'Forfeited Leave': employee.Forfeited
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Forfeited Leaves');
+    
+    const today = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(workbook, `forfeited-leaves-${today}.xlsx`);
+  };
+
   if (loading) {
     return (
       <Card>
@@ -85,10 +104,25 @@ export const ForfeitedLeavesTable = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Forfeited Leaves</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Employees who have forfeited annual leave
-        </p>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle>Forfeited Leaves</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Employees who have forfeited annual leave
+            </p>
+          </div>
+          {forfeitedLeaves.length > 0 && (
+            <Button
+              onClick={downloadToExcel}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export to Excel
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {forfeitedLeaves.length === 0 ? (
