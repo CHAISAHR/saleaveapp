@@ -74,9 +74,10 @@ export const CurrentlyOnLeaveTable = () => {
       // Calculate days remaining for each
       const leaveWithDaysRemaining = activeLeave.map(leave => {
         const endDate = new Date(leave.EndDate || leave.endDate);
-        const todayTime = today.getTime();
-        const endTime = endDate.getTime();
-        const daysRemaining = Math.ceil((endTime - todayTime) / (1000 * 60 * 60 * 24));
+        // Set both dates to start of day for accurate comparison
+        const todayStartOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const endDateStartOfDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+        const daysRemaining = Math.ceil((endDateStartOfDay.getTime() - todayStartOfDay.getTime()) / (1000 * 60 * 60 * 24)) + 1;
         const requesterEmail = leave.Requester || leave.requester;
         
         return {
