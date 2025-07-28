@@ -30,10 +30,13 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
       });
 
       const data = await response.json();
+      console.log('Document fetch response:', data); // <-- Add this line for debugging
+
       if (data && data.success) {
         setDocuments(data.documents || []);
       } else {
-        toast.error('Failed to fetch documents');
+        // Show backend error message if available
+        toast.error(data?.message ? `Failed to fetch documents: ${data.message}` : 'Failed to fetch documents');
       }
     } catch (error) {
       console.error('Error fetching documents:', error);
