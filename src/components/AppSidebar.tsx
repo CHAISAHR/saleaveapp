@@ -40,7 +40,7 @@ export const AppSidebar = ({
       {
         value: "dashboard",
         icon: Calendar,
-        label: userRole === 'employee' ? 'My Requests' : userRole === 'manager' ? 'Team Requests' : 'Dashboard'
+        label: userRole === 'employee' ? 'Leave Requests' : userRole === 'manager' ? 'Leave Requests' : 'Dashboard'
       },
       {
         value: "holidays",
@@ -59,7 +59,7 @@ export const AppSidebar = ({
       baseItems.splice(1, 0, {
         value: "balance",
         icon: Calendar,
-        label: userRole === 'employee' ? 'Balance' : 'Team Balances'
+        label: userRole === 'employee' ? 'Leave Balances' : 'Leave Balances'
       });
     }
 
