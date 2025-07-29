@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle, XCircle, AlertCircle, Clock, Users, Calendar, Mail, Ban, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { LeaveDetailsDialog } from "@/components/LeaveDetailsDialog";
 import { apiConfig, makeApiRequest } from "@/config/apiConfig";
 import { balanceService } from "@/services/balanceService";
 import { usePagination } from "@/hooks/usePagination";
@@ -27,6 +28,8 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
   const [pendingRequests, setPendingRequests] = useState([]);
   const [historicRequests, setHistoricRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const getAuthHeaders = () => {
     const authToken = localStorage.getItem('auth_token');
@@ -227,6 +230,44 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
         return <Badge variant="outline">Cancelled</Badge>;
       default:
         return <Badge variant="secondary">Unknown</Badge>;
+    }
+  };
+
+  const handleRowClick = (request: any, event: React.MouseEvent) => {
+    // Prevent row click when clicking on action buttons
+    if ((event.target as HTMLElement).closest('button')) {
+      return;
+    }
+    setSelectedRequest(request);
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setSelectedRequest(null);
+  };
+
+  const handleDialogApprove = async (requestId: number) => {
+    const request = [...pendingRequests, ...historicRequests].find(r => r.LeaveID === requestId);
+    if (request) {
+      await handleApprove(requestId, request.Requester, request.Requester);
+      await fetchTeamData(); // Refresh data
+    }
+  };
+
+  const handleDialogReject = async (requestId: number) => {
+    const request = [...pendingRequests, ...historicRequests].find(r => r.LeaveID === requestId);
+    if (request) {
+      await handleReject(requestId, request.Requester, request.Requester);
+      await fetchTeamData(); // Refresh data
+    }
+  };
+
+  const handleDialogCancel = async (requestId: number) => {
+    const request = [...pendingRequests, ...historicRequests].find(r => r.LeaveID === requestId);
+    if (request) {
+      await handleCancelApprovedLeave(requestId, request.Requester, request.Requester);
+      await fetchTeamData(); // Refresh data
     }
   };
 
@@ -438,7 +479,11 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
                     </TableHeader>
                     <TableBody>
                       {pendingRequests.map((request) => (
-                        <TableRow key={request.LeaveID}>
+                        <TableRow 
+                          key={request.LeaveID}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={(e) => handleRowClick(request, e)}
+                        >
                           <TableCell>
                             <div className="flex items-center space-x-3">
                               <Avatar className="h-8 w-8">
@@ -508,13 +553,25 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
         requests={historicRequests}
         onCancelApprovedLeave={handleCancelApprovedLeave}
         getStatusBadge={getStatusBadge}
+        onRowClick={handleRowClick}
+      />
+      
+      <LeaveDetailsDialog
+        request={selectedRequest}
+        isOpen={isDialogOpen}
+        onClose={handleCloseDialog}
+        userRole="manager"
+        onApprove={handleDialogApprove}
+        onReject={handleDialogReject}
+        onCancel={handleDialogCancel}
+        canEditStatus={true}
       />
     </div>
   );
 };
 
 // Team Requests Table Component with Pagination and Sorting
-const TeamRequestsTable = ({ requests, onCancelApprovedLeave, getStatusBadge }) => {
+const TeamRequestsTable = ({ requests, onCancelApprovedLeave, getStatusBadge, onRowClick }) => {
   const { sortedData, sortConfig, handleSort } = useSorting(requests, 'Created', 'desc');
   const {
     paginatedData,
@@ -616,7 +673,11 @@ const TeamRequestsTable = ({ requests, onCancelApprovedLeave, getStatusBadge }) 
                 </TableHeader>
                 <TableBody>
                   {paginatedData.map((request) => (
-                    <TableRow key={request.LeaveID}>
+                    <TableRow 
+                      key={request.LeaveID}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={(e) => onRowClick(request, e)}
+                    >
                       <TableCell className="font-medium">{request.Title}</TableCell>
                       <TableCell>
                         <div className="max-w-[200px] truncate" title={request.Detail}>

@@ -1,7 +1,9 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, AlertCircle, Clock } from "lucide-react";
+import { LeaveDetailsDialog } from "@/components/LeaveDetailsDialog";
 
 interface LeaveRequest {
   id: number;
@@ -54,6 +56,19 @@ const getStatusBadge = (status: string) => {
 };
 
 export const LeaveRequestsList = ({ leaveRequests }: LeaveRequestsListProps) => {
+  const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleRowClick = (request: LeaveRequest) => {
+    setSelectedRequest(request);
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setSelectedRequest(null);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -63,7 +78,11 @@ export const LeaveRequestsList = ({ leaveRequests }: LeaveRequestsListProps) => 
       <CardContent>
         <div className="space-y-4">
           {leaveRequests.map(request => (
-            <div key={request.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <div 
+              key={request.id} 
+              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer" 
+              onClick={() => handleRowClick(request)}
+            >
               <div className="flex items-center space-x-4">
                 {getStatusIcon(request.status)}
                 <div>
@@ -87,6 +106,14 @@ export const LeaveRequestsList = ({ leaveRequests }: LeaveRequestsListProps) => 
           ))}
         </div>
       </CardContent>
+      
+      <LeaveDetailsDialog
+        request={selectedRequest}
+        isOpen={isDialogOpen}
+        onClose={handleCloseDialog}
+        userRole="employee"
+        canEditStatus={false}
+      />
     </Card>
   );
 };

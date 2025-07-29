@@ -75,12 +75,12 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
                 window.open(fileURL, '_blank');
                 toast.success(`Opening "${document.original_name}" in new tab.`);
             } else {
-                const link = document.createElement('a');
+                const link = window.document.createElement('a');
                 link.href = fileURL;
                 link.download = document.original_name;
-                document.body.appendChild(link);
+                window.document.body.appendChild(link);
                 link.click();
-                document.body.removeChild(link);
+                window.document.body.removeChild(link);
                 toast.success('Document downloaded successfully');
             }
 

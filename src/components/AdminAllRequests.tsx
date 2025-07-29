@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, XCircle, AlertCircle, Edit, Save, X, Download, Ban, Filter, FilterX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { LeaveDetailsDialog } from "@/components/LeaveDetailsDialog";
 import { balanceService } from "@/services/balanceService";
 import { apiConfig, makeApiRequest } from "@/config/apiConfig";
 import { usePagination } from "@/hooks/usePagination";
@@ -37,6 +38,8 @@ export const AdminAllRequests = () => {
   const [editingRequest, setEditingRequest] = useState<LeaveRequest | null>(null);
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Filter states
   const [filters, setFilters] = useState({
@@ -212,6 +215,35 @@ export const AdminAllRequests = () => {
   const handleCancel = () => {
     setEditingId(null);
     setEditingRequest(null);
+  };
+
+  const handleRowClick = (request: LeaveRequest, event: React.MouseEvent) => {
+    // Prevent row click when clicking on action buttons
+    if ((event.target as HTMLElement).closest('button')) {
+      return;
+    }
+    setSelectedRequest(request);
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setSelectedRequest(null);
+  };
+
+  const handleDialogApprove = async (requestId: number, reason?: string) => {
+    await handleStatusUpdate(requestId, 'approved', reason);
+    await fetchRequests(); // Refresh data
+  };
+
+  const handleDialogReject = async (requestId: number, reason?: string) => {
+    await handleStatusUpdate(requestId, 'rejected', reason);
+    await fetchRequests(); // Refresh data
+  };
+
+  const handleDialogCancel = async (requestId: number, reason?: string) => {
+    await handleStatusUpdate(requestId, 'cancelled', reason);
+    await fetchRequests(); // Refresh data
   };
 
   // Filtered requests
@@ -524,7 +556,11 @@ export const AdminAllRequests = () => {
                 </TableHeader>
                 <TableBody>
                   {displayRequests.map((request) => (
-                    <TableRow key={request.LeaveID}>
+                    <TableRow 
+                      key={request.LeaveID} 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={(e) => handleRowClick(request, e)}
+                    >
                       <TableCell className="font-medium">{request.LeaveID}</TableCell>
                       <TableCell>
                         {editingId === request.LeaveID ? (
@@ -685,6 +721,17 @@ export const AdminAllRequests = () => {
           )}
         </CardContent>
       </Card>
+      
+      <LeaveDetailsDialog
+        request={selectedRequest}
+        isOpen={isDialogOpen}
+        onClose={handleCloseDialog}
+        userRole="admin"
+        onApprove={handleDialogApprove}
+        onReject={handleDialogReject}
+        onCancel={handleDialogCancel}
+        canEditStatus={true}
+      />
     </div>
   );
 };
