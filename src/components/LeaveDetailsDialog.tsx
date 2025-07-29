@@ -166,7 +166,7 @@ export const LeaveDetailsDialog = ({
             Leave Request Details
           </DialogTitle>
           <DialogDescription>
-            Request ID: #{leaveId}
+            {leaveType}
           </DialogDescription>
         </DialogHeader>
 
@@ -181,8 +181,6 @@ export const LeaveDetailsDialog = ({
               </div>
             </div>
             <div className="text-right">
-              <div className="text-sm text-muted-foreground">Leave Type</div>
-              <div className="font-medium">{leaveType}</div>
             </div>
           </div>
 
