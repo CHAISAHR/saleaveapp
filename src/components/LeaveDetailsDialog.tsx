@@ -57,7 +57,7 @@ export const LeaveDetailsDialog = ({
   canEditStatus = true
 }: LeaveDetailsDialogProps) => {
   const { toast } = useToast();
-  const [actionReason, setActionReason] = useState("");
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!request) return null;
@@ -130,16 +130,16 @@ export const LeaveDetailsDialog = ({
     try {
       switch (action) {
         case 'approve':
-          if (onApprove) await onApprove(leaveId, actionReason);
+          if (onApprove) await onApprove(leaveId);
           break;
         case 'reject':
-          if (onReject) await onReject(leaveId, actionReason);
+          if (onReject) await onReject(leaveId);
           break;
         case 'cancel':
-          if (onCancel) await onCancel(leaveId, actionReason);
+          if (onCancel) await onCancel(leaveId);
           break;
       }
-      setActionReason("");
+      
       onClose();
     } catch (error) {
       console.error(`Error ${action}ing leave:`, error);
@@ -246,24 +246,6 @@ export const LeaveDetailsDialog = ({
             </div>
           )}
 
-          {/* Action Section for Managers/Admins */}
-          {(canApprove || canReject || canCancelApproved) && (
-            <div className="border-t pt-4">
-              <h4 className="font-medium mb-3">Manager Actions</h4>
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="actionReason">Reason (optional)</Label>
-                  <Textarea
-                    id="actionReason"
-                    placeholder="Add a note about your decision..."
-                    value={actionReason}
-                    onChange={(e) => setActionReason(e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
