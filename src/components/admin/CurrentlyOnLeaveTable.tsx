@@ -66,9 +66,15 @@ export const CurrentlyOnLeaveTable = () => {
         const startDate = new Date(request.StartDate || request.startDate);
         const endDate = new Date(request.EndDate || request.endDate);
         const status = request.Status || request.status;
+        
+        // Normalize dates to compare only date parts (ignore time)
+        const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+        const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+        
         return status === 'approved' && 
-               startDate <= today && 
-               endDate >= today;
+               startDateOnly <= todayDate && 
+               endDateOnly >= todayDate;
       });
 
       console.log('CurrentlyOnLeave - Active leave:', activeLeave);
