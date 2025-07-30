@@ -142,8 +142,8 @@ export const AdminAllBalances = () => {
     setShowForfeitWarning(false);
     
     try {
-      // Call the backend API to forfeit leave
-      const response = await fetch(`${apiConfig.endpoints.leave}/auto-forfeit`, {
+      // Call the new manual forfeit API endpoint
+      const response = await fetch(`${apiConfig.endpoints.leave}/manual-forfeit`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -159,7 +159,7 @@ export const AdminAllBalances = () => {
         
         toast({
           title: "Leave Forfeited",
-          description: `Successfully forfeited brought forward leave for ${result.employeesAffected} employees.`,
+          description: `${result.message}`,
         });
       } else {
         throw new Error('Failed to forfeit leave');
@@ -174,39 +174,6 @@ export const AdminAllBalances = () => {
     }
   };
 
-  // Auto-forfeit functionality
-  const checkAndAutoForfeit = () => {
-    if (isAfterJuly31()) {
-      const updatedBalances = balances.map(balance => {
-        const unusedBroughtForward = Math.max(0, balance.Broughtforward - balance.AnnualUsed - balance.Forfeited);
-        if (unusedBroughtForward > 0) {
-          return {
-            ...balance,
-            Forfeited: balance.Forfeited + unusedBroughtForward,
-            Modified: new Date().toISOString()
-          };
-        }
-        return balance;
-      });
-
-      const employeesAffected = updatedBalances.filter((balance, index) => 
-        balance.Forfeited !== balances[index].Forfeited
-      ).length;
-
-      if (employeesAffected > 0) {
-        setBalances(updatedBalances);
-        toast({
-          title: "Automatic Leave Forfeit",
-          description: `Automatically forfeited unused brought forward leave for ${employeesAffected} employees after July 31st.`,
-        });
-      }
-    }
-  };
-
-  // Run auto-forfeit check on component mount and whenever balances change
-  useEffect(() => {
-    checkAndAutoForfeit();
-  }, []);
 
   const handleForfeitedChange = async (balanceId: number, value: string) => {
     const numericValue = parseFloat(value) || 0;

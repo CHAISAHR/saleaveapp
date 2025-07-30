@@ -274,37 +274,46 @@ router.put('/requests/:id/status', authenticateToken, requireRole(['manager', 'a
   }
 });
 
-// Automatic forfeit leave endpoint (to be called by cron job or scheduled task)
-router.post('/auto-forfeit', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+// Manual forfeit leave endpoint - calculates forfeit based on annual leave taken before July 31st
+router.post('/manual-forfeit', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
   try {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
-    const isAfterJuly31 = currentDate > new Date(currentYear, 6, 31); // July is month 6 (0-indexed)
+    const july31 = new Date(currentYear, 6, 31); // July is month 6 (0-indexed)
 
-    if (!isAfterJuly31) {
-      return res.json({
-        success: false,
-        message: 'Automatic forfeit only runs after July 31st'
-      });
-    }
-
-    // Get all balances where brought forward leave should be forfeited
-    const balancesToUpdate = await executeQuery(
+    // Get all balances for current year
+    const allBalances = await executeQuery(
       `SELECT BalanceID, EmployeeName, EmployeeEmail, Broughtforward, AnnualUsed, Forfeited, Annual_leave_adjustments
        FROM leave_balances 
-       WHERE Year = ? AND (Broughtforward - Annual_leave_adjustments - AnnualUsed - Forfeited) > 0`,
+       WHERE Year = ?`,
       [currentYear]
     );
 
     let totalForfeited = 0;
     const updatedEmployees = [];
 
-    for (const balance of balancesToUpdate) {
-      const forfeitAmount = Math.max(0, balance.Broughtforward - balance.Annual_leave_adjustments - balance.AnnualUsed - balance.Forfeited);
+    for (const balance of allBalances) {
+      // Calculate annual leave taken before July 31st for this employee
+      const leaveBeforeJuly31Query = await executeQuery(
+        `SELECT COALESCE(SUM(workingDays), 0) as leaveTakenBeforeJuly31
+         FROM leave_taken 
+         WHERE Requester = ? 
+         AND YEAR(StartDate) = ? 
+         AND LeaveType = 'annual' 
+         AND Status = 'approved'
+         AND StartDate <= ?`,
+        [balance.EmployeeEmail, currentYear, july31.toISOString().split('T')[0]]
+      );
+
+      const leaveTakenBeforeJuly31 = leaveBeforeJuly31Query[0]?.leaveTakenBeforeJuly31 || 0;
+      
+      // Calculate forfeit amount: broughtforward - (leave taken before July 31st) - (annual leave adjustments)
+      const forfeitAmount = Math.max(0, balance.Broughtforward - leaveTakenBeforeJuly31 - balance.Annual_leave_adjustments);
       
       if (forfeitAmount > 0) {
+        // Update the forfeit amount in the database
         await executeQuery(
-          'UPDATE leave_balances SET Forfeited = Forfeited + ?, Modified = NOW() WHERE BalanceID = ?',
+          'UPDATE leave_balances SET Forfeited = ?, Modified = NOW() WHERE BalanceID = ?',
           [forfeitAmount, balance.BalanceID]
         );
         
@@ -312,20 +321,24 @@ router.post('/auto-forfeit', authenticateToken, requireRole(['admin']), async (r
         updatedEmployees.push({
           name: balance.EmployeeName,
           email: balance.EmployeeEmail,
-          forfeited: forfeitAmount
+          forfeited: forfeitAmount,
+          broughtforward: balance.Broughtforward,
+          leaveTakenBeforeJuly31,
+          adjustments: balance.Annual_leave_adjustments
         });
       }
     }
 
     res.json({
       success: true,
-      message: `Automatically forfeited ${totalForfeited} days of brought forward leave for ${updatedEmployees.length} employees`,
+      message: `Manually forfeited ${totalForfeited.toFixed(1)} days of brought forward leave for ${updatedEmployees.length} employees`,
       totalForfeited,
-      updatedEmployees
+      updatedEmployees,
+      employeesAffected: updatedEmployees.length
     });
   } catch (error) {
-    console.error('Auto forfeit error:', error);
-    res.status(500).json({ success: false, message: 'Failed to auto-forfeit leave' });
+    console.error('Manual forfeit error:', error);
+    res.status(500).json({ success: false, message: 'Failed to forfeit leave' });
   }
 });
 
