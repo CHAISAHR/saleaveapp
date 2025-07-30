@@ -170,14 +170,18 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
                LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
                GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
     } else if (req.user!.role === 'manager') {
-      // Manager can see requests where they are the approver, alternative approver, OR their own requests
-      // But exclude cases where they are both requester and approver (can't approve own leave)
+      // Manager can see:
+      // 1. Requests where they are the approver (but not their own requests)
+      // 2. Requests where they are the alternative approver (but not their own requests)  
+      // 3. Their own requests (for viewing only, not for approval)
       query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
                lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, lt.Modified_By,
                lt.workingDays, COUNT(la.id) as attachment_count
                FROM leave_taken lt 
                LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
-               WHERE (lt.Approver = ? AND lt.Requester != ?) OR lt.AlternativeApprover = ? OR (lt.Requester = ? AND lt.Approver != ?)
+               WHERE (lt.Approver = ? AND lt.Requester != ?) OR 
+                     (lt.AlternativeApprover = ? AND lt.Requester != ?) OR 
+                     lt.Requester = ?
                GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
       params = [req.user!.email, req.user!.email, req.user!.email, req.user!.email, req.user!.email];
     } else {
@@ -206,11 +210,23 @@ router.put('/requests/:id/status', authenticateToken, requireRole(['manager', 'a
     const { id } = req.params;
     const { status, approver, reason } = req.body;
 
-    // Get current leave request for audit
+    // Get current leave request for validation and audit
     const currentLeave = await executeQuery(
       'SELECT * FROM leave_taken WHERE LeaveID = ?',
       [id]
     );
+
+    if (currentLeave.length === 0) {
+      return res.status(404).json({ success: false, message: 'Leave request not found' });
+    }
+
+    // Prevent self-approval: managers cannot approve their own leave requests
+    if (req.user!.role === 'manager' && currentLeave[0].Requester === req.user!.email) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'You cannot approve your own leave request' 
+      });
+    }
 
     await executeQuery(
       'UPDATE leave_taken SET Status = ?, Modified = NOW(), Modified_By = ? WHERE LeaveID = ?',
