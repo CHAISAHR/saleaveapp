@@ -75,8 +75,8 @@ export const makeApiRequest = async (url: string, options: ApiRequestOptions = {
             ...options.headers,
         };
 
-        const token = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!).token : null;
-        if (token) {
+        const token = localStorage.getItem('auth_token');
+        if (token && token !== 'mock-admin-token') {
              headers['Authorization'] = `Bearer ${token}`;
         }
 
