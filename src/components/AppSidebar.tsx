@@ -40,7 +40,7 @@ export const AppSidebar = ({
       {
         value: "dashboard",
         icon: Calendar,
-        label: userRole === 'employee' ? 'Leave Requests' : userRole === 'manager' ? 'Leave Requests' : userRole === 'country_director' ? 'Dashboard' : 'Dashboard'
+        label: userRole === 'employee' ? 'Leave Requests' : userRole === 'manager' ? 'Leave Requests' : userRole === 'country_director' ? 'Leave Requests' : 'Dashboard'
       },
       {
         value: "holidays",
