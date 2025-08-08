@@ -114,6 +114,46 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
       }
     }
 
+    // Check if leave request exceeds available balance
+    let availableBalance = 0;
+    let employeeName = '';
+    
+    try {
+      // Get employee's current balance and name
+      const balanceQuery = await executeQuery(
+        'SELECT annual_leave, name FROM leave_balances lb JOIN users u ON lb.email = u.email WHERE lb.email = ?',
+        [requester]
+      );
+      
+      if (balanceQuery.length > 0) {
+        availableBalance = balanceQuery[0].annual_leave || 0;
+        employeeName = balanceQuery[0].name || requester;
+        
+        // Check if requested days exceed available balance
+        if (workingDays > availableBalance) {
+          console.log(`Balance exceeded: Requested ${workingDays} days, available ${availableBalance} days`);
+          
+          // Send urgent notification to HR & Ops manager
+          await emailService.notifyHROfBalanceExceeded(
+            {
+              Requester: requester,
+              LeaveType: leaveType,
+              StartDate: formattedStartDate,
+              EndDate: formattedEndDate,
+              Detail: detail,
+              LeaveID: leaveId
+            },
+            employeeName,
+            availableBalance,
+            workingDays
+          );
+        }
+      }
+    } catch (balanceError) {
+      console.error('Error checking balance:', balanceError);
+      // Continue with normal flow even if balance check fails
+    }
+
     // Use the approver email for notifications (already determined above)
     const managerEmail = approverEmail;
     console.log('Sending notification to approver:', managerEmail);

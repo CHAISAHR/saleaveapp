@@ -5,7 +5,7 @@ export interface EmailNotification {
   sender_email: string;
   subject: string;
   message: string;
-  notification_type: 'leave_request' | 'leave_approved' | 'leave_rejected' | 'user_registration';
+  notification_type: 'leave_request' | 'leave_approved' | 'leave_rejected' | 'user_registration' | 'balance_exceeded';
   leave_id?: number;
   cc_email?: string;
 }

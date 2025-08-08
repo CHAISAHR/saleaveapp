@@ -7,7 +7,7 @@ export interface EmailNotification {
   sender_email: string;
   subject: string;
   message: string;
-  notification_type: 'leave_request' | 'leave_approved' | 'leave_rejected' | 'user_registration';
+  notification_type: 'leave_request' | 'leave_approved' | 'leave_rejected' | 'user_registration' | 'balance_exceeded';
   leave_id?: number;
   cc_email?: string;
 }
@@ -181,6 +181,46 @@ class EmailService {
         HR
       `,
       notification_type: 'leave_rejected',
+      leave_id: leaveRequest.LeaveID || leaveRequest.id
+    };
+
+    await this.sendEmail(notification);
+  }
+
+  // Send email notification to HR & Ops manager when leave exceeds balance
+  async notifyHROfBalanceExceeded(leaveRequest: any, employeeName: string, availableBalance: number, requestedDays: number): Promise<void> {
+    const balanceDeficit = requestedDays - availableBalance;
+    
+    const notification: EmailNotification = {
+      recipient_email: this.ADMIN_EMAIL, // HR & Ops manager
+      sender_email: this.FROM_EMAIL,
+      subject: `URGENT: Leave Request Exceeds Balance - ${employeeName}`,
+      message: `
+        URGENT ATTENTION REQUIRED
+
+        An employee has submitted a leave request that exceeds their available balance:
+
+        Employee: ${employeeName}
+        Email: ${leaveRequest.Requester || leaveRequest.employeeEmail}
+        Leave Type: ${leaveRequest.LeaveType || leaveRequest.leaveType}
+        Start Date: ${this.formatDateForDisplay(leaveRequest.StartDate || leaveRequest.startDate)}
+        End Date: ${this.formatDateForDisplay(leaveRequest.EndDate || leaveRequest.endDate)}
+        
+        BALANCE ANALYSIS:
+        - Available Balance: ${availableBalance} days
+        - Requested Days: ${requestedDays} days
+        - Balance Deficit: ${balanceDeficit} days
+
+        Description: ${leaveRequest.Detail || leaveRequest.description || 'No description provided'}
+
+        This request requires immediate HR review and approval as it exceeds the employee's current balance.
+
+        Please log into the system to review this request: ${process.env.FRONTEND_URL}
+
+        Best regards,
+        Leave Management System
+      `,
+      notification_type: 'balance_exceeded',
       leave_id: leaveRequest.LeaveID || leaveRequest.id
     };
 
