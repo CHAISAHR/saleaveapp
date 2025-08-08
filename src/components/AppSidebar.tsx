@@ -54,9 +54,18 @@ export const AppSidebar = ({
       }
     ];
 
+    // Add Dashboard tab for country director (first position)
+    if (userRole === 'country_director') {
+      baseItems.unshift({
+        value: "admin-dashboard",
+        icon: Database,
+        label: "Dashboard"
+      });
+    }
+
     // Add balance tab only for employees, managers, and country directors (not admin)
     if (userRole !== 'admin') {
-      baseItems.splice(1, 0, {
+      baseItems.splice(-2, 0, {
         value: "balance",
         icon: Calendar,
         label: userRole === 'employee' ? 'Leave Balances' : 'Leave Balances'
@@ -94,7 +103,7 @@ export const AppSidebar = ({
 
     // Add documents tab for managers and country directors (not employees or admin)
     if (userRole === 'manager' || userRole === 'country_director') {
-      baseItems.splice(2, 0, {
+      baseItems.splice(-2, 0, {
         value: "documents",
         icon: FileText,
         label: "Documents"

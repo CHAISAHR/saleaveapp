@@ -25,10 +25,15 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
         ) : userRole === 'manager' ? (
           <ManagerDashboard currentUser={currentUser} />
         ) : userRole === 'country_director' ? (
-          <AdminDashboard currentUser={currentUser} />
+          <ManagerDashboard currentUser={currentUser} />
         ) : (
           <AdminDashboard currentUser={currentUser} />
         );
+
+      case 'admin-dashboard':
+        return userRole === 'country_director' ? (
+          <AdminDashboard currentUser={currentUser} />
+        ) : null;
 
       case 'balance':
         return userRole === 'employee' ? (
