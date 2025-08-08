@@ -42,10 +42,10 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
         );
 
       case 'all-requests':
-        return (userRole === 'admin' || userRole === 'country_director') ? <AdminAllRequests /> : null;
+        return userRole === 'admin' ? <AdminAllRequests /> : null;
 
       case 'all-balances':
-        return (userRole === 'admin' || userRole === 'country_director') ? <AdminAllBalances /> : null;
+        return userRole === 'admin' ? <AdminAllBalances /> : null;
 
       case 'user-management':
         return userRole === 'admin' ? <AdminPanel currentUser={currentUser} /> : null;
@@ -60,7 +60,7 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
         return <PolicyGuide />;
 
       case 'audit':
-        return (userRole === 'admin' || userRole === 'country_director') ? <AuditLog /> : null;
+        return userRole === 'admin' ? <AuditLog /> : null;
 
       default:
         return <div>Page not found</div>;

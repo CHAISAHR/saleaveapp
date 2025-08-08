@@ -40,7 +40,7 @@ export const AppSidebar = ({
       {
         value: "dashboard",
         icon: Calendar,
-        label: userRole === 'employee' ? 'Leave Requests' : userRole === 'manager' ? 'Leave Requests' : 'Dashboard'
+        label: userRole === 'employee' ? 'Leave Requests' : userRole === 'manager' ? 'Leave Requests' : userRole === 'country_director' ? 'Dashboard' : 'Dashboard'
       },
       {
         value: "holidays",
@@ -54,7 +54,7 @@ export const AppSidebar = ({
       }
     ];
 
-    // Add balance tab only for employees and managers
+    // Add balance tab only for employees, managers, and country directors (not admin)
     if (userRole !== 'admin') {
       baseItems.splice(1, 0, {
         value: "balance",
@@ -63,8 +63,8 @@ export const AppSidebar = ({
       });
     }
 
-    // Add Admin Dashboard for both admin and country_director
-    if (userRole === 'admin' || userRole === 'country_director') {
+    // Admin-only features
+    if (userRole === 'admin') {
       baseItems.splice(1, 0, {
         value: "all-requests",
         icon: Database,
@@ -92,7 +92,7 @@ export const AppSidebar = ({
       });
     }
 
-    // Add documents tab for managers and country directors
+    // Add documents tab for managers and country directors (not employees or admin)
     if (userRole === 'manager' || userRole === 'country_director') {
       baseItems.splice(2, 0, {
         value: "documents",

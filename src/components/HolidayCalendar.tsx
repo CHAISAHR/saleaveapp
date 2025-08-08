@@ -390,7 +390,7 @@ export const HolidayCalendar = ({
           <p className="text-gray-600">Public holidays and office closure dates</p>
         </div>
         <div className="flex space-x-2">
-          {(userRole === 'admin' || userRole === 'country_director') && (
+          {userRole === 'admin' && (
             <Dialog open={showHolidayForm} onOpenChange={(open) => {
               if (!open) resetForm();
               setShowHolidayForm(open);
@@ -513,10 +513,10 @@ export const HolidayCalendar = ({
                   </CardTitle>
                   <CardDescription>Public holidays that exclude leave calculations</CardDescription>
                 </div>
-                {(userRole === 'admin' || userRole === 'country_director') && (
+                {userRole === 'admin' && (
                   <Badge variant="outline" className="text-xs">
                     <Settings className="h-3 w-3 mr-1" />
-                    {userRole === 'admin' ? 'Admin View' : 'Country Director View'}
+                    Admin View
                   </Badge>
                 )}
               </div>
@@ -532,7 +532,7 @@ export const HolidayCalendar = ({
                       <TableHead>Date</TableHead>
                       <TableHead>Day</TableHead>
                       <TableHead>Status</TableHead>
-                      {(userRole === 'admin' || userRole === 'country_director') && <TableHead>Actions</TableHead>}
+                      {userRole === 'admin' && <TableHead>Actions</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -559,7 +559,7 @@ export const HolidayCalendar = ({
                               {statusInfo.label}
                             </span>
                           </TableCell>
-                          {(userRole === 'admin' || userRole === 'country_director') && (
+                          {userRole === 'admin' && (
                             <TableCell>
                               <div className="flex items-center space-x-1">
                                 <Button
