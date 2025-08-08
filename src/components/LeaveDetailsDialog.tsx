@@ -39,7 +39,7 @@ interface LeaveDetailsDialogProps {
   request: LeaveRequest | null;
   isOpen: boolean;
   onClose: () => void;
-  userRole: 'employee' | 'manager' | 'admin';
+  userRole: 'employee' | 'manager' | 'admin' | 'country_director';
   onApprove?: (requestId: number, reason?: string) => Promise<void>;
   onReject?: (requestId: number, reason?: string) => Promise<void>;
   onCancel?: (requestId: number, reason?: string) => Promise<void>;

@@ -11,7 +11,7 @@ import { AuditLog } from "@/components/admin/AuditLog";
 
 interface MainContentProps {
   activeTab: string;
-  userRole: 'employee' | 'manager' | 'admin';
+  userRole: 'employee' | 'manager' | 'admin' | 'country_director';
   currentUser: any;
   onNewRequest: () => void;
 }
@@ -24,6 +24,8 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
           <EmployeeDashboard onNewRequest={onNewRequest} currentUser={currentUser} />
         ) : userRole === 'manager' ? (
           <ManagerDashboard currentUser={currentUser} />
+        ) : userRole === 'country_director' ? (
+          <AdminDashboard currentUser={currentUser} />
         ) : (
           <AdminDashboard currentUser={currentUser} />
         );
@@ -33,21 +35,23 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
           <EmployeeDashboard onNewRequest={onNewRequest} currentUser={currentUser} activeView="balance" />
         ) : userRole === 'manager' ? (
           <ManagerDashboard currentUser={currentUser} activeView="balance" />
+        ) : userRole === 'country_director' ? (
+          <ManagerDashboard currentUser={currentUser} activeView="balance" />
         ) : (
           <AdminDashboard currentUser={currentUser} activeView="balances" />
         );
 
       case 'all-requests':
-        return userRole === 'admin' ? <AdminAllRequests /> : null;
+        return (userRole === 'admin' || userRole === 'country_director') ? <AdminAllRequests /> : null;
 
       case 'all-balances':
-        return userRole === 'admin' ? <AdminAllBalances /> : null;
+        return (userRole === 'admin' || userRole === 'country_director') ? <AdminAllBalances /> : null;
 
       case 'user-management':
         return userRole === 'admin' ? <AdminPanel currentUser={currentUser} /> : null;
 
       case 'documents':
-        return (userRole === 'manager' || userRole === 'admin') ? <DocumentManager userRole={userRole} /> : null;
+        return (userRole === 'manager' || userRole === 'admin' || userRole === 'country_director') ? <DocumentManager userRole={userRole} /> : null;
 
       case 'holidays':
         return <HolidayCalendar userRole={userRole} />;
@@ -56,7 +60,7 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
         return <PolicyGuide />;
 
       case 'audit':
-        return userRole === 'admin' ? <AuditLog /> : null;
+        return (userRole === 'admin' || userRole === 'country_director') ? <AuditLog /> : null;
 
       default:
         return <div>Page not found</div>;

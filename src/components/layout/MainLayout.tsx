@@ -9,8 +9,8 @@ import { balanceService, EmployeeBalance } from "@/services/balanceService";
 
 interface MainLayoutProps {
   currentUser: any;
-  userRole: 'employee' | 'manager' | 'admin';
-  setUserRole: (role: 'employee' | 'manager' | 'admin') => void;
+  userRole: 'employee' | 'manager' | 'admin' | 'country_director';
+  setUserRole: (role: 'employee' | 'manager' | 'admin' | 'country_director') => void;
 }
 
 export const MainLayout = ({ currentUser, userRole, setUserRole }: MainLayoutProps) => {
