@@ -204,21 +204,23 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
     if (req.user!.role === 'admin') {
       // Admin can see all requests with attachments and alternative approver info
       query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
-               lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, lt.Modified_By,
-               lt.workingDays, COUNT(la.id) as attachment_count
+               lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, 
+               lt.Modified_By, u.name as ModifiedBy, lt.workingDays, COUNT(la.id) as attachment_count
                FROM leave_taken lt 
                LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
+               LEFT JOIN users u ON lt.Modified_By = u.email
                GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
-    } else if (req.user!.role === 'manager') {
+    } else if (req.user!.role === 'manager' || req.user!.role === 'country_director') {
       // Manager can see:
       // 1. Requests where they are the approver (but not their own requests)
       // 2. Requests where they are the alternative approver (but not their own requests)  
       // 3. Their own requests (for viewing only, not for approval)
       query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
-               lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, lt.Modified_By,
-               lt.workingDays, COUNT(la.id) as attachment_count
+               lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, 
+               lt.Modified_By, u.name as ModifiedBy, lt.workingDays, COUNT(la.id) as attachment_count
                FROM leave_taken lt 
                LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
+               LEFT JOIN users u ON lt.Modified_By = u.email
                WHERE (lt.Approver = ? AND lt.Requester != ?) OR 
                      (lt.AlternativeApprover = ? AND lt.Requester != ?) OR 
                      lt.Requester = ?
@@ -227,10 +229,11 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
     } else {
       // Employee can only see their own requests with attachments and alternative approver info
       query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
-               lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, lt.Modified_By,
-               lt.workingDays, COUNT(la.id) as attachment_count
+               lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, 
+               lt.Modified_By, u.name as ModifiedBy, lt.workingDays, COUNT(la.id) as attachment_count
                FROM leave_taken lt 
                LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
+               LEFT JOIN users u ON lt.Modified_By = u.email
                WHERE lt.Requester = ? 
                GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
       params = [req.user!.email];
@@ -245,7 +248,7 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Update leave request status (manager/admin only)
-router.put('/requests/:id/status', authenticateToken, requireRole(['manager', 'admin']), async (req: AuthRequest, res) => {
+router.put('/requests/:id/status', authenticateToken, requireRole(['manager', 'admin', 'country_director']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const { status, approver, reason } = req.body;
@@ -260,8 +263,8 @@ router.put('/requests/:id/status', authenticateToken, requireRole(['manager', 'a
       return res.status(404).json({ success: false, message: 'Leave request not found' });
     }
 
-    // Prevent self-approval: managers cannot approve their own leave requests
-    if (req.user!.role === 'manager' && currentLeave[0].Requester === req.user!.email) {
+    // Prevent self-approval: managers and country directors cannot approve their own leave requests
+    if ((req.user!.role === 'manager' || req.user!.role === 'country_director') && currentLeave[0].Requester === req.user!.email) {
       return res.status(403).json({ 
         success: false, 
         message: 'You cannot approve your own leave request' 
@@ -425,7 +428,7 @@ router.get('/api/external/requests/:email', async (req, res) => {
 });
 
 // Get documents for managers and admins
-router.get('/documents', authenticateToken, requireRole(['manager', 'admin']), async (req: AuthRequest, res) => {
+router.get('/documents', authenticateToken, requireRole(['manager', 'admin', 'country_director']), async (req: AuthRequest, res) => {
     try {
         console.log(`[Documents] ${req.method} ${req.path} - User: ${req.user!.email} (${req.user!.role})`);
 
@@ -445,7 +448,7 @@ router.get('/documents', authenticateToken, requireRole(['manager', 'admin']), a
                 JOIN users u ON lt.Requester = u.email
                 ORDER BY la.created_at DESC
             `;
-        } else if (req.user!.role === 'manager') {
+        } else if (req.user!.role === 'manager' || req.user!.role === 'country_director') {
             // Manager can see documents from their team and alternative approvals
             query = `
                 SELECT
@@ -481,7 +484,7 @@ router.get('/documents', authenticateToken, requireRole(['manager', 'admin']), a
 });
 
 // Download specific document
-router.get('/documents/:id/download', authenticateToken, requireRole(['manager', 'admin']), async (req: AuthRequest, res) => {
+router.get('/documents/:id/download', authenticateToken, requireRole(['manager', 'admin', 'country_director']), async (req: AuthRequest, res) => {
     try {
         const documentId = req.params.id;
         console.log(`[Documents] Download request for document ID: ${documentId} by user: ${req.user!.email}`);
@@ -503,7 +506,7 @@ router.get('/documents/:id/download', authenticateToken, requireRole(['manager',
                 JOIN leave_taken lt ON la.leave_id = lt.LeaveID
                 WHERE la.id = ?
             `;
-        } else if (req.user!.role === 'manager') {
+        } else if (req.user!.role === 'manager' || req.user!.role === 'country_director') {
             query = `
                 SELECT la.original_name, la.file_type, la.file_data, lt.Requester
                 FROM leave_attachments la
