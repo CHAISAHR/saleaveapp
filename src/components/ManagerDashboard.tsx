@@ -300,6 +300,7 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
                 const annualBalance = calculateLeaveBalance(member, 'annual');
                 const studyBalance = calculateLeaveBalance(member, 'study');
                 const wellnessBalance = calculateLeaveBalance(member, 'wellness');
+                const familyBalance = calculateLeaveBalance(member, 'family');
                 
                 return (
                   <Card key={member.BalanceID} className="hover:shadow-md transition-shadow">
@@ -317,7 +318,7 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
                             <span className="text-sm font-medium text-gray-600">Annual Leave</span>
@@ -363,6 +364,22 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
                           />
                           <div className="text-xs text-gray-400">
                             Used: {member.WellnessUsed}
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-600">Family Leave</span>
+                            <span className="text-sm text-gray-500">
+                              {familyBalance} days
+                            </span>
+                          </div>
+                          <Progress 
+                            value={((3 - familyBalance) / 3) * 100} 
+                            className="h-2"
+                          />
+                          <div className="text-xs text-gray-400">
+                            Used: {member.FamilyUsed}
                           </div>
                         </div>
                       </div>
