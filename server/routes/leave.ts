@@ -14,6 +14,156 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
+// Update leave request (employees can edit pending requests)
+router.put('/:leaveId', authenticateToken, async (req, res) => {
+  try {
+    console.log('=== LEAVE REQUEST UPDATE START ===');
+    console.log('Update request received:', {
+      leaveId: req.params.leaveId,
+      body: req.body,
+      user: (req as AuthRequest).user
+    });
+
+    // Validate user authentication
+    if (!(req as AuthRequest).user) {
+      console.error('No authenticated user found');
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+
+    const { leaveId } = req.params;
+    const { title, detail, startDate, endDate, leaveType, workingDays } = req.body;
+    const requester = (req as AuthRequest).user!.email;
+
+    // Check if the leave request exists and belongs to the user
+    const existingRequest = await executeQuery(
+      'SELECT * FROM leave_taken WHERE LeaveID = ? AND Requester = ?',
+      [leaveId, requester]
+    );
+
+    if (existingRequest.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Leave request not found or access denied' 
+      });
+    }
+
+    const request = existingRequest[0];
+
+    // Check if request is pending
+    if (request.Status !== 'pending') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Can only edit pending leave requests' 
+      });
+    }
+
+    // Check if start date hasn't passed
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const requestStartDate = new Date(request.StartDate);
+    requestStartDate.setHours(0, 0, 0, 0);
+
+    if (requestStartDate < today) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Cannot edit leave requests after the start date has passed' 
+      });
+    }
+
+    // Convert ISO date strings to MySQL DATE format
+    const formatDateForMySQL = (dateString: string) => {
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0];
+    };
+
+    const formattedStartDate = formatDateForMySQL(startDate);
+    const formattedEndDate = formatDateForMySQL(endDate);
+
+    console.log('Date formatting for update:', { 
+      originalStartDate: startDate, 
+      formattedStartDate,
+      originalEndDate: endDate,
+      formattedEndDate 
+    });
+
+    // Update the leave request
+    await executeQuery(
+      `UPDATE leave_taken 
+       SET Title = ?, Detail = ?, StartDate = ?, EndDate = ?, LeaveType = ?, workingDays = ?, 
+           Modified = NOW(), Modified_By = ?, Status = 'pending'
+       WHERE LeaveID = ?`,
+      [title, detail, formattedStartDate, formattedEndDate, leaveType, workingDays, requester, leaveId]
+    );
+
+    console.log('Leave request updated successfully, ID:', leaveId);
+
+    // Log leave request update to audit
+    await AuditService.logUpdate('leave_taken', leaveId, {
+      old_title: request.Title,
+      new_title: title,
+      old_detail: request.Detail,
+      new_detail: detail,
+      old_startDate: request.StartDate,
+      new_startDate: formattedStartDate,
+      old_endDate: request.EndDate,
+      new_endDate: formattedEndDate,
+      old_leaveType: request.LeaveType,
+      new_leaveType: leaveType,
+      old_workingDays: request.workingDays,
+      new_workingDays: workingDays,
+      status_reset_to: 'pending'
+    });
+
+    // Get updated request data for notifications
+    const updatedRequestData = {
+      LeaveID: leaveId,
+      Title: title,
+      Detail: detail,
+      StartDate: formattedStartDate,
+      EndDate: formattedEndDate,
+      LeaveType: leaveType,
+      Requester: requester,
+      Approver: request.Approver,
+      workingDays: workingDays
+    };
+
+    // Send email notification to manager about the updated request
+    try {
+      await emailService.notifyManagerOfLeaveRequest(
+        {
+          ...updatedRequestData,
+          title,
+          description: detail,
+          leaveType,
+          startDate: formattedStartDate,
+          endDate: formattedEndDate,
+          submittedBy: requester
+        },
+        request.Approver
+      );
+      console.log('Manager notification sent for updated leave request');
+    } catch (emailError) {
+      console.error('Failed to send manager notification for updated request:', emailError);
+      // Don't fail the request if email fails
+    }
+
+    console.log('=== LEAVE REQUEST UPDATE END ===');
+    res.json({ 
+      success: true, 
+      message: 'Leave request updated successfully',
+      leaveId: leaveId 
+    });
+
+  } catch (error) {
+    console.error('Error updating leave request:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to update leave request',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
 // Submit leave request with file attachments
 router.post('/request', authenticateToken, upload.array('attachments', 10), async (req, res) => {
   try {

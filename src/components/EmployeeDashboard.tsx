@@ -134,7 +134,7 @@ export const EmployeeDashboard = ({
       </div>
 
       <LeaveStatsCards leaveRequests={leaveRequests} />
-      <LeaveRequestsList leaveRequests={leaveRequests} />
+      <LeaveRequestsList leaveRequests={leaveRequests} onRequestUpdated={fetchLeaveRequests} />
     </div>
   );
 };

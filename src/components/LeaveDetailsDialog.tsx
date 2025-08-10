@@ -44,6 +44,7 @@ interface LeaveDetailsDialogProps {
   onReject?: (requestId: number, reason?: string) => Promise<void>;
   onCancel?: (requestId: number, reason?: string) => Promise<void>;
   canEditStatus?: boolean;
+  onEdit?: (request: LeaveRequest) => void;
 }
 
 export const LeaveDetailsDialog = ({
@@ -54,7 +55,8 @@ export const LeaveDetailsDialog = ({
   onApprove,
   onReject,
   onCancel,
-  canEditStatus = true
+  canEditStatus = true,
+  onEdit
 }: LeaveDetailsDialogProps) => {
   const { toast } = useToast();
   
@@ -156,6 +158,19 @@ export const LeaveDetailsDialog = ({
   const canApprove = userRole !== 'employee' && status === 'pending' && canEditStatus;
   const canReject = userRole !== 'employee' && status === 'pending' && canEditStatus;
   const canCancelApproved = userRole !== 'employee' && status === 'approved' && canEditStatus;
+  
+  // Check if employee can edit - only for pending requests where start date hasn't passed
+  const canEmployeeEdit = () => {
+    if (userRole !== 'employee' || status !== 'pending' || !onEdit) return false;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to beginning of day
+    
+    const leaveStartDate = new Date(startDate);
+    leaveStartDate.setHours(0, 0, 0, 0);
+    
+    return leaveStartDate >= today;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -248,6 +263,17 @@ export const LeaveDetailsDialog = ({
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
           <div className="flex gap-2 w-full sm:w-auto">
+            {canEmployeeEdit() && (
+              <Button
+                onClick={() => onEdit!(request)}
+                disabled={isSubmitting}
+                className="bg-blue-600 hover:bg-blue-700 flex-1 sm:flex-none"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Request
+              </Button>
+            )}
+            
             {canApprove && (
               <Button
                 onClick={() => handleAction('approve')}

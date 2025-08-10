@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, AlertCircle, Clock } from "lucide-react";
 import { LeaveDetailsDialog } from "@/components/LeaveDetailsDialog";
+import { EditLeaveRequestDialog } from "@/components/EditLeaveRequestDialog";
 
 interface LeaveRequest {
   id: number;
@@ -19,6 +20,7 @@ interface LeaveRequest {
 
 interface LeaveRequestsListProps {
   leaveRequests: LeaveRequest[];
+  onRequestUpdated?: () => void;
 }
 
 const getStatusIcon = (status: string) => {
@@ -55,9 +57,11 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-export const LeaveRequestsList = ({ leaveRequests }: LeaveRequestsListProps) => {
+export const LeaveRequestsList = ({ leaveRequests, onRequestUpdated }: LeaveRequestsListProps) => {
   const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editRequest, setEditRequest] = useState<LeaveRequest | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleRowClick = (request: LeaveRequest) => {
     setSelectedRequest(request);
@@ -67,6 +71,23 @@ export const LeaveRequestsList = ({ leaveRequests }: LeaveRequestsListProps) => 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setSelectedRequest(null);
+  };
+
+  const handleEditRequest = (request: LeaveRequest) => {
+    setEditRequest(request);
+    setIsEditDialogOpen(true);
+    setIsDialogOpen(false); // Close details dialog
+  };
+
+  const handleCloseEditDialog = () => {
+    setIsEditDialogOpen(false);
+    setEditRequest(null);
+  };
+
+  const handleEditSuccess = () => {
+    if (onRequestUpdated) {
+      onRequestUpdated();
+    }
   };
 
   return (
@@ -113,6 +134,14 @@ export const LeaveRequestsList = ({ leaveRequests }: LeaveRequestsListProps) => 
         onClose={handleCloseDialog}
         userRole="employee"
         canEditStatus={false}
+        onEdit={handleEditRequest}
+      />
+      
+      <EditLeaveRequestDialog
+        request={editRequest}
+        isOpen={isEditDialogOpen}
+        onClose={handleCloseEditDialog}
+        onSuccess={handleEditSuccess}
       />
     </Card>
   );
