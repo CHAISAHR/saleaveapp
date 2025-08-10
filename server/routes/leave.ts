@@ -98,21 +98,27 @@ router.put('/:leaveId', authenticateToken, async (req, res) => {
     console.log('Leave request updated successfully, ID:', leaveId);
 
     // Log leave request update to audit
-    await AuditService.logUpdate('leave_taken', leaveId, {
-      old_title: request.Title,
-      new_title: title,
-      old_detail: request.Detail,
-      new_detail: detail,
-      old_startDate: request.StartDate,
-      new_startDate: formattedStartDate,
-      old_endDate: request.EndDate,
-      new_endDate: formattedEndDate,
-      old_leaveType: request.LeaveType,
-      new_leaveType: leaveType,
-      old_workingDays: request.workingDays,
-      new_workingDays: workingDays,
-      status_reset_to: 'pending'
-    });
+    await AuditService.logUpdate('leave_taken', leaveId, 
+      {
+        title: request.Title,
+        detail: request.Detail,
+        startDate: request.StartDate,
+        endDate: request.EndDate,
+        leaveType: request.LeaveType,
+        workingDays: request.workingDays,
+        status: request.Status
+      },
+      {
+        title: title,
+        detail: detail,
+        startDate: formattedStartDate,
+        endDate: formattedEndDate,
+        leaveType: leaveType,
+        workingDays: workingDays,
+        status: 'pending'
+      },
+      requester
+    );
 
     // Get updated request data for notifications
     const updatedRequestData = {
