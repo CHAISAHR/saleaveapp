@@ -187,6 +187,70 @@ class EmailService {
     await this.sendEmail(notification);
   }
 
+  // Send email notification to HR & Ops manager when leave is rejected
+  async notifyHROfLeaveRejection(leaveRequest: any, employeeName: string, rejectionReason: string, approverName: string): Promise<void> {
+    const notification: EmailNotification = {
+      recipient_email: this.ADMIN_EMAIL, // HR & Ops manager
+      sender_email: this.FROM_EMAIL,
+      subject: `Leave Request Rejected - ${employeeName}`,
+      message: `
+        A leave request has been rejected and requires HR attention:
+
+        Employee: ${employeeName}
+        Email: ${leaveRequest.Requester || leaveRequest.employeeEmail}
+        Leave Type: ${leaveRequest.LeaveType || leaveRequest.leaveType}
+        Start Date: ${this.formatDateForDisplay(leaveRequest.StartDate || leaveRequest.startDate)}
+        End Date: ${this.formatDateForDisplay(leaveRequest.EndDate || leaveRequest.endDate)}
+        Rejected by: ${approverName}
+        
+        REJECTION REASON: ${rejectionReason}
+
+        Description: ${leaveRequest.Detail || leaveRequest.description || 'No description provided'}
+
+        Please review this rejection and follow up with the employee if necessary.
+
+        Best regards,
+        Leave Management System
+      `,
+      notification_type: 'leave_rejected',
+      leave_id: leaveRequest.LeaveID || leaveRequest.id
+    };
+
+    await this.sendEmail(notification);
+  }
+
+  // Send email notification to HR & Ops manager when approved leave is cancelled
+  async notifyHROfLeaveCancellation(leaveRequest: any, employeeName: string, cancellationReason: string, approverName: string): Promise<void> {
+    const notification: EmailNotification = {
+      recipient_email: this.ADMIN_EMAIL, // HR & Ops manager
+      sender_email: this.FROM_EMAIL,
+      subject: `Approved Leave Cancelled - ${employeeName}`,
+      message: `
+        A previously approved leave request has been cancelled:
+
+        Employee: ${employeeName}
+        Email: ${leaveRequest.Requester || leaveRequest.employeeEmail}
+        Leave Type: ${leaveRequest.LeaveType || leaveRequest.leaveType}
+        Start Date: ${this.formatDateForDisplay(leaveRequest.StartDate || leaveRequest.startDate)}
+        End Date: ${this.formatDateForDisplay(leaveRequest.EndDate || leaveRequest.endDate)}
+        Cancelled by: ${approverName}
+        
+        CANCELLATION REASON: ${cancellationReason}
+
+        Description: ${leaveRequest.Detail || leaveRequest.description || 'No description provided'}
+
+        This cancellation may impact scheduling and workforce planning.
+
+        Best regards,
+        Leave Management System
+      `,
+      notification_type: 'leave_rejected',
+      leave_id: leaveRequest.LeaveID || leaveRequest.id
+    };
+
+    await this.sendEmail(notification);
+  }
+
   // Send email notification to HR & Ops manager when leave exceeds balance
   async notifyHROfBalanceExceeded(leaveRequest: any, employeeName: string, availableBalance: number, requestedDays: number): Promise<void> {
     const balanceDeficit = requestedDays - availableBalance;

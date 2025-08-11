@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { CheckCircle, XCircle, AlertCircle, Clock, Calendar, User, FileText, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { RejectReasonDialog } from "./RejectReasonDialog";
 
 interface LeaveRequest {
   LeaveID?: number;
@@ -61,6 +62,8 @@ export const LeaveDetailsDialog = ({
   const { toast } = useToast();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   if (!request) return null;
 
@@ -128,18 +131,20 @@ export const LeaveDetailsDialog = ({
   const handleAction = async (action: 'approve' | 'reject' | 'cancel') => {
     if (!leaveId) return;
     
+    if (action === 'reject') {
+      setShowRejectDialog(true);
+      return;
+    }
+    
+    if (action === 'cancel') {
+      setShowCancelDialog(true);
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
-      switch (action) {
-        case 'approve':
-          if (onApprove) await onApprove(leaveId);
-          break;
-        case 'reject':
-          if (onReject) await onReject(leaveId);
-          break;
-        case 'cancel':
-          if (onCancel) await onCancel(leaveId);
-          break;
+      if (action === 'approve' && onApprove) {
+        await onApprove(leaveId);
       }
       
       onClose();
@@ -152,6 +157,38 @@ export const LeaveDetailsDialog = ({
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleRejectWithReason = async (reason: string) => {
+    if (!leaveId || !onReject) return;
+    
+    try {
+      await onReject(leaveId, reason);
+      onClose();
+    } catch (error) {
+      console.error('Error rejecting leave:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reject leave request. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCancelWithReason = async (reason: string) => {
+    if (!leaveId || !onCancel) return;
+    
+    try {
+      await onCancel(leaveId, reason);
+      onClose();
+    } catch (error) {
+      console.error('Error cancelling leave:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel leave request. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -315,6 +352,22 @@ export const LeaveDetailsDialog = ({
           </Button>
         </DialogFooter>
       </DialogContent>
+      
+      <RejectReasonDialog
+        isOpen={showRejectDialog}
+        onClose={() => setShowRejectDialog(false)}
+        onConfirm={handleRejectWithReason}
+        actionType="reject"
+        requestTitle={title}
+      />
+      
+      <RejectReasonDialog
+        isOpen={showCancelDialog}
+        onClose={() => setShowCancelDialog(false)}
+        onConfirm={handleCancelWithReason}
+        actionType="cancel"
+        requestTitle={title}
+      />
     </Dialog>
   );
 };

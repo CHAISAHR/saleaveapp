@@ -459,7 +459,13 @@ router.put('/requests/:id/status', authenticateToken, requireRole(['manager', 'a
         console.log(`Approval email notification sent to: ${leave.Requester}`);
       } else if (status === 'rejected') {
         await emailService.notifyEmployeeOfRejection(leave, approverName, reason);
-        console.log(`Rejection email notification sent to: ${leave.Requester}`);
+        // Also notify HR & Ops manager of rejection
+        await emailService.notifyHROfLeaveRejection(leave, leave.Requester, reason, approverName);
+        console.log(`Rejection email notification sent to: ${leave.Requester} and HR`);
+      } else if (status === 'cancelled') {
+        // Notify HR & Ops manager of cancellation
+        await emailService.notifyHROfLeaveCancellation(leave, leave.Requester, reason, approverName);
+        console.log(`Cancellation email notification sent to HR`);
       }
     }
 
