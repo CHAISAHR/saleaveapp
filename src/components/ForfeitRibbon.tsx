@@ -11,7 +11,14 @@ interface ForfeitRibbonProps {
 export const ForfeitRibbon = ({ broughtforward, annualUsed, annualLeaveAdjustments }: ForfeitRibbonProps) => {
   const daysToForfeit = Math.max(0, broughtforward - annualLeaveAdjustments - annualUsed);
   
-  if (daysToForfeit === 0) {
+  // Check if July 31st has passed for the current year
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const july31 = new Date(currentYear, 6, 31); // Month is 0-indexed, so 6 = July
+  const isAfterJuly31 = currentDate > july31;
+  
+  // Don't show the ribbon if there are no days to forfeit or if July 31st has passed
+  if (daysToForfeit === 0 || isAfterJuly31) {
     return null;
   }
 
