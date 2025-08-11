@@ -163,7 +163,15 @@ export const EditLeaveRequestDialog = ({ request, isOpen, onClose, onSuccess }: 
         detail: formData.description,
         startDate: formData.startDate.toISOString(),
         endDate: formData.endDate.toISOString(),
-        leaveType: formData.leaveType,
+        // Send standardized leave type format
+        leaveType: (() => {
+          const standardizedTypes: Record<string, string> = {
+            'annual': 'Annual', 'sick': 'Sick', 'maternity': 'Maternity',
+            'parental': 'Parental', 'family': 'Family', 'adoption': 'Adoption',
+            'study': 'Study', 'wellness': 'Wellness'
+          };
+          return standardizedTypes[formData.leaveType] || formData.leaveType;
+        })(),
         workingDays
       };
 

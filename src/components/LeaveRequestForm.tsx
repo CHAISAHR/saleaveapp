@@ -577,8 +577,18 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       formDataToSend.append('detail', formData.description);
       formDataToSend.append('startDate', formData.startDate!.toLocaleDateString('en-CA')); // YYYY-MM-DD format
       formDataToSend.append('endDate', formData.endDate!.toLocaleDateString('en-CA')); // YYYY-MM-DD format
-      // Send proper case format that matches backend expectations (e.g., "Annual" not "Annual Leave")
-      const backendLeaveType = selectedLeaveType?.label.split(' ')[0] || ''; // Extract "Annual" from "Annual Leave"
+      // Send standardized leave type format
+      const standardizedLeaveTypes: Record<string, string> = {
+        'annual': 'Annual',
+        'sick': 'Sick',
+        'maternity': 'Maternity',
+        'parental': 'Parental',
+        'family': 'Family',
+        'adoption': 'Adoption',
+        'study': 'Study',
+        'wellness': 'Wellness'
+      };
+      const backendLeaveType = standardizedLeaveTypes[formData.leaveType] || formData.leaveType;
       formDataToSend.append('leaveType', backendLeaveType);
       formDataToSend.append('workingDays', leaveDuration.toString());
       
