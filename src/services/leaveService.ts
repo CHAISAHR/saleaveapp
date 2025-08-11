@@ -9,7 +9,7 @@ export interface User {
   email: string;
   name: string;
   department: string;
-  role: 'employee' | 'manager' | 'admin';
+  role: 'employee' | 'manager' | 'cd' |'admin';
   hire_date: string;
   manager_id?: number;
   avatar_url?: string;
