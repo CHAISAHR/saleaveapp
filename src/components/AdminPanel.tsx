@@ -23,7 +23,7 @@ interface User {
   name: string;
   email: string;
   department: string;
-  role: 'employee' | 'manager' | 'admin' | 'country_director';
+  role: 'employee' | 'manager' | 'admin' | 'CD';
   hire_date: string;
   is_active: boolean;
   manager_email?: string;
@@ -41,8 +41,8 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
   
   const formatRoleName = (role: string) => {
     switch (role) {
-      case 'country_director':
-        return 'Country Director';
+      case 'CD':
+        return 'CD';
       case 'manager':
         return 'Manager';
       case 'admin':
@@ -405,7 +405,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                 name: editUser.name, 
                 email: editUser.email, 
                 department: editUser.department,
-                role: editUser.role as 'employee' | 'manager' | 'admin' | 'country_director',
+                role: editUser.role as 'employee' | 'manager' | 'admin' | 'CD',
                 manager_email: editUser.manager_email || undefined,
                 hire_date: editUser.hire_date
               } 
@@ -446,7 +446,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
       if (response.ok) {
         // Update local state
         setUsers(prev => prev.map(user => 
-          user.id === userId ? { ...user, role: newRole as 'employee' | 'manager' | 'admin' | 'country_director' } : user
+          user.id === userId ? { ...user, role: newRole as 'employee' | 'manager' | 'admin' | 'CD' } : user
         ));
 
         const user = users.find(u => u.id === userId);
@@ -666,7 +666,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                           <SelectItem value="employee">Employee</SelectItem>
                           <SelectItem value="manager">Manager</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="country_director">Country Director</SelectItem>
+                          <SelectItem value="CD">CD</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -784,7 +784,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                         <SelectItem value="employee">Employee</SelectItem>
                         <SelectItem value="manager">Manager</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="country_director">Country Director</SelectItem>
+                        <SelectItem value="CD">CD</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -895,7 +895,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{user.department}</TableCell>
                         <TableCell>
-                          <Badge variant={user.role === 'admin' ? 'destructive' : user.role === 'manager' || user.role === 'country_director' ? 'default' : 'secondary'}>
+                          <Badge variant={user.role === 'admin' ? 'destructive' : user.role === 'manager' || user.role === 'CD' ? 'default' : 'secondary'}>
                             {formatRoleName(user.role)}
                           </Badge>
                           <Select
@@ -909,7 +909,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                               <SelectItem value="employee">Employee</SelectItem>
                               <SelectItem value="manager">Manager</SelectItem>
                               <SelectItem value="admin">Admin</SelectItem>
-                              <SelectItem value="country_director">Country Director</SelectItem>
+                              <SelectItem value="CD">CD</SelectItem>
                             </SelectContent>
                           </Select>
                         </TableCell>

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { AccountInfo } from '@azure/msal-browser';
 
 export const useUserRole = (user: AccountInfo | null) => {
-  const [userRole, setUserRole] = useState<'employee' | 'manager' | 'admin' | 'country_director'>('employee');
+  const [userRole, setUserRole] = useState<'employee' | 'manager' | 'admin' | 'CD'>('employee');
 
   // Get user's full name from different sources
   const getUserFullName = () => {
@@ -39,11 +39,11 @@ export const useUserRole = (user: AccountInfo | null) => {
       console.log('[useUserRole] User changed, determining role for:', user.username);
       
       // Get role from token claims (this comes from the database via JWT)
-      let actualRole: 'employee' | 'manager' | 'admin' | 'country_director' = 'employee';
+      let actualRole: 'employee' | 'manager' | 'admin' | 'CD' = 'employee';
       
       if (user.idTokenClaims?.role) {
         console.log('[useUserRole] User role from token claims:', user.idTokenClaims.role);
-        actualRole = user.idTokenClaims.role as 'employee' | 'manager' | 'admin' | 'country_director';
+        actualRole = user.idTokenClaims.role as 'employee' | 'manager' | 'admin' | 'CD';
       } else {
         console.log('[useUserRole] No role in token claims, defaulting to employee');
       }

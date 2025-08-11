@@ -7,7 +7,7 @@ export interface AuthRequest extends Request {
   user?: {
     id: number;
     email: string;
-    role: 'employee' | 'manager' | 'admin' | 'country_director';
+    role: 'employee' | 'manager' | 'admin' | 'CD';
     name: string;
     department: string;
   };

@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiConfig } from '@/config/apiConfig';
 
 interface HolidayCalendarProps {
-  userRole?: 'employee' | 'manager' | 'admin' | 'country_director';
+  userRole?: 'employee' | 'manager' | 'admin' | 'CD';
 }
 
 interface Holiday {
