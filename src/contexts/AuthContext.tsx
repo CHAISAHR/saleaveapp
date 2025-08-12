@@ -50,98 +50,79 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('[AuthContext] Manual user data present:', !!manualUser);
         
         if (authToken && authToken !== 'mock-jwt-token' && manualUser) {
-          console.log('[AuthContext] Found stored manual login data');
+          console.log('[AuthContext] Validating manual login token...');
           console.log('[AuthContext] Token exists:', !!authToken);
+          console.log('[AuthContext] Token preview:', authToken.substring(0, 20) + '...');
           
-          // Skip backend validation if localhost is not available
-          // Just use stored user data if API is pointing to localhost
-          if (apiConfig.baseURL.includes('localhost')) {
-            console.log('[AuthContext] Backend not available (localhost), using stored user data');
-            try {
+          try {
+            // Validate token with backend
+            const response = await fetch(`${apiConfig.endpoints.auth}/me`, {
+              headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            console.log('[AuthContext] Token validation response:', response.status);
+            
+            if (response.ok) {
+              const userData = await response.json();
+              console.log('[AuthContext] Token validation successful, user role:', userData.user.role);
+              // Create AccountInfo-like object from backend user data
+              const userAccount: AccountInfo = {
+                homeAccountId: `manual-${userData.user.email}`,
+                environment: 'manual',
+                tenantId: 'manual-tenant',
+                username: userData.user.email,
+                localAccountId: `manual-${userData.user.email}`,
+                name: userData.user.name,
+                idTokenClaims: {
+                  aud: 'manual',
+                  iss: 'manual',
+                  iat: Date.now() / 1000,
+                  exp: (Date.now() / 1000) + 86400, // 24 hours
+                  sub: `manual-${userData.user.email}`,
+                  email: userData.user.email,
+                  role: userData.user.role,
+                  department: userData.user.department
+                }
+              };
+              setUser(userAccount);
+            } else {
+              console.warn('[AuthContext] Token validation failed:', response.status);
+              // For production, try to extract user info from stored data instead of clearing immediately
+              const storedUser = JSON.parse(manualUser);
+              if (storedUser && storedUser.username) {
+                console.log('[AuthContext] Using stored user data as fallback:', storedUser.username);
+                setUser(storedUser);
+              } else {
+                console.warn('[AuthContext] Clearing invalid token and user data');
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('manualUser');
+              }
+            }
+          } catch (error) {
+            console.error('[AuthContext] Token validation error:', error);
+            // In production, be more forgiving with network errors and API configuration issues
+            if (error instanceof Error && (
+              error.message.includes('Failed to fetch') || 
+              error.message.includes('MISSING_API_URL') ||
+              error.message.includes('Network Error')
+            )) {
+              console.log('[AuthContext] Network/API error during validation, using stored user data');
               const storedUser = JSON.parse(manualUser);
               if (storedUser && storedUser.username) {
                 console.log('[AuthContext] Successfully restored user from localStorage:', storedUser.username);
                 setUser(storedUser);
               } else {
-                console.warn('[AuthContext] Invalid stored user data, clearing');
+                console.warn('[AuthContext] No valid stored user data found');
                 localStorage.removeItem('auth_token');
                 localStorage.removeItem('manualUser');
               }
-            } catch (error) {
-              console.error('[AuthContext] Error parsing stored user data:', error);
+            } else {
+              console.warn('[AuthContext] Non-network error during validation, clearing auth data');
               localStorage.removeItem('auth_token');
               localStorage.removeItem('manualUser');
-            }
-          } else {
-            // Only try backend validation if we have a real API URL
-            console.log('[AuthContext] Validating manual login token with backend...');
-            
-            try {
-              // Validate token with backend
-              const response = await fetch(`${apiConfig.endpoints.auth}/me`, {
-                headers: {
-                  'Authorization': `Bearer ${authToken}`,
-                  'Content-Type': 'application/json'
-                }
-              });
-              
-              console.log('[AuthContext] Token validation response:', response.status);
-              
-              if (response.ok) {
-                const userData = await response.json();
-                console.log('[AuthContext] Token validation successful, user role:', userData.user.role);
-                // Create AccountInfo-like object from backend user data
-                const userAccount: AccountInfo = {
-                  homeAccountId: `manual-${userData.user.email}`,
-                  environment: 'manual',
-                  tenantId: 'manual-tenant',
-                  username: userData.user.email,
-                  localAccountId: `manual-${userData.user.email}`,
-                  name: userData.user.name,
-                  idTokenClaims: {
-                    aud: 'manual',
-                    iss: 'manual',
-                    iat: Date.now() / 1000,
-                    exp: (Date.now() / 1000) + 86400, // 24 hours
-                    sub: `manual-${userData.user.email}`,
-                    email: userData.user.email,
-                    role: userData.user.role,
-                    department: userData.user.department
-                  }
-                };
-                setUser(userAccount);
-              } else {
-                console.warn('[AuthContext] Token validation failed:', response.status);
-                // Fallback to stored user data
-                const storedUser = JSON.parse(manualUser);
-                if (storedUser && storedUser.username) {
-                  console.log('[AuthContext] Using stored user data as fallback:', storedUser.username);
-                  setUser(storedUser);
-                } else {
-                  console.warn('[AuthContext] Clearing invalid token and user data');
-                  localStorage.removeItem('auth_token');
-                  localStorage.removeItem('manualUser');
-                }
-              }
-            } catch (error) {
-              console.error('[AuthContext] Token validation error:', error);
-              // Always fallback to stored user data on network errors
-              console.log('[AuthContext] Network error during validation, using stored user data');
-              try {
-                const storedUser = JSON.parse(manualUser);
-                if (storedUser && storedUser.username) {
-                  console.log('[AuthContext] Successfully restored user from localStorage:', storedUser.username);
-                  setUser(storedUser);
-                } else {
-                  console.warn('[AuthContext] No valid stored user data found');
-                  localStorage.removeItem('auth_token');
-                  localStorage.removeItem('manualUser');
-                }
-              } catch (parseError) {
-                console.error('[AuthContext] Error parsing stored user data:', parseError);
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('manualUser');
-              }
             }
           }
         }
@@ -201,37 +182,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Manual login attempt:', email);
       
-      // Check if backend is available (not localhost fallback)
-      if (apiConfig.baseURL.includes('localhost')) {
-        console.log('Backend not available, using mock authentication');
-        // Create a mock authenticated user for demo purposes
-        const mockUserAccount: AccountInfo = {
-          homeAccountId: `manual-${email}`,
-          environment: 'manual',
-          tenantId: 'manual-tenant',
-          username: email,
-          localAccountId: `manual-${email}`,
-          name: email.split('@')[0].replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-          idTokenClaims: {
-            aud: 'manual',
-            iss: 'manual',
-            iat: Date.now() / 1000,
-            exp: (Date.now() / 1000) + 86400, // 24 hours
-            sub: `manual-${email}`,
-            email: email,
-            role: email.includes('admin') ? 'admin' : 'employee',
-            department: 'Development'
-          }
-        };
-
-        setUser(mockUserAccount);
-        localStorage.setItem('manualUser', JSON.stringify(mockUserAccount));
-        localStorage.setItem('auth_token', 'mock-jwt-token-' + Date.now());
-        // Clear mock user if it exists
-        localStorage.removeItem('mockUser');
-        return;
-      }
-      
       const response = await makeApiRequest(`${apiConfig.endpoints.auth}/login`, {
         method: 'POST',
         body: JSON.stringify({ email, password })
@@ -272,10 +222,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.error('Manual login error:', error);
-      // If it's a network error and we're using localhost, provide a helpful message
-      if (error instanceof Error && error.message.includes('Failed to fetch') && apiConfig.baseURL.includes('localhost')) {
-        throw new Error('Backend server not available. Please start the backend server or use mock authentication.');
-      }
       throw error;
     }
   };
