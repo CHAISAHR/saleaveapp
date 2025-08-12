@@ -12,16 +12,10 @@ import { format } from 'date-fns';
 interface DocumentAttachment {
     id: number;
     leave_id: number;
-    filename: string;
     original_name: string;
+    file_data: string;
     file_type: string;
-    file_size: number;
     uploaded_at: string;
-    leave_title: string;
-    leave_type: string;
-    requester_email: string;
-    requester_name: string;
-    department_name: string; // <--- ADDED: To receive department from backend
 }
 
 interface DocumentManagerProps {
@@ -146,10 +140,8 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Leave ID</TableHead>
-                                        <TableHead>Requester</TableHead>
-                                        <TableHead>Department</TableHead> {/* Display department */}
-                                        <TableHead>Leave Type</TableHead>
-                                        <TableHead>File Name</TableHead>
+                                        <TableHead>Original Name</TableHead>
+                                        <TableHead>File Type</TableHead>
                                         <TableHead>Upload Date</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -161,17 +153,12 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
                                                 #{doc.leave_id}
                                             </TableCell>
                                             <TableCell>
-                                                <div className="font-medium">{doc.requester_name}</div>
-                                                <div className="text-sm text-muted-foreground">{doc.requester_email}</div>
-                                            </TableCell>
-                                            <TableCell>{doc.department_name}</TableCell> {/* Display department */}
-                                            <TableCell>{doc.leave_type}</TableCell>
-                                            <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <FileText className="h-4 w-4" />
                                                     <span className="font-medium">{doc.original_name}</span>
                                                 </div>
                                             </TableCell>
+                                            <TableCell>{doc.file_type}</TableCell>
                                             <TableCell className="text-sm">
                                                 {doc.uploaded_at ? format(new Date(doc.uploaded_at), 'MMM dd, yyyy HH:mm') : 'N/A'}
                                             </TableCell>
