@@ -37,9 +37,9 @@ export const ForfeitedLeavesTable = () => {
       const data = await response.json();
       console.log('ForfeitedLeavesTable - Balance data:', data);
       
-      // Handle both real API responses and mock data arrays
+      // Handle API response format: { success: true, balances: [...] }
       const balanceArray = Array.isArray(data) ? data : 
-                          (data.success && data.data ? data.data : 
+                          (data.success && data.balances ? data.balances : 
                            data.data || []);
       
       console.log('ForfeitedLeavesTable - Raw balance array:', balanceArray);
