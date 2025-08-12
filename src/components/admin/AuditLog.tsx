@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { makeApiRequest } from '@/config/apiConfig';
+import { makeApiRequest, apiConfig } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Eye, Clock, User } from 'lucide-react';
@@ -24,7 +24,7 @@ export const AuditLog = () => {
   const fetchAuditActivity = async () => {
     try {
       setLoading(true);
-      const response = await makeApiRequest('/api/audit/recent?limit=100', {
+      const response = await makeApiRequest(`${apiConfig.endpoints.audit}/recent?limit=100`, {
         method: 'GET'
       });
 
