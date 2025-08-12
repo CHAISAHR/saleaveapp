@@ -22,10 +22,29 @@ const getApiBaseUrl = () => {
             return fallbackUrl;
         }
 
-        // In production, you should set VITE_API_URL in your deployment settings
-        // For now, we'll return a placeholder that will trigger mock data
-        console.error('Production deployment missing VITE_API_URL. Please configure it in project settings.');
-        return 'MISSING_API_URL'; // This will trigger mock data responses
+        // In production, try to infer the backend URL from the current domain
+        // Most Railway deployments follow the pattern: https://[project-name]-production.up.railway.app
+        const currentHost = window.location.host;
+        const currentProtocol = window.location.protocol;
+        
+        // Check if we're on a Railway deployment URL pattern
+        if (currentHost.includes('.up.railway.app') || currentHost.includes('.railway.app')) {
+            // Try to construct the backend URL by replacing 'frontend' with 'backend' or using the same domain
+            let backendUrl = `${currentProtocol}//${currentHost}`;
+            
+            // If the host suggests it's a frontend service, try to get the backend
+            if (currentHost.includes('-production')) {
+                // For Railway apps, the backend might be on the same domain or a different service
+                // We'll try the same domain first as Railway often serves both from one service
+                console.log('Using production Railway fallback:', backendUrl);
+                return backendUrl;
+            }
+        }
+        
+        // Final fallback - use current origin
+        const fallbackUrl = window.location.origin;
+        console.log('Using current origin as fallback:', fallbackUrl);
+        return fallbackUrl;
     }
 
     console.log('Selected API base URL:', viteApiUrl);

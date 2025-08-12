@@ -103,14 +103,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           } catch (error) {
             console.error('[AuthContext] Token validation error:', error);
-            // In production, be more forgiving with network errors
-            if (error instanceof Error && error.message.includes('Failed to fetch')) {
-              console.log('[AuthContext] Network error during validation, using stored user data');
+            // In production, be more forgiving with network errors and API configuration issues
+            if (error instanceof Error && (
+              error.message.includes('Failed to fetch') || 
+              error.message.includes('MISSING_API_URL') ||
+              error.message.includes('Network Error')
+            )) {
+              console.log('[AuthContext] Network/API error during validation, using stored user data');
               const storedUser = JSON.parse(manualUser);
               if (storedUser && storedUser.username) {
+                console.log('[AuthContext] Successfully restored user from localStorage:', storedUser.username);
                 setUser(storedUser);
+              } else {
+                console.warn('[AuthContext] No valid stored user data found');
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('manualUser');
               }
             } else {
+              console.warn('[AuthContext] Non-network error during validation, clearing auth data');
               localStorage.removeItem('auth_token');
               localStorage.removeItem('manualUser');
             }
