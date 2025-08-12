@@ -28,6 +28,8 @@ interface LeaveRequest {
   endDate?: string;
   LeaveType?: string;
   type?: string;
+  Approver?: string;
+  approver?: string;
   workingDays?: number;
   days?: number;
 }
@@ -104,22 +106,36 @@ export const EditLeaveRequestDialog = ({ request, isOpen, onClose, onSuccess }: 
           );
           setAvailableManagers(managers);
           
-          // For now, we'll use a placeholder for current manager since we don't have request's requester info
-          // In a real scenario, you'd get this from the request data
-          setCurrentManager({ 
-            name: "Current Manager", 
-            email: "current.manager@example.com" 
-          });
+          // Get the actual approver from the request
+          if (request) {
+            const approverEmail = request.Approver || request.approver;
+            if (approverEmail) {
+              // Find the approver in the users list
+              const approver = allUsers.find((u: any) => u.email === approverEmail);
+              if (approver) {
+                setCurrentManager({ 
+                  name: approver.name, 
+                  email: approver.email 
+                });
+              } else {
+                // If approver not found in users list, use the email
+                setCurrentManager({ 
+                  name: approverEmail, 
+                  email: approverEmail 
+                });
+              }
+            }
+          }
         }
       } catch (error) {
         console.error('Failed to fetch managers:', error);
       }
     };
 
-    if (isOpen) {
+    if (isOpen && request) {
       fetchManagersAndCurrentManager();
     }
-  }, [isOpen]);
+  }, [isOpen, request]);
 
   // Fetch company holidays
   useEffect(() => {
