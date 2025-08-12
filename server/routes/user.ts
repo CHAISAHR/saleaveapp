@@ -124,9 +124,20 @@ router.put('/:id/role', authenticateToken, requireRole(['admin']), async (req: A
     const { id } = req.params;
     const { role } = req.body;
 
+    // Validate role and convert to lowercase for database compatibility
+    const validRoles = ['employee', 'manager', 'admin', 'cd'];
+    const normalizedRole = role.toLowerCase();
+    
+    if (!validRoles.includes(normalizedRole)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid role. Must be one of: employee, manager, admin, CD' 
+      });
+    }
+
     await executeQuery(
       'UPDATE users SET role = ?, updated_at = NOW() WHERE id = ?',
-      [role, id]
+      [normalizedRole, id]
     );
 
     res.json({ success: true, message: 'User role updated successfully' });
