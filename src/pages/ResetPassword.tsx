@@ -129,7 +129,7 @@ const ResetPassword = () => {
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <img 
-              src="/lovable-uploads/chailogo.png" 
+              src="/logo/chailogo.png" 
               alt="Company Logo" 
               className="h-12 w-12"
             />

@@ -124,7 +124,7 @@ export const AppSidebar = ({
       <SidebarHeader className="p-4">
         <div className="flex items-center space-x-3">
           <img 
-            src="/lovable-uploads/chailogo.png" 
+            src="/logo/chailogo.png" 
             alt="Company Logo" 
             className="h-8 w-8"
           />
