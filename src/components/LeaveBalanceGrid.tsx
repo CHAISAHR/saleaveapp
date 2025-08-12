@@ -256,7 +256,7 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
               <ul className="space-y-1 text-gray-600">
                 <li>• Annual: 1.667 days per month</li>
                 <li>• Sick: 1 day per month, accumulates to 36 in 3 years</li>
-                <li>• Maternity: 3 months (for eligible employees)</li>
+                <li>• Maternity: 3 months (can be extended to 4 months with the additional month unpaid)</li>
                 <li>• Parental: 4 weeks per annum</li>
                 <li>• Adoption: 4 weeks per annum</li>
               </ul>
