@@ -45,6 +45,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
   const [availableManagers, setAvailableManagers] = useState<any[]>([]);
   const [userBalance, setUserBalance] = useState<EmployeeBalance | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch manager info and available managers on component mount
   useEffect(() => {
@@ -525,6 +526,12 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Prevent duplicate submissions
+    if (isSubmitting) {
+      console.log('Submission already in progress, ignoring duplicate click');
+      return;
+    }
+    
     if (!formData.title || !formData.leaveType || !formData.startDate || !formData.endDate) {
       toast({
         title: "Missing Information",
@@ -569,9 +576,17 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
 
     console.log("Leave request submitted:", requestData);
 
-    await sendEmailNotifications(requestData);
+    // Set loading state
+    setIsSubmitting(true);
+    
+    // Show immediate feedback to user
+    toast({
+      title: "Submitting Request...",
+      description: "Please wait while we process your leave request.",
+    });
 
     try {
+      await sendEmailNotifications(requestData);
       const formDataToSend = new FormData();
       formDataToSend.append('title', formData.title);
       formDataToSend.append('detail', formData.description);
@@ -679,7 +694,10 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         description: `Failed to submit leave request: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`,
         variant: "destructive",
       });
+      setIsSubmitting(false);
       return;
+    } finally {
+      setIsSubmitting(false);
     }
 
     let toastMessage = `Your ${selectedLeaveType?.label.toLowerCase()} request for ${getDisplayDuration()} has been submitted for approval.`;
@@ -1049,11 +1067,15 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
           )}
 
           <div className="flex justify-end space-x-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-              Submit Request
+            <Button 
+              type="submit" 
+              className="bg-blue-600 hover:bg-blue-700" 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Submit Request"}
             </Button>
           </div>
         </form>

@@ -194,6 +194,24 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
       title, detail, startDate, endDate, leaveType, requester, workingDays
     });
 
+    // Check for duplicate requests (same user, same dates, same type, within last 5 minutes)
+    const duplicateCheck = await executeQuery(
+      `SELECT LeaveID FROM leave_taken 
+       WHERE Requester = ? AND StartDate = ? AND EndDate = ? AND LeaveType = ? 
+       AND Created > DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+       ORDER BY Created DESC LIMIT 1`,
+      [requester, startDate, endDate, leaveType]
+    );
+
+    if (duplicateCheck.length > 0) {
+      console.log('Duplicate request detected:', duplicateCheck[0].LeaveID);
+      return res.status(409).json({ 
+        success: false, 
+        message: 'A similar leave request was already submitted recently. Please check your existing requests.',
+        duplicateId: duplicateCheck[0].LeaveID
+      });
+    }
+
     // Convert ISO date strings to MySQL DATE format (YYYY-MM-DD)
     const formatDateForMySQL = (dateString: string) => {
       const date = new Date(dateString);
