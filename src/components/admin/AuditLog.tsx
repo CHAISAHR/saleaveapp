@@ -13,10 +13,7 @@ interface AuditEntry {
   table_name: string;
   record_id: string;
   action: 'INSERT' | 'UPDATE' | 'DELETE';
-  old_values: string | null;
-  new_values: string | null;
   changed_by: string;
-  changed_by_name: string;
   changed_at: string;
 }
 
@@ -62,14 +59,6 @@ export const AuditLog = () => {
     return tableName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
-  const parseJsonSafely = (jsonString: string | null) => {
-    if (!jsonString) return null;
-    try {
-      return JSON.parse(jsonString);
-    } catch {
-      return jsonString;
-    }
-  };
 
   useEffect(() => {
     fetchAuditActivity();
@@ -116,69 +105,49 @@ export const AuditLog = () => {
           ) : (
             <ScrollArea className="h-[600px]">
               <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Time</TableHead>
-                      <TableHead>User</TableHead>
-                      <TableHead>Action</TableHead>
-                      <TableHead>Table</TableHead>
-                      <TableHead>Record ID</TableHead>
-                      <TableHead>Changes</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {auditEntries.map((entry) => (
-                      <TableRow key={entry.id}>
-                        <TableCell className="text-sm">
-                          {format(new Date(entry.changed_at), 'MMM dd, HH:mm:ss')}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4" />
-                            <div>
-                              <div className="font-medium">{entry.changed_by_name || 'Unknown'}</div>
-                              <div className="text-xs text-muted-foreground">{entry.changed_by}</div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getActionBadgeVariant(entry.action)}>
-                            {entry.action}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className="font-medium">{formatTableName(entry.table_name)}</span>
-                        </TableCell>
-                        <TableCell>
-                          <code className="text-xs bg-muted px-1 py-0.5 rounded">
-                            {entry.record_id}
-                          </code>
-                        </TableCell>
-                        <TableCell className="max-w-xs">
-                          <div className="text-xs space-y-1">
-                            {entry.old_values && (
-                              <div>
-                                <span className="font-semibold text-destructive">Old:</span>{' '}
-                                <code className="text-xs bg-muted px-1 py-0.5 rounded">
-                                  {JSON.stringify(parseJsonSafely(entry.old_values), null, 0)}
-                                </code>
-                              </div>
-                            )}
-                            {entry.new_values && (
-                              <div>
-                                <span className="font-semibold text-primary">New:</span>{' '}
-                                <code className="text-xs bg-muted px-1 py-0.5 rounded">
-                                  {JSON.stringify(parseJsonSafely(entry.new_values), null, 0)}
-                                </code>
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Table</TableHead>
+                        <TableHead>Record ID</TableHead>
+                        <TableHead>Action</TableHead>
+                        <TableHead>Changed By</TableHead>
+                        <TableHead>Changed At</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {auditEntries.map((entry) => (
+                        <TableRow key={entry.id}>
+                          <TableCell className="font-medium">
+                            {entry.id}
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-medium">{formatTableName(entry.table_name)}</span>
+                          </TableCell>
+                          <TableCell>
+                            <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                              {entry.record_id}
+                            </code>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={getActionBadgeVariant(entry.action)}>
+                              {entry.action}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4" />
+                              <span className="text-sm">{entry.changed_by}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {format(new Date(entry.changed_at), 'MMM dd, yyyy HH:mm:ss')}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
               </div>
             </ScrollArea>
           )}
