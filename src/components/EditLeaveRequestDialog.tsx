@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CalendarIcon, AlertTriangle } from "lucide-react";
+import { CalendarIcon, AlertTriangle, Users } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { calculateWorkingDays } from "@/lib/utils";
@@ -47,10 +48,15 @@ export const EditLeaveRequestDialog = ({ request, isOpen, onClose, onSuccess }: 
     leaveType: "",
     startDate: undefined as Date | undefined,
     endDate: undefined as Date | undefined,
+    useAlternativeManager: false,
+    alternativeManager: "",
+    alternativeManagerReason: "",
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [companyHolidays, setCompanyHolidays] = useState<Date[]>([]);
+  const [availableManagers, setAvailableManagers] = useState<any[]>([]);
+  const [currentManager, setCurrentManager] = useState<{ name: string; email: string } | null>(null);
 
   // Initialize form data when request changes
   useEffect(() => {
@@ -67,9 +73,53 @@ export const EditLeaveRequestDialog = ({ request, isOpen, onClose, onSuccess }: 
         leaveType,
         startDate: startDateStr ? new Date(startDateStr) : undefined,
         endDate: endDateStr ? new Date(endDateStr) : undefined,
+        useAlternativeManager: false,
+        alternativeManager: "",
+        alternativeManagerReason: "",
       });
     }
   }, [request]);
+
+  // Fetch available managers and current manager info
+  useEffect(() => {
+    const fetchManagersAndCurrentManager = async () => {
+      try {
+        const authToken = localStorage.getItem('auth_token');
+        if (!authToken) return;
+
+        // Fetch all users to get managers and current user's manager
+        const usersResponse = await fetch(`${apiConfig.endpoints.users}/basic`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        if (usersResponse.ok) {
+          const usersData = await usersResponse.json();
+          const allUsers = usersData.users || [];
+          
+          // Set available managers (users with manager or admin role)
+          const managers = allUsers.filter((u: any) => 
+            u.role === 'manager' || u.role === 'admin'
+          );
+          setAvailableManagers(managers);
+          
+          // For now, we'll use a placeholder for current manager since we don't have request's requester info
+          // In a real scenario, you'd get this from the request data
+          setCurrentManager({ 
+            name: "Current Manager", 
+            email: "current.manager@example.com" 
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch managers:', error);
+      }
+    };
+
+    if (isOpen) {
+      fetchManagersAndCurrentManager();
+    }
+  }, [isOpen]);
 
   // Fetch company holidays
   useEffect(() => {
@@ -143,6 +193,17 @@ export const EditLeaveRequestDialog = ({ request, isOpen, onClose, onSuccess }: 
       return;
     }
 
+    if (formData.useAlternativeManager) {
+      if (!formData.alternativeManager || !formData.alternativeManagerReason.trim()) {
+        toast({
+          title: "Alternative Manager Required",
+          description: "Please select an alternative manager and provide a reason.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     if (formData.startDate >= formData.endDate) {
       toast({
         title: "Invalid dates",
@@ -172,7 +233,12 @@ export const EditLeaveRequestDialog = ({ request, isOpen, onClose, onSuccess }: 
           };
           return standardizedTypes[formData.leaveType] || formData.leaveType;
         })(),
-        workingDays
+        workingDays,
+        // Include alternative manager information if selected
+        ...(formData.useAlternativeManager && formData.alternativeManager ? {
+          alternativeApprover: formData.alternativeManager,
+          approverReason: formData.alternativeManagerReason
+        } : {})
       };
 
       const response = await fetch(`${apiConfig.endpoints.leave}/${leaveId}`, {
@@ -185,9 +251,13 @@ export const EditLeaveRequestDialog = ({ request, isOpen, onClose, onSuccess }: 
       });
 
       if (response.ok) {
+        const successMessage = formData.useAlternativeManager 
+          ? "Your leave request has been updated and sent to the alternative manager for approval."
+          : "Your leave request has been updated and sent to your manager for re-approval.";
+        
         toast({
           title: "Request updated",
-          description: "Your leave request has been updated and sent to your manager for re-approval.",
+          description: successMessage,
         });
         onSuccess();
         onClose();
@@ -329,6 +399,69 @@ export const EditLeaveRequestDialog = ({ request, isOpen, onClose, onSuccess }: 
                 className="min-h-[100px]"
                 required
               />
+            </div>
+
+            {/* Manager Selection Section */}
+            <div className="space-y-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="flex items-center space-x-2">
+                <Users className="h-5 w-5 text-purple-600" />
+                <h4 className="font-medium text-purple-800">Manager Selection</h4>
+              </div>
+
+              {currentManager && !formData.useAlternativeManager && (
+                <div className="text-sm text-gray-600">
+                  <p><strong>Current Manager:</strong> {currentManager.name} ({currentManager.email})</p>
+                </div>
+              )}
+
+              <div className="flex items-center space-x-3">
+                <Switch
+                  id="useAlternativeManager"
+                  checked={formData.useAlternativeManager}
+                  onCheckedChange={(checked) => setFormData(prev => ({ 
+                    ...prev, 
+                    useAlternativeManager: checked,
+                    alternativeManager: checked ? prev.alternativeManager : "",
+                    alternativeManagerReason: checked ? prev.alternativeManagerReason : ""
+                  }))}
+                />
+                <Label htmlFor="useAlternativeManager" className="text-sm font-medium text-purple-800">
+                  Use Alternative Manager
+                </Label>
+              </div>
+
+              {formData.useAlternativeManager && (
+                <div className="space-y-4 pl-6 border-l-2 border-purple-300">
+                  <div className="space-y-2">
+                    <Label htmlFor="alternativeManager">Alternative Manager *</Label>
+                    <Select value={formData.alternativeManager || "none"} onValueChange={(value) => setFormData(prev => ({ ...prev, alternativeManager: value === "none" ? "" : value }))}>
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Select alternative manager" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white z-50">
+                        <SelectItem value="none" disabled>Select a manager</SelectItem>
+                        {availableManagers.map((manager) => (
+                          <SelectItem key={manager.email} value={manager.email}>
+                            {manager.name} ({manager.role})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="alternativeManagerReason">Reason for Alternative Manager *</Label>
+                    <Textarea
+                      id="alternativeManagerReason"
+                      placeholder="e.g., Regular manager is on vacation, urgent approval needed, etc."
+                      value={formData.alternativeManagerReason}
+                      onChange={(e) => setFormData(prev => ({ ...prev, alternativeManagerReason: e.target.value }))}
+                      rows={2}
+                      className="bg-white"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
