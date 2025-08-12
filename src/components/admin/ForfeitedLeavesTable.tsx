@@ -68,8 +68,8 @@ export const ForfeitedLeavesTable = () => {
           EmployeeName: balance.EmployeeName || balance.employee_name || 'Unknown',
           EmployeeEmail: balance.EmployeeEmail || balance.employee_email || '',
           Department: balance.Department || balance.department || 'Unknown',
-          Broughtforward: balance.Broughtforward || balance.brought_forward || 0,
-          Forfeited: balance.Forfeited || balance.forfeited || balance.Forfeit || balance.forfeit || 0
+          Broughtforward: Number(balance.Broughtforward || balance.brought_forward || 0),
+          Forfeited: Number(balance.Forfeited || balance.forfeited || balance.Forfeit || balance.forfeit || 0)
         }));
 
       console.log('ForfeitedLeavesTable - Forfeited leaves:', forfeitedData);
@@ -169,10 +169,10 @@ export const ForfeitedLeavesTable = () => {
                     <TableCell>{employee.EmployeeEmail}</TableCell>
                     <TableCell>{employee.Department}</TableCell>
                     <TableCell className="text-right">
-                      {employee.Broughtforward.toFixed(1)} days
+                      {Number(employee.Broughtforward || 0).toFixed(1)} days
                     </TableCell>
                     <TableCell className="text-right text-red-600 font-medium">
-                      {employee.Forfeited.toFixed(1)} days
+                      {Number(employee.Forfeited || 0).toFixed(1)} days
                     </TableCell>
                   </TableRow>
                 ))}
