@@ -42,15 +42,34 @@ export const ForfeitedLeavesTable = () => {
                           (data.success && data.data ? data.data : 
                            data.data || []);
       
+      console.log('ForfeitedLeavesTable - Raw balance array:', balanceArray);
+      console.log('ForfeitedLeavesTable - Sample balance record:', balanceArray[0]);
+      
+      // Debug: Check all possible field names for forfeited
+      balanceArray.forEach((balance: any, index: number) => {
+        const forfeitedValue = balance.Forfeited || balance.forfeited || balance.Forfeit || balance.forfeit || 0;
+        if (index < 3) { // Log first 3 records for debugging
+          console.log(`Balance ${index}:`, {
+            name: balance.EmployeeName || balance.employee_name,
+            forfeited: forfeitedValue,
+            allFields: Object.keys(balance)
+          });
+        }
+      });
+      
       // Filter employees who have forfeited leave > 0
       const forfeitedData = balanceArray
-        .filter((balance: any) => (balance.Forfeited || 0) > 0)
+        .filter((balance: any) => {
+          const forfeitedValue = balance.Forfeited || balance.forfeited || balance.Forfeit || balance.forfeit || 0;
+          console.log(`Checking ${balance.EmployeeName || balance.employee_name}: forfeited = ${forfeitedValue}`);
+          return forfeitedValue > 0;
+        })
         .map((balance: any) => ({
           EmployeeName: balance.EmployeeName || balance.employee_name || 'Unknown',
           EmployeeEmail: balance.EmployeeEmail || balance.employee_email || '',
           Department: balance.Department || balance.department || 'Unknown',
           Broughtforward: balance.Broughtforward || balance.brought_forward || 0,
-          Forfeited: balance.Forfeited || balance.forfeited || 0
+          Forfeited: balance.Forfeited || balance.forfeited || balance.Forfeit || balance.forfeit || 0
         }));
 
       console.log('ForfeitedLeavesTable - Forfeited leaves:', forfeitedData);
