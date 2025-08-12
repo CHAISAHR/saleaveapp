@@ -130,6 +130,15 @@ router.post('/register', async (req, res) => {
       console.log('Continuing with registration despite leave balance error');
     }
 
+    // Send admin notification about new user registration
+    try {
+      await emailService.notifyAdminsOfNewUserRegistration(email, fullName, department, gender);
+      console.log('Admin notification sent for new user registration:', email);
+    } catch (emailError) {
+      console.error('Failed to send admin notification for new user:', emailError);
+      // Don't fail registration if admin notification fails
+    }
+
     console.log('Registration completed successfully for:', email);
     res.status(201).json({
       success: true,

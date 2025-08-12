@@ -93,6 +93,60 @@ class EmailService {
     await this.sendEmail(notification);
   }
 
+  // Send email notification to admins when a new user registers
+  async notifyAdminsOfNewUserRegistration(userEmail: string, userName: string, department: string, gender: string): Promise<void> {
+    // Import database function to get admin emails
+    const { executeQuery } = require('../config/database');
+    
+    try {
+      // Get all admin users
+      const adminUsers = await executeQuery(
+        'SELECT email, name FROM users WHERE role = ? AND is_active = TRUE',
+        ['admin']
+      );
+
+      console.log(`Found ${adminUsers.length} admin users to notify of new registration`);
+
+      // Send notification to each admin
+      for (const admin of adminUsers) {
+        const notification: EmailNotification = {
+          recipient_email: admin.email,
+          sender_email: this.FROM_EMAIL,
+          subject: `New User Registration - ${userName}`,
+          message: `
+            Dear ${admin.name},
+
+            A new user has successfully registered in the Leave Management System and requires your attention:
+
+            NEW USER DETAILS:
+            • Name: ${userName}
+            • Email: ${userEmail}
+            • Department: ${department}
+            • Gender: ${gender}
+            • Registration Date: ${new Date().toLocaleDateString('en-GB')}
+
+            NEXT STEPS:
+            • Please review the new user's department assignment
+            • Verify the user's manager assignment if needed
+            • Confirm their role permissions are correct
+            • Welcome the new team member to the system
+
+            You can access the user management section at: ${process.env.FRONTEND_URL}
+
+            Best regards,
+            Leave Management System
+          `,
+          notification_type: 'user_registration'
+        };
+
+        await this.sendEmail(notification);
+      }
+    } catch (error) {
+      console.error('Failed to notify admins of new user registration:', error);
+      // Don't throw error to prevent breaking the registration process
+    }
+  }
+
   // Send email notification to manager when leave is submitted
   async notifyManagerOfLeaveRequest(leaveRequest: any, managerEmail: string): Promise<void> {
     const notification: EmailNotification = {
