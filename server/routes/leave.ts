@@ -643,6 +643,33 @@ router.get('/documents', authenticateToken, requireRole(['manager', 'admin', 'CD
             return res.status(500).json({ success: false, message: 'Failed to verify database tables' });
         }
 
+        // Check which timestamp column exists in leave_attachments table
+        let timestampColumn = 'created_at';
+        try {
+            const columnCheck = await executeQuery(`
+                SELECT COLUMN_NAME FROM information_schema.columns 
+                WHERE table_schema = DATABASE() 
+                AND table_name = 'leave_attachments' 
+                AND COLUMN_NAME IN ('created_at', 'uploaded_at')
+            `);
+            
+            console.log('[Documents] Available timestamp columns:', columnCheck);
+            
+            // Use uploaded_at if created_at doesn't exist
+            if (columnCheck.length > 0) {
+                if (columnCheck.some(col => col.COLUMN_NAME === 'created_at')) {
+                    timestampColumn = 'created_at';
+                } else if (columnCheck.some(col => col.COLUMN_NAME === 'uploaded_at')) {
+                    timestampColumn = 'uploaded_at';
+                }
+            }
+        } catch (columnError) {
+            console.error('[Documents] Column check failed, using default:', columnError);
+            timestampColumn = 'uploaded_at'; // Fallback to old column name
+        }
+
+        console.log('[Documents] Using timestamp column:', timestampColumn);
+
         let query = '';
         let params: any[] = [];
 
@@ -650,20 +677,20 @@ router.get('/documents', authenticateToken, requireRole(['manager', 'admin', 'CD
             // Admin can see all documents
             query = `
                 SELECT
-                    la.id, la.leave_id, la.filename, la.original_name, la.file_type, la.file_size, la.created_at as uploaded_at,
+                    la.id, la.leave_id, la.filename, la.original_name, la.file_type, la.file_size, la.${timestampColumn} as uploaded_at,
                     lt.Title as leave_title, lt.LeaveType as leave_type, lt.Requester as requester_email,
                     u.name as requester_name,
                     u.department as department_name
                 FROM leave_attachments la
                 JOIN leave_taken lt ON la.leave_id = lt.LeaveID
                 JOIN users u ON lt.Requester = u.email
-                ORDER BY la.created_at DESC
+                ORDER BY la.${timestampColumn} DESC
             `;
         } else if (req.user!.role === 'manager' || req.user!.role === 'CD') {
             // Manager can see documents from their team and alternative approvals
             query = `
                 SELECT
-                    la.id, la.leave_id, la.filename, la.original_name, la.file_type, la.file_size, la.created_at as uploaded_at,
+                    la.id, la.leave_id, la.filename, la.original_name, la.file_type, la.file_size, la.${timestampColumn} as uploaded_at,
                     lt.Title as leave_title, lt.LeaveType as leave_type, lt.Requester as requester_email,
                     u.name as requester_name,
                     u.department as department_name
@@ -672,7 +699,7 @@ router.get('/documents', authenticateToken, requireRole(['manager', 'admin', 'CD
                 JOIN users u ON lt.Requester = u.email
                 LEFT JOIN leave_balances lb ON lt.Requester = lb.EmployeeEmail
                 WHERE (lb.Manager = ? OR lt.AlternativeApprover = ?) AND lt.Requester != ?
-                ORDER BY la.created_at DESC
+                ORDER BY la.${timestampColumn} DESC
             `;
             params = [req.user!.email, req.user!.email, req.user!.email];
         } else {
