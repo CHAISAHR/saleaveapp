@@ -24,19 +24,26 @@ export const AuditLog = () => {
   const fetchAuditActivity = async () => {
     try {
       setLoading(true);
+      console.log('Fetching audit activity from:', `${apiConfig.endpoints.audit}/recent?limit=100`);
+      
       const response = await makeApiRequest(`${apiConfig.endpoints.audit}/recent?limit=100`, {
         method: 'GET'
       });
 
+      console.log('Audit API response status:', response.status);
       const data = await response.json();
+      console.log('Audit API response data:', data);
+      
       if (data && data.success) {
+        console.log('Audit entries received:', data.activity?.length || 0);
         setAuditEntries(data.activity || []);
       } else {
-        toast.error('Failed to fetch audit activity');
+        console.error('API returned unsuccessful response:', data);
+        toast.error(`Failed to fetch audit activity: ${data?.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error fetching audit activity:', error);
-      toast.error('Failed to fetch audit activity');
+      toast.error(`Failed to fetch audit activity: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
