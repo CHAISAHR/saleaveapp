@@ -86,7 +86,7 @@ export const LeaveDetailsDialog = ({
     switch (status) {
       case 'approved':
         return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'rejected':
+      case 'declined':
         return <XCircle className="h-5 w-5 text-red-500" />;
       case 'pending':
         return <AlertCircle className="h-5 w-5 text-yellow-500" />;
@@ -101,8 +101,8 @@ export const LeaveDetailsDialog = ({
     switch (status) {
       case 'approved':
         return <Badge variant="default" className="bg-lime-600">Approved</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">Rejected</Badge>;
+      case 'declined':
+        return <Badge variant="destructive">Declined</Badge>;
       case 'pending':
         return <Badge variant="secondary">Pending</Badge>;
       case 'cancelled':

@@ -20,7 +20,7 @@ interface LeaveRequest {
   LeaveType: string;
   Requester: string;
   Approver?: string;
-  Status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  Status: 'pending' | 'approved' | 'declined' | 'cancelled';
   workingDays: number;
   Created: string;
   Modified: string;
@@ -135,8 +135,8 @@ export const StaffLeaveEditor = ({ userEmail }: StaffLeaveEditorProps) => {
     switch (status) {
       case 'approved':
         return <Badge variant="default" className="bg-lime-600">Approved</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">Rejected</Badge>;
+      case 'declined':
+        return <Badge variant="destructive">Declined</Badge>;
       case 'pending':
         return <Badge variant="secondary">Pending</Badge>;
       case 'cancelled':

@@ -27,7 +27,7 @@ const getStatusIcon = (status: string) => {
   switch (status) {
     case 'approved':
       return <CheckCircle className="h-4 w-4 text-green-500" />;
-    case 'rejected':
+    case 'declined':
       return <XCircle className="h-4 w-4 text-red-500" />;
     case 'pending':
       return <AlertCircle className="h-4 w-4 text-yellow-500" />;
@@ -42,7 +42,7 @@ const getStatusBadge = (status: string) => {
       return <Badge variant="default" className="bg-lime-600">
           {status.charAt(0).toUpperCase() + status.slice(1)}
         </Badge>;
-    case 'rejected':
+    case 'declined':
       return <Badge variant="destructive">
           {status.charAt(0).toUpperCase() + status.slice(1)}
         </Badge>;

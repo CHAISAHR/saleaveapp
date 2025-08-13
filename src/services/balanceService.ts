@@ -39,7 +39,7 @@ export interface LeaveRequest {
   LeaveType: string;
   Requester: string;
   Approver?: string;
-  Status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  Status: 'pending' | 'approved' | 'declined' | 'cancelled';
   workingDays: number;
 }
 
