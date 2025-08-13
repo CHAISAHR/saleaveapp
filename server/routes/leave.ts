@@ -616,6 +616,33 @@ router.get('/documents', authenticateToken, requireRole(['manager', 'admin', 'CD
     try {
         console.log(`[Documents] ${req.method} ${req.path} - User: ${req.user!.email} (${req.user!.role})`);
 
+        // Test database connectivity first
+        try {
+            await executeQuery('SELECT 1 as test');
+            console.log('[Documents] Database connection test successful');
+        } catch (dbError) {
+            console.error('[Documents] Database connection test failed:', dbError);
+            return res.status(500).json({ success: false, message: 'Database connection failed' });
+        }
+
+        // Check if tables exist
+        try {
+            const tableCheck = await executeQuery(`
+                SELECT COUNT(*) as count FROM information_schema.tables 
+                WHERE table_schema = DATABASE() 
+                AND table_name IN ('leave_attachments', 'leave_taken', 'users')
+            `);
+            console.log('[Documents] Table check result:', tableCheck);
+            
+            if (tableCheck[0]?.count < 3) {
+                console.error('[Documents] Missing required tables');
+                return res.status(500).json({ success: false, message: 'Database tables not found' });
+            }
+        } catch (tableError) {
+            console.error('[Documents] Table check failed:', tableError);
+            return res.status(500).json({ success: false, message: 'Failed to verify database tables' });
+        }
+
         let query = '';
         let params: any[] = [];
 
@@ -626,7 +653,7 @@ router.get('/documents', authenticateToken, requireRole(['manager', 'admin', 'CD
                     la.id, la.leave_id, la.filename, la.original_name, la.file_type, la.file_size, la.created_at as uploaded_at,
                     lt.Title as leave_title, lt.LeaveType as leave_type, lt.Requester as requester_email,
                     u.name as requester_name,
-                    u.department as department_name -- <--- ADDED: Fetch department name for display
+                    u.department as department_name
                 FROM leave_attachments la
                 JOIN leave_taken lt ON la.leave_id = lt.LeaveID
                 JOIN users u ON lt.Requester = u.email
@@ -639,7 +666,7 @@ router.get('/documents', authenticateToken, requireRole(['manager', 'admin', 'CD
                     la.id, la.leave_id, la.filename, la.original_name, la.file_type, la.file_size, la.created_at as uploaded_at,
                     lt.Title as leave_title, lt.LeaveType as leave_type, lt.Requester as requester_email,
                     u.name as requester_name,
-                    u.department as department_name -- <--- ADDED: Fetch department name for display
+                    u.department as department_name
                 FROM leave_attachments la
                 JOIN leave_taken lt ON la.leave_id = lt.LeaveID
                 JOIN users u ON lt.Requester = u.email
@@ -653,9 +680,15 @@ router.get('/documents', authenticateToken, requireRole(['manager', 'admin', 'CD
             return res.status(403).json({ success: false, message: 'Forbidden: Insufficient permissions to view documents.' });
         }
 
+        console.log('[Documents] Executing query:', query);
+        console.log('[Documents] Query parameters:', params);
+
         const documents = await executeQuery(query, params);
 
         console.log(`[Documents] Found ${documents.length} documents`);
+        if (documents.length > 0) {
+            console.log('[Documents] Sample document:', documents[0]);
+        }
 
         res.json({
             success: true,
@@ -663,7 +696,12 @@ router.get('/documents', authenticateToken, requireRole(['manager', 'admin', 'CD
         });
     } catch (error) {
         console.error('[Documents] Error fetching documents:', error);
-        res.status(500).json({ success: false, message: 'Failed to fetch documents' });
+        console.error('[Documents] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to fetch documents',
+            error: error instanceof Error ? error.message : 'Unknown error'
+        });
     }
 });
 
