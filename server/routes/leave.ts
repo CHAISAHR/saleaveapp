@@ -657,9 +657,9 @@ router.get('/documents', authenticateToken, requireRole(['manager', 'admin', 'CD
             
             // Use uploaded_at if created_at doesn't exist
             if (columnCheck.length > 0) {
-                if (columnCheck.some(col => col.COLUMN_NAME === 'created_at')) {
+                if (columnCheck.some((col: any) => col.COLUMN_NAME === 'created_at')) {
                     timestampColumn = 'created_at';
-                } else if (columnCheck.some(col => col.COLUMN_NAME === 'uploaded_at')) {
+                } else if (columnCheck.some((col: any) => col.COLUMN_NAME === 'uploaded_at')) {
                     timestampColumn = 'uploaded_at';
                 }
             }
