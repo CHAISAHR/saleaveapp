@@ -158,7 +158,7 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({
-          status: 'rejected',
+          status: 'declined',
           approver: currentUser.email
         })
       });
@@ -167,8 +167,8 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
         setPendingRequests(prev => prev.filter(r => r.LeaveID !== requestId));
         
         toast({
-          title: "Request Rejected",
-          description: `${employeeName}'s leave request has been rejected.`,
+          title: "Request Declined",
+          description: `${employeeName}'s leave request has been declined.`,
           variant: "destructive",
         });
       }
@@ -225,8 +225,8 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
         return <Badge variant="default">Approved</Badge>;
       case 'pending':
         return <Badge variant="secondary">Pending</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">Rejected</Badge>;
+      case 'declined':
+        return <Badge variant="destructive">Declined</Badge>;
       case 'cancelled':
         return <Badge variant="outline">Cancelled</Badge>;
       default:
@@ -394,8 +394,8 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
     );
   }
 
-  // Filter rejected requests
-  const rejectedRequests = historicRequests.filter(request => request.Status === 'rejected');
+  // Filter declined requests
+  const rejectedRequests = historicRequests.filter(request => request.Status === 'declined');
 
   return (
     <div className="space-y-6">
@@ -443,7 +443,7 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
                 <XCircle className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Rejected</p>
+                <p className="text-sm text-gray-600">Declined</p>
                 <p className="text-2xl font-bold text-gray-900">{rejectedRequests.length}</p>
               </div>
             </div>

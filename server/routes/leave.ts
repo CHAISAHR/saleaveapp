@@ -479,7 +479,7 @@ router.put('/requests/:id/status', authenticateToken, requireRole(['manager', 'a
       if (status === 'approved') {
         await emailService.notifyEmployeeOfApproval(leave, approverName);
         console.log(`Approval email notification sent to: ${leave.Requester}`);
-      } else if (status === 'rejected') {
+      } else if (status === 'declined') {
         await emailService.notifyEmployeeOfRejection(leave, approverName, reason);
         // Also notify HR & Ops manager of rejection
         await emailService.notifyHROfLeaveRejection(leave, leave.Requester, reason, approverName);

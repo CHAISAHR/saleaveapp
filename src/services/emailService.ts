@@ -105,22 +105,22 @@ class EmailService {
     await this.sendEmail(notification);
   }
 
-  // Send email notification to employee when leave is rejected
+  // Send email notification to employee when leave is declined
   async notifyEmployeeOfRejection(leaveRequest: any, approverName: string, reason?: string): Promise<void> {
     const notification: EmailNotification = {
       recipient_email: leaveRequest.Requester || leaveRequest.employeeEmail,
       sender_email: 'noreply@company.com',
-      subject: `Leave Request Rejected: ${leaveRequest.Title || leaveRequest.title}`,
+      subject: `Leave Request Declined: ${leaveRequest.Title || leaveRequest.title}`,
       message: `
         Hello,
 
-        We regret to inform you that your leave request has been rejected.
+        We regret to inform you that your leave request has been declined.
 
         Leave Details:
         - Leave Type: ${leaveRequest.LeaveType || leaveRequest.leaveType}
         - Start Date: ${leaveRequest.StartDate || leaveRequest.startDate}
         - End Date: ${leaveRequest.EndDate || leaveRequest.endDate}
-        - Rejected by: ${approverName}
+        - Declined by: ${approverName}
         ${reason ? `- Reason: ${reason}` : ''}
 
         Please contact your manager if you have any questions.

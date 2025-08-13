@@ -292,7 +292,7 @@ BEGIN
         Requester,
         NULLIF(Approver, ''),
         CASE 
-            WHEN LOWER(Status) IN ('pending', 'approved', 'rejected', 'cancelled') THEN LOWER(Status)
+            WHEN LOWER(Status) IN ('pending', 'approved', 'declined', 'cancelled') THEN LOWER(Status)
             ELSE 'pending' 
         END,
         CAST(NULLIF(workingDays, '') AS DECIMAL(8,3)),

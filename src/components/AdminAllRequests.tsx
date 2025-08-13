@@ -25,7 +25,7 @@ interface LeaveRequest {
   LeaveType: string;
   Requester: string;
   Approver?: string;
-  Status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  Status: 'pending' | 'approved' | 'declined' | 'cancelled';
   workingDays: number;
   Created: string;
   Modified: string;
@@ -91,7 +91,7 @@ export const AdminAllRequests = () => {
     fetchRequests();
   }, []);
 
-  const handleStatusUpdate = async (requestId: number, newStatus: 'pending' | 'approved' | 'rejected' | 'cancelled', reason?: string) => {
+  const handleStatusUpdate = async (requestId: number, newStatus: 'pending' | 'approved' | 'declined' | 'cancelled', reason?: string) => {
     try {
       const response = await makeApiRequest(`${apiConfig.endpoints.leave}/requests/${requestId}/status`, {
         method: 'PUT',
@@ -237,7 +237,7 @@ export const AdminAllRequests = () => {
   };
 
   const handleDialogReject = async (requestId: number, reason?: string) => {
-    await handleStatusUpdate(requestId, 'rejected', reason);
+    await handleStatusUpdate(requestId, 'declined', reason);
     await fetchRequests(); // Refresh data
   };
 
@@ -302,8 +302,8 @@ export const AdminAllRequests = () => {
     switch (status) {
       case 'approved':
         return <Badge variant="default" className="bg-lime-600">Approved</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">Rejected</Badge>;
+      case 'declined':
+        return <Badge variant="destructive">Declined</Badge>;
       case 'pending':
         return <Badge variant="secondary">Pending</Badge>;
       case 'cancelled':
@@ -374,7 +374,7 @@ export const AdminAllRequests = () => {
                     <SelectItem value="all">All statuses</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
+                    <SelectItem value="declined">Declined</SelectItem>
                     <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
@@ -645,7 +645,7 @@ export const AdminAllRequests = () => {
                             <SelectContent>
                               <SelectItem value="pending">Pending</SelectItem>
                               <SelectItem value="approved">Approved</SelectItem>
-                              <SelectItem value="rejected">Rejected</SelectItem>
+                              <SelectItem value="declined">Declined</SelectItem>
                               <SelectItem value="cancelled">Cancelled</SelectItem>
                             </SelectContent>
                           </Select>

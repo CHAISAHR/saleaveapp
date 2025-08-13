@@ -39,7 +39,7 @@ export interface LeaveApplication {
   end_date: string;
   total_days: number;
   is_half_day: boolean;
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  status: 'pending' | 'approved' | 'declined' | 'cancelled';
   approved_by?: number;
   approved_at?: string;
   rejection_reason?: string;
@@ -167,7 +167,7 @@ export const leaveService = {
 
   async rejectLeaveApplication(applicationId: number, approverId: number, reason: string): Promise<void> {
     // Mock implementation - would POST to /api/leave-applications/{applicationId}/reject
-    console.log(`Application ${applicationId} rejected by user ${approverId}. Reason: ${reason}`);
+    console.log(`Application ${applicationId} declined by user ${approverId}. Reason: ${reason}`);
   },
 
   // Holiday management

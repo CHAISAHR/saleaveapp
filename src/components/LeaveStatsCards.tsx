@@ -74,9 +74,9 @@ export const LeaveStatsCards = ({ leaveRequests }: LeaveStatsCardsProps) => {
               <XCircle className="h-5 w-5 text-red-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Rejected</p>
+              <p className="text-sm text-gray-600">Declined</p>
               <p className="text-2xl font-bold text-gray-900">
-                {leaveRequests.filter(r => r.status === 'rejected').length}
+                {leaveRequests.filter(r => r.status === 'declined').length}
               </p>
             </div>
           </div>

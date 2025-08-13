@@ -61,7 +61,7 @@ CREATE TABLE leave_taken (
     Approver VARCHAR(255) NULL,
     AlternativeApprover VARCHAR(255) NULL, -- New field for alternative manager
     ApproverReason TEXT NULL, -- Reason for alternative approver
-    Status ENUM('pending', 'approved', 'rejected', 'cancelled') DEFAULT 'pending',
+    Status ENUM('pending', 'approved', 'declined', 'cancelled') DEFAULT 'pending',
     workingDays DECIMAL(8,3) DEFAULT 0, -- Fixed column name to match API
     Created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     Modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

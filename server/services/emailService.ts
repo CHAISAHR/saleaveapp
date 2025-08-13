@@ -210,23 +210,23 @@ class EmailService {
     await this.sendEmail(notification);
   }
 
-  // Send email notification to employee when leave is rejected
+  // Send email notification to employee when leave is declined
   async notifyEmployeeOfRejection(leaveRequest: any, approverName: string, reason?: string): Promise<void> {
     const notification: EmailNotification = {
       recipient_email: leaveRequest.Requester || leaveRequest.employeeEmail,
       sender_email: this.FROM_EMAIL,
       cc_email: this.ADMIN_EMAIL,
-      subject: `Leave Request Rejected: ${leaveRequest.Title || leaveRequest.title}`,
+      subject: `Leave Request Declined: ${leaveRequest.Title || leaveRequest.title}`,
       message: `
         Hello,
 
-        We regret to inform you that your leave request has been rejected.
+        We regret to inform you that your leave request has been declined.
 
         Leave Details:
         - Leave Type: ${leaveRequest.LeaveType || leaveRequest.leaveType}
         - Start Date: ${this.formatDateForDisplay(leaveRequest.StartDate || leaveRequest.startDate)}
         - End Date: ${this.formatDateForDisplay(leaveRequest.EndDate || leaveRequest.endDate)}
-        - Rejected by: ${approverName}
+        - Declined by: ${approverName}
         ${reason ? `- Reason: ${reason}` : ''}
 
         Please contact your manager if you have any questions.
@@ -241,21 +241,21 @@ class EmailService {
     await this.sendEmail(notification);
   }
 
-  // Send email notification to HR & Ops manager when leave is rejected
+  // Send email notification to HR & Ops manager when leave is declined
   async notifyHROfLeaveRejection(leaveRequest: any, employeeName: string, rejectionReason: string, approverName: string): Promise<void> {
     const notification: EmailNotification = {
       recipient_email: this.ADMIN_EMAIL, // HR & Ops manager
       sender_email: this.FROM_EMAIL,
-      subject: `Leave Request Rejected - ${employeeName}`,
+      subject: `Leave Request Declined - ${employeeName}`,
       message: `
-        A leave request has been rejected and requires HR attention:
+        A leave request has been declined and requires HR attention:
 
         Employee: ${employeeName}
         Email: ${leaveRequest.Requester || leaveRequest.employeeEmail}
         Leave Type: ${leaveRequest.LeaveType || leaveRequest.leaveType}
         Start Date: ${this.formatDateForDisplay(leaveRequest.StartDate || leaveRequest.startDate)}
         End Date: ${this.formatDateForDisplay(leaveRequest.EndDate || leaveRequest.endDate)}
-        Rejected by: ${approverName}
+        Declined by: ${approverName}
         
         REJECTION REASON: ${rejectionReason}
 
