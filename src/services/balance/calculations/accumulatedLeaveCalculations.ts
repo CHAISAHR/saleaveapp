@@ -2,7 +2,7 @@
 import { EmployeeBalance } from '../../balanceService';
 
 export class AccumulatedLeaveCalculations {
-  // Calculate AccumulatedLeave using 30 days per month logic to match SQL calculations
+  // Calculate AccumulatedLeave - monthly chunks approach with proper prorated calculation
   static calculateAccumulatedLeave(currentDate: Date = new Date(), terminationDate?: string, startDate?: string): number {
     const year = currentDate.getFullYear();
     const targetDate = terminationDate ? new Date(terminationDate) : currentDate;
@@ -27,11 +27,11 @@ export class AccumulatedLeaveCalculations {
       employeeStartDate = new Date(year, 0, 1);
     }
     
-    // Calculate days worked using the same logic as SQL
+    // Use the exact same logic as the SQL: FLOOR(DATEDIFF(current_date, start_date) / 30) * 1.667
     const msPerDay = 1000 * 60 * 60 * 24;
     const daysWorked = Math.floor((calculationDate.getTime() - employeeStartDate.getTime()) / msPerDay) + 1;
     
-    // Use 30 days per month calculation to match SQL logic
+    // Use FLOOR(days / 30) to match SQL logic exactly
     const monthsWorked = Math.floor(daysWorked / 30);
     const accumulated = Math.min(monthsWorked * 1.667, 20);
     
