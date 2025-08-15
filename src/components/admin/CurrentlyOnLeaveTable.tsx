@@ -186,7 +186,7 @@ export const CurrentlyOnLeaveTable = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Employee</TableHead>
+                  <TableHead>Employee Name</TableHead>
                   <TableHead>Leave Type</TableHead>
                   <TableHead>Start Date</TableHead>
                   <TableHead>End Date</TableHead>
