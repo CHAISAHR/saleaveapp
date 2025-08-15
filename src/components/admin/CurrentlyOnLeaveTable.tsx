@@ -43,8 +43,9 @@ export const CurrentlyOnLeaveTable = () => {
                            (requestsData.success && requestsData.requests ? requestsData.requests : 
                             requestsData.data || []);
       
+      // Fix users array extraction - check for users property
       const usersArray = Array.isArray(usersData) ? usersData : 
-                        (usersData.success && usersData.data ? usersData.data : 
+                        (usersData.success && usersData.users ? usersData.users : 
                          usersData.data || []);
       
       // Create email to name mapping
@@ -56,6 +57,8 @@ export const CurrentlyOnLeaveTable = () => {
           emailToNameMap[email] = name;
         }
       });
+      
+      console.log('Email to name mapping:', emailToNameMap);
       
       console.log('CurrentlyOnLeave - Requests array:', requestsArray);
       
