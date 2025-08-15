@@ -2,7 +2,7 @@
 import { EmployeeBalance } from '../../balanceService';
 
 export class AccumulatedLeaveCalculations {
-  // Calculate AccumulatedLeave - monthly chunks approach with proper prorated calculation
+  // Calculate AccumulatedLeave - monthly chunks using actual calendar months
   static calculateAccumulatedLeave(currentDate: Date = new Date(), terminationDate?: string, startDate?: string): number {
     const year = currentDate.getFullYear();
     const targetDate = terminationDate ? new Date(terminationDate) : currentDate;
@@ -27,13 +27,46 @@ export class AccumulatedLeaveCalculations {
       employeeStartDate = new Date(year, 0, 1);
     }
     
-    // Use the exact same logic as the SQL: FLOOR(DATEDIFF(current_date, start_date) / 30) * 1.667
-    const msPerDay = 1000 * 60 * 60 * 24;
-    const daysWorked = Math.floor((calculationDate.getTime() - employeeStartDate.getTime()) / msPerDay) + 1;
+    let totalAccumulated = 0;
     
-    // Use FLOOR(days / 30) to match SQL logic exactly
-    const monthsWorked = Math.floor(daysWorked / 30);
-    const accumulated = Math.min(monthsWorked * 1.667, 20);
+    // Iterate through each month from start date to calculation date
+    let currentMonth = employeeStartDate.getMonth();
+    let currentYear = employeeStartDate.getFullYear();
+    
+    while (currentYear < calculationDate.getFullYear() || 
+           (currentYear === calculationDate.getFullYear() && currentMonth <= calculationDate.getMonth())) {
+      
+      const monthStart = new Date(currentYear, currentMonth, 1);
+      const monthEnd = new Date(currentYear, currentMonth + 1, 0); // Last day of month
+      
+      // Determine the actual period worked in this month
+      const periodStart = currentYear === employeeStartDate.getFullYear() && currentMonth === employeeStartDate.getMonth() 
+        ? employeeStartDate 
+        : monthStart;
+      
+      const periodEnd = currentYear === calculationDate.getFullYear() && currentMonth === calculationDate.getMonth()
+        ? calculationDate
+        : monthEnd;
+      
+      // Calculate days worked in this month
+      const daysInMonth = monthEnd.getDate();
+      const msPerDay = 1000 * 60 * 60 * 24;
+      const daysWorked = Math.floor((periodEnd.getTime() - periodStart.getTime()) / msPerDay) + 1;
+      
+      // Calculate prorated leave for this month (1.667 days per full month)
+      const monthlyLeave = 1.667 * (daysWorked / daysInMonth);
+      totalAccumulated += monthlyLeave;
+      
+      // Move to next month
+      currentMonth += 1;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear += 1;
+      }
+    }
+    
+    // Cap at 20 days maximum
+    const accumulated = Math.min(totalAccumulated, 20);
     
     return Number(accumulated.toFixed(1));
   }
