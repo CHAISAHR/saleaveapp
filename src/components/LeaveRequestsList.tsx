@@ -112,7 +112,7 @@ export const LeaveRequestsList = ({ leaveRequests, onRequestUpdated }: LeaveRequ
                   <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
                     <span>{request.startDate} to {request.endDate}</span>
                     <span>{request.days} day{request.days > 1 ? 's' : ''}</span>
-                    <span>{request.type} Leave</span>
+                    <span>{request.type} </span>
                   </div>
                 </div>
               </div>
