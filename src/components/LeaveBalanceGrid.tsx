@@ -68,8 +68,8 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
           {
             type: 'Maternity',
             used: employeeBalance.MaternityUsed || 0,
-            total: 3,
-            accrued: 3,
+            total: employeeBalance.gender?.toLowerCase() === 'female' ? 3 : 0,
+            accrued: employeeBalance.gender?.toLowerCase() === 'female' ? 3 : 0,
             unit: 'months',
             balance: balanceService.calculateCurrentBalance(employeeBalance, 'maternity')
           },

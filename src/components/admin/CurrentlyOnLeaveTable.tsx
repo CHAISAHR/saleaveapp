@@ -64,7 +64,7 @@ export const CurrentlyOnLeaveTable = () => {
       
       const today = new Date();
       
-      // Filter for approved requests that are currently active
+      // Filter for approved and pending requests that are currently active
       const activeLeave = requestsArray.filter(request => {
         const startDate = new Date(request.StartDate || request.startDate);
         const endDate = new Date(request.EndDate || request.endDate);
@@ -75,7 +75,7 @@ export const CurrentlyOnLeaveTable = () => {
         const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
         const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
         
-        return status === 'approved' && 
+        return (status === 'approved' || status === 'pending') && 
                startDateOnly <= todayDate && 
                endDateOnly >= todayDate;
       });
@@ -99,7 +99,8 @@ export const CurrentlyOnLeaveTable = () => {
           employeeEmail: requesterEmail,
           leaveType: leave.LeaveType || leave.leaveType,
           startDate: leave.StartDate || leave.startDate,
-          endDate: leave.EndDate || leave.endDate
+          endDate: leave.EndDate || leave.endDate,
+          status: leave.Status || leave.status
         };
       });
 
@@ -123,7 +124,8 @@ export const CurrentlyOnLeaveTable = () => {
       'Leave Type': staff.leaveType,
       'Start Date': new Date(staff.startDate).toLocaleDateString(),
       'End Date': new Date(staff.endDate).toLocaleDateString(),
-      'Days Remaining': staff.daysRemaining
+      'Days Remaining': staff.daysRemaining,
+      'Status': staff.status
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -142,7 +144,7 @@ export const CurrentlyOnLeaveTable = () => {
             <CalendarIcon className="h-5 w-5" />
             <span>Staff Currently on Leave</span>
           </CardTitle>
-          <CardDescription>Employees currently on approved leave today</CardDescription>
+          <CardDescription>Employees on leave today</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
@@ -163,7 +165,7 @@ export const CurrentlyOnLeaveTable = () => {
               <CalendarIcon className="h-5 w-5" />
               <span>Staff Currently on Leave</span>
             </CardTitle>
-            <CardDescription>Employees currently on approved leave today ({currentlyOnLeave.length})</CardDescription>
+            <CardDescription>Employees on leave today ({currentlyOnLeave.length})</CardDescription>
           </div>
           {currentlyOnLeave.length > 0 && (
             <Button
@@ -194,6 +196,7 @@ export const CurrentlyOnLeaveTable = () => {
                   <TableHead>Start Date</TableHead>
                   <TableHead>End Date</TableHead>
                   <TableHead>Days Remaining</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -231,6 +234,11 @@ export const CurrentlyOnLeaveTable = () => {
                     return 'default';
                   };
 
+                  // Function to get status color
+                  const getStatusVariant = (status) => {
+                    return status === 'approved' ? 'default' : 'secondary';
+                  };
+
                   return (
                     <TableRow key={staff.LeaveID || staff.id} className="hover:bg-muted/50 transition-colors">
                       <TableCell className="font-medium">{staff.employeeName}</TableCell>
@@ -254,6 +262,14 @@ export const CurrentlyOnLeaveTable = () => {
                           className="text-xs font-medium animate-fade-in hover-scale"
                         >
                           {staff.daysRemaining} {staff.daysRemaining === 1 ? 'day' : 'days'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={getStatusVariant(staff.status)}
+                          className="text-xs font-medium animate-fade-in capitalize"
+                        >
+                          {staff.status}
                         </Badge>
                       </TableCell>
                     </TableRow>

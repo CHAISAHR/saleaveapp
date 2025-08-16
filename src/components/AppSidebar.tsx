@@ -54,12 +54,12 @@ export const AppSidebar = ({
       }
     ];
 
-    // Add Dashboard tab for CD (first position)
+    // Add Dashboard tab for CD (first position) 
     if (userRole === 'CD') {
       baseItems.unshift({
         value: "admin-dashboard",
         icon: Database,
-        label: "Dashboard"
+        label: "CD Dashboard"
       });
     }
 

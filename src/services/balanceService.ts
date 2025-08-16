@@ -28,6 +28,7 @@ export interface EmployeeBalance {
   Contract_termination_date?: string;
   termination_balance?: number;
   Start_date?: string; // Employee start date for prorated calculations
+  gender?: string; // Gender for gender-specific leave calculations
 }
 
 export interface LeaveRequest {
