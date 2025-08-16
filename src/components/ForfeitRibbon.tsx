@@ -12,30 +12,39 @@ interface ForfeitRibbonProps {
 export const ForfeitRibbon = ({ broughtforward, annualUsed, annualLeaveAdjustments, forfeited }: ForfeitRibbonProps) => {
   const daysToForfeit = Math.max(0, broughtforward - annualLeaveAdjustments - annualUsed);
   
-  // Check if July 31st has passed for the current year
+  // Check date ranges for ribbon display
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const july31 = new Date(currentYear, 6, 31); // Month is 0-indexed, so 6 = July
-  const isAfterJuly31 = currentDate > july31;
+  const august31 = new Date(currentYear, 7, 31); // Month is 0-indexed, so 7 = August
   
-  // Don't show the ribbon if there are no days to forfeit and no forfeited days to show
-  if (!isAfterJuly31 && daysToForfeit === 0) {
+  const isBeforeAugust1 = currentDate <= july31;
+  const isAugust = currentDate > july31 && currentDate <= august31;
+  
+  // From Jan 1 - July 31: Show days to be forfeited (if any)
+  if (isBeforeAugust1 && daysToForfeit === 0) {
     return null;
   }
   
-  if (isAfterJuly31 && forfeited === 0) {
+  // From Aug 1 - Aug 31: Show forfeited days (if any)
+  if (isAugust && forfeited === 0) {
+    return null;
+  }
+  
+  // After Aug 31: Don't show ribbon
+  if (!isBeforeAugust1 && !isAugust) {
     return null;
   }
 
   return (
-    <Card className={`${isAfterJuly31 ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'} mb-6`}>
+    <Card className={`${isAugust ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'} mb-6`}>
       <CardContent className="p-4">
         <div className="flex items-center space-x-3">
-          <div className={`${isAfterJuly31 ? 'bg-red-100' : 'bg-amber-100'} p-2 rounded-lg`}>
-            <AlertTriangle className={`h-5 w-5 ${isAfterJuly31 ? 'text-red-600' : 'text-amber-600'}`} />
+          <div className={`${isAugust ? 'bg-red-100' : 'bg-amber-100'} p-2 rounded-lg`}>
+            <AlertTriangle className={`h-5 w-5 ${isAugust ? 'text-red-600' : 'text-amber-600'}`} />
           </div>
           <div>
-            {isAfterJuly31 ? (
+            {isAugust ? (
               <>
                 <h4 className="font-medium text-red-800">Leave Days Forfeited</h4>
                 <p className="text-sm text-red-700">
