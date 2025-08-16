@@ -85,7 +85,9 @@ export class CurrentBalanceCalculations {
       case 'sick':
         return this.calculateOtherLeaveBalance(36, balance.SickUsed);
       case 'maternity':
-        return this.calculateOtherLeaveBalance(3, balance.MaternityUsed); // 3 months
+        // Maternity leave is only available to female employees
+        const maternityAllocation = balance.gender?.toLowerCase() === 'female' ? 3 : 0;
+        return this.calculateOtherLeaveBalance(maternityAllocation, balance.MaternityUsed);
       case 'parental':
         return this.calculateOtherLeaveBalance(4, balance.ParentalUsed); // 4 weeks
       case 'family':
@@ -106,7 +108,10 @@ export class CurrentBalanceCalculations {
     return {
       annual: this.calculateAnnualLeaveBalance(balance, employeeStartDate),
       sick: this.calculateOtherLeaveBalance(36, balance.SickUsed),
-      maternity: this.calculateOtherLeaveBalance(3, balance.MaternityUsed), // 3 months
+      maternity: (() => {
+        const maternityAllocation = balance.gender?.toLowerCase() === 'female' ? 3 : 0;
+        return this.calculateOtherLeaveBalance(maternityAllocation, balance.MaternityUsed);
+      })(),
       parental: this.calculateOtherLeaveBalance(4, balance.ParentalUsed), // 4 weeks
       family: this.calculateOtherLeaveBalance(3, balance.FamilyUsed),
       adoption: this.calculateOtherLeaveBalance(4, balance.AdoptionUsed), // 4 weeks
