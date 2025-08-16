@@ -552,7 +552,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
     );
   }
 
-  const managers = users.filter(user => user.role === 'manager' || user.role === 'admin');
+  const managers = users.filter(user => user.role === 'manager' || user.role === 'admin' || user.role === 'CD');
   const activeDepartments = departments.filter(dept => dept.is_active);
 
   console.log('Rendering main AdminPanel content');
@@ -843,7 +843,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                   <div>
                     <p className="text-sm text-gray-600">Managers</p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {users.filter(u => u.role === 'manager').length}
+                      {users.filter(u => u.role === 'manager' || u.role === 'CD').length}
                     </p>
                   </div>
                 </div>

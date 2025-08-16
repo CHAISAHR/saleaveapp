@@ -33,6 +33,8 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
       case 'admin-dashboard':
         return userRole === 'CD' ? (
           <AdminDashboard currentUser={currentUser} />
+        ) : userRole === 'admin' ? (
+          <AdminDashboard currentUser={currentUser} />
         ) : null;
 
       case 'balance':
