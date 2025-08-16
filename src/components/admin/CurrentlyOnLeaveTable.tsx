@@ -144,7 +144,7 @@ export const CurrentlyOnLeaveTable = () => {
             <CalendarIcon className="h-5 w-5" />
             <span>Staff Currently on Leave</span>
           </CardTitle>
-          <CardDescription>Employees currently on approved leave today</CardDescription>
+          <CardDescription>Employees currently on leave today</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
