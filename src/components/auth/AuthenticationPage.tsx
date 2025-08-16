@@ -48,7 +48,7 @@ export const AuthenticationPage = ({ manualLogin, manualSignUp, resetPassword }:
             />
           </div>
           <CardTitle className="text-2xl">LeaveApp_SA</CardTitle>
-          <CardDescription>HR Management System - South Africa</CardDescription>
+          <CardDescription>Leave Management System - South Africa</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Auth mode toggle */}
