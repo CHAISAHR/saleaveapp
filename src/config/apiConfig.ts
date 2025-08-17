@@ -15,6 +15,14 @@ const getApiBaseUrl = () => {
     if (!viteApiUrl) {
         console.warn('VITE_API_URL environment variable is not set, using fallback');
 
+        // Check if we're in Lovable environment (uses .lovableproject.com)
+        if (window.location.host.includes('.lovableproject.com')) {
+            // In Lovable environment, use mock data for now
+            const fallbackUrl = 'MISSING_API_URL';
+            console.log('Using Lovable mock fallback:', fallbackUrl);
+            return fallbackUrl;
+        }
+
         // In development, use localhost on port 3001 (where the server runs)
         if (import.meta.env.DEV) {
             const fallbackUrl = 'http://localhost:3001';
@@ -217,6 +225,10 @@ const createMockResponse = (url: string, responseType?: 'json' | 'blob' | 'text'
             success: true,
             activity: [
                 { id: 1, table_name: 'leave_taken', record_id: '123', action: 'INSERT', old_values: null, new_values: '{"title":"Vacation","leaveType":"Annual Leave"}', changed_by: 'john.doe@example.com', changed_by_name: 'John Doe', changed_at: '2025-01-26T10:00:00Z' },
+                { id: 2, table_name: 'users', record_id: '456', action: 'UPDATE', old_values: '{"name":"Old Name"}', new_values: '{"name":"New Name"}', changed_by: 'admin@example.com', changed_by_name: 'Admin User', changed_at: '2025-01-26T11:00:00Z' },
+                { id: 3, table_name: 'leave_balances', record_id: '789', action: 'DELETE', old_values: '{"balance":"5"}', new_values: null, changed_by: 'manager@example.com', changed_by_name: 'Manager User', changed_at: '2025-01-26T12:00:00Z' },
+                { id: 4, table_name: 'holidays', record_id: '101', action: 'INSERT', old_values: null, new_values: '{"name":"New Year","date":"2025-01-01"}', changed_by: 'admin@example.com', changed_by_name: 'Admin User', changed_at: '2025-01-26T13:00:00Z' },
+                { id: 5, table_name: 'departments', record_id: '202', action: 'UPDATE', old_values: '{"name":"IT"}', new_values: '{"name":"Information Technology"}', changed_by: 'admin@example.com', changed_by_name: 'Admin User', changed_at: '2025-01-26T14:00:00Z' }
             ]
         };
     } else {

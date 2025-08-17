@@ -37,13 +37,20 @@ export const useUserRole = (user: AccountInfo | null) => {
   useEffect(() => {
     if (user) {
       console.log('[useUserRole] User changed, determining role for:', user.username);
+      console.log('[useUserRole] Full user object:', user);
+      console.log('[useUserRole] User idTokenClaims:', user.idTokenClaims);
       
       // Get role from token claims (this comes from the database via JWT)
       let actualRole: 'employee' | 'manager' | 'admin' | 'CD' = 'employee';
       
       if (user.idTokenClaims?.role) {
         console.log('[useUserRole] User role from token claims:', user.idTokenClaims.role);
-        actualRole = user.idTokenClaims.role as 'employee' | 'manager' | 'admin' | 'CD';
+        // Ensure CD role is properly handled
+        if (user.idTokenClaims.role === 'CD') {
+          actualRole = 'CD';
+        } else {
+          actualRole = user.idTokenClaims.role as 'employee' | 'manager' | 'admin' | 'CD';
+        }
       } else {
         console.log('[useUserRole] No role in token claims, defaulting to employee');
       }
@@ -54,6 +61,11 @@ export const useUserRole = (user: AccountInfo | null) => {
       // Log token info for debugging
       const authToken = localStorage.getItem('auth_token');
       console.log('[useUserRole] Auth token present:', !!authToken);
+      
+      // Force a re-render when role changes to CD
+      if (actualRole === 'CD') {
+        console.log('[useUserRole] CD role detected, forcing state update');
+      }
     }
   }, [user]);
 
