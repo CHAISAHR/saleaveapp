@@ -61,12 +61,6 @@ export const AppSidebar = ({
         icon: Database,
         label: "CD Dashboard"
       });
-      // Add team management for CD
-      baseItems.splice(1, 0, {
-        value: "team-management",
-        icon: Users,
-        label: "Team Management"
-      });
     }
 
     // Add balance tab only for employees, managers, and country directors (not admin)
