@@ -19,15 +19,33 @@ class EmailService {
 
   constructor() {
     // Initialize email transporter
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    this.transporter = nodemailer.createTransporter({
+      host: process.env.SMTP_HOST || 'smtp.office365.com',
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: false, // true for 465, false for other ports
+      requireTLS: true, // Office365 requires TLS
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
+      tls: {
+        ciphers: 'SSLv3'
+      }
     });
+
+    // Verify SMTP connection on startup
+    this.verifyConnection();
+  }
+
+  // Verify email connection
+  private async verifyConnection(): Promise<void> {
+    try {
+      await this.transporter.verify();
+      console.log('✅ Email service connected successfully');
+    } catch (error) {
+      console.error('❌ Email service connection failed:', error);
+      console.log('Please check your SMTP_USER and SMTP_PASS environment variables');
+    }
   }
 
   // Send password reset email
