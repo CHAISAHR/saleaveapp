@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle, XCircle, AlertCircle, Clock, Users, Calendar, Mail, Ban, Edit } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { LeaveDetailsDialog } from "@/components/LeaveDetailsDialog";
 import { apiConfig, makeApiRequest } from "@/config/apiConfig";
@@ -318,56 +319,65 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm font-medium text-gray-600">Annual Leave</span>
-                            <span className="text-sm text-gray-500">
-                              {annualBalance} days
-                            </span>
+                      <div className="flex flex-wrap items-center gap-4">
+                        <div className="flex items-center">
+                          <div className="space-y-2 min-w-[180px]">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-medium text-gray-600">Annual Leave</span>
+                              <span className="text-sm text-gray-500">
+                                {annualBalance} days
+                              </span>
+                            </div>
+                            <Progress 
+                              value={((20 - annualBalance) / 20) * 100} 
+                              className="h-2"
+                            />
+                            <div className="text-xs text-gray-400">
+                              Used: {member.AnnualUsed} | BF: {member.Broughtforward}
+                            </div>
                           </div>
-                          <Progress 
-                            value={((20 - annualBalance) / 20) * 100} 
-                            className="h-2"
-                          />
-                          <div className="text-xs text-gray-400">
-                            Used: {member.AnnualUsed} | BF: {member.Broughtforward}
-                          </div>
+                          <Separator orientation="vertical" className="h-16 mx-4" />
                         </div>
                         
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm font-medium text-gray-600">Study Leave</span>
-                            <span className="text-sm text-gray-500">
-                              {studyBalance} days
-                            </span>
+                        <div className="flex items-center">
+                          <div className="space-y-2 min-w-[180px]">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-medium text-gray-600">Study Leave</span>
+                              <span className="text-sm text-gray-500">
+                                {studyBalance} days
+                              </span>
+                            </div>
+                            <Progress 
+                              value={((6 - studyBalance) / 6) * 100} 
+                              className="h-2"
+                            />
+                            <div className="text-xs text-gray-400">
+                              Used: {member.StudyUsed}
+                            </div>
                           </div>
-                          <Progress 
-                            value={((6 - studyBalance) / 6) * 100} 
-                            className="h-2"
-                          />
-                          <div className="text-xs text-gray-400">
-                            Used: {member.StudyUsed}
-                          </div>
+                          <Separator orientation="vertical" className="h-16 mx-4" />
                         </div>
                         
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm font-medium text-gray-600">Wellness Leave</span>
-                            <span className="text-sm text-gray-500">
-                              {wellnessBalance} days
-                            </span>
+                        <div className="flex items-center">
+                          <div className="space-y-2 min-w-[180px]">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-medium text-gray-600">Wellness Leave</span>
+                              <span className="text-sm text-gray-500">
+                                {wellnessBalance} days
+                              </span>
+                            </div>
+                            <Progress 
+                              value={((2 - wellnessBalance) / 2) * 100} 
+                              className="h-2"
+                            />
+                            <div className="text-xs text-gray-400">
+                              Used: {member.WellnessUsed}
+                            </div>
                           </div>
-                          <Progress 
-                            value={((2 - wellnessBalance) / 2) * 100} 
-                            className="h-2"
-                          />
-                          <div className="text-xs text-gray-400">
-                            Used: {member.WellnessUsed}
-                          </div>
+                          <Separator orientation="vertical" className="h-16 mx-4" />
                         </div>
                         
-                        <div className="space-y-2">
+                        <div className="space-y-2 min-w-[180px]">
                           <div className="flex justify-between items-center">
                             <span className="text-sm font-medium text-gray-600">Family Leave</span>
                             <span className="text-sm text-gray-500">
