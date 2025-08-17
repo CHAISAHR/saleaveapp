@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { ForfeitRibbon } from "@/components/ForfeitRibbon";
 import { balanceService, EmployeeBalance } from "@/services/balanceService";
 
@@ -219,10 +220,10 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-4 gap-4">
-        {leaveBalances.map(balance => {
-          return (
-            <Card key={balance.type} className="hover:shadow-md transition-shadow">
+      <div className="flex flex-wrap items-center gap-4">
+        {leaveBalances.map((balance, index) => (
+          <div key={balance.type} className="flex items-center">
+            <Card className="hover:shadow-md transition-shadow min-w-[200px]">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-gray-600 text-center">
                   {balance.type} leave
@@ -235,8 +236,11 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
                 </div>
               </CardContent>
             </Card>
-          );
-        })}
+            {index < leaveBalances.length - 1 && (
+              <Separator orientation="vertical" className="h-24 mx-4" />
+            )}
+          </div>
+        ))}
       </div>
 
       <Card>
