@@ -231,7 +231,9 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-lime-700 mb-1 font-mono">{balance.balance}</div>
+                  <div className="text-3xl font-bold text-lime-700 mb-1 font-mono">
+                    {balance.type === 'Annual' ? balance.balance.toFixed(2) : balance.balance}
+                  </div>
                   <div className="text-sm text-gray-500">{balance.unit} available</div>
                 </div>
               </CardContent>
