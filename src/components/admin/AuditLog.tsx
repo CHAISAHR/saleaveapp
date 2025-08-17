@@ -25,24 +25,43 @@ export const AuditLog = () => {
     try {
       setLoading(true);
       console.log('Fetching audit activity from:', `${apiConfig.endpoints.audit}/recent?limit=100`);
+      console.log('API Base URL:', apiConfig.baseURL);
+      console.log('Full audit endpoint:', apiConfig.endpoints.audit);
       
       const response = await makeApiRequest(`${apiConfig.endpoints.audit}/recent?limit=100`, {
         method: 'GET'
       });
 
       console.log('Audit API response status:', response.status);
+      console.log('Audit API response ok:', response.ok);
+      
+      if (!response.ok) {
+        console.error('Response not OK. Status:', response.status, 'StatusText:', response.statusText);
+        const errorText = await response.text();
+        console.error('Error response body:', errorText);
+        toast.error(`API request failed: ${response.status} ${response.statusText}`);
+        return;
+      }
+
       const data = await response.json();
       console.log('Audit API response data:', data);
+      console.log('Data type:', typeof data);
+      console.log('Data keys:', Object.keys(data || {}));
       
       if (data && data.success) {
         console.log('Audit entries received:', data.activity?.length || 0);
+        console.log('First audit entry:', data.activity?.[0]);
         setAuditEntries(data.activity || []);
       } else {
         console.error('API returned unsuccessful response:', data);
+        console.error('Success field:', data?.success);
+        console.error('Message field:', data?.message);
         toast.error(`Failed to fetch audit activity: ${data?.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error fetching audit activity:', error);
+      console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error);
+      console.error('Error message:', error instanceof Error ? error.message : String(error));
       toast.error(`Failed to fetch audit activity: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
