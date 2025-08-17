@@ -221,27 +221,22 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-4">
-        {leaveBalances.map((balance, index) => (
-          <div key={balance.type} className="flex items-center">
-            <Card className="hover:shadow-md transition-shadow min-w-[200px]">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-600 text-center">
-                  {balance.type} leave
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-lime-700 mb-1 font-mono">
-                    {balance.type === 'Annual' ? balance.balance.toFixed(2) : balance.balance}
-                  </div>
-                  <div className="text-sm text-gray-500">{balance.unit} available</div>
+        {leaveBalances.map((balance) => (
+          <Card key={balance.type} className="hover:shadow-md transition-shadow min-w-[200px]">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-600 text-center">
+                {balance.type} leave
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-lime-700 mb-1 font-mono">
+                  {balance.type === 'Annual' ? balance.balance.toFixed(2) : balance.balance}
                 </div>
-              </CardContent>
-            </Card>
-            {index < leaveBalances.length - 1 && (
-              <Separator orientation="vertical" className="h-24 mx-4" />
-            )}
-          </div>
+                <div className="text-sm text-gray-500">{balance.unit} available</div>
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 

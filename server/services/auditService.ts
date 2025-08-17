@@ -104,14 +104,14 @@ export class AuditService {
   // Get recent audit activity
   static async getRecentActivity(limit: number = 50): Promise<any[]> {
     try {
+      // Use simple direct query like leave_attachments approach
       const results = await executeQuery(
-        `SELECT al.*, u.name as changed_by_name 
-         FROM audit_log al 
-         LEFT JOIN users u ON al.changed_by = u.email 
-         ORDER BY al.changed_at DESC 
+        `SELECT * FROM audit_log 
+         ORDER BY changed_at DESC 
          LIMIT ?`,
         [limit]
       );
+      
       return Array.isArray(results) ? results : [];
     } catch (error) {
       console.error('Failed to get recent audit activity:', error);

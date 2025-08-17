@@ -47,21 +47,21 @@ export const AuthenticationPage = ({ manualLogin, manualSignUp, resetPassword }:
               className="h-12 w-12"
             />
           </div>
-          <CardTitle className="text-2xl">LeaveApp_SA</CardTitle>
+          <CardTitle className="text-2xl text-navy">LeaveApp_SA</CardTitle>
           <CardDescription>Leave Management System - South Africa</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Auth mode toggle */}
           <div className="flex space-x-2">
             <Button
-              variant={authMode === 'signin' ? 'default' : 'outline'}
+              variant={authMode === 'signin' ? 'navy' : 'outline'}
               className="flex-1"
               onClick={() => setAuthMode('signin')}
             >
               Sign In
             </Button>
             <Button
-              variant={authMode === 'signup' ? 'default' : 'outline'}
+              variant={authMode === 'signup' ? 'navy' : 'outline'}
               className="flex-1"
               onClick={() => setAuthMode('signup')}
             >

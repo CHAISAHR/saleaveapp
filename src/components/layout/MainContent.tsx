@@ -68,6 +68,11 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
 
       case 'audit':
         return userRole === 'admin' ? <AuditLog /> : null;
+      
+      case 'team-management':
+        return userRole === 'CD' ? (
+          <AdminAllRequests />
+        ) : null;
 
       default:
         return <div>Page not found</div>;

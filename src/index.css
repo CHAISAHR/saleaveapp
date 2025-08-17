@@ -49,6 +49,12 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --blue: 210 100% 50%;
+    --blue-foreground: 0 0% 100%;
+
+    --navy: 220 100% 20%;
+    --navy-foreground: 0 0% 100%;
   }
 
   .dark {
@@ -87,6 +93,12 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --blue: 210 100% 60%;
+    --blue-foreground: 0 0% 100%;
+
+    --navy: 220 100% 25%;
+    --navy-foreground: 0 0% 100%;
   }
 }
 
