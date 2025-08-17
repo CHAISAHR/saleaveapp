@@ -28,7 +28,17 @@ export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
     console.error('[useAuth] Context is undefined - AuthProvider may not be properly mounted');
-    throw new Error('useAuth must be used within an AuthProvider');
+    // Return a default context instead of throwing to prevent the app from crashing
+    return {
+      user: null,
+      isAuthenticated: false,
+      manualLogin: async () => { throw new Error('AuthProvider not mounted'); },
+      mockAdminLogin: () => { throw new Error('AuthProvider not mounted'); },
+      manualSignUp: async () => { throw new Error('AuthProvider not mounted'); },
+      resetPassword: async () => { throw new Error('AuthProvider not mounted'); },
+      logout: async () => { throw new Error('AuthProvider not mounted'); },
+      loading: true
+    } as AuthContextType;
   }
   return context;
 };

@@ -450,9 +450,23 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
         ));
 
         const user = users.find(u => u.id === userId);
+        
+        // If the current user's role was updated, refresh their authentication state
+        const currentUserEmail = localStorage.getItem('manualUser') ? 
+          JSON.parse(localStorage.getItem('manualUser')!).username : null;
+        
+        if (user?.email === currentUserEmail) {
+          console.log('[AdminPanel] Current user role updated, refreshing auth state...');
+          // Force a page reload to refresh the authentication state
+          // This ensures the new role is properly reflected in the UI
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }
+
         toast({
           title: "Role Updated",
-          description: `${user?.name}'s role has been updated to ${newRole}.`,
+          description: `${user?.name}'s role has been updated to ${newRole}.${user?.email === currentUserEmail ? ' Page will refresh to apply changes.' : ''}`,
         });
       } else {
         throw new Error('Failed to update user role');
