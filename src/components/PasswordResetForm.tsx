@@ -108,7 +108,7 @@ export const PasswordResetForm: React.FC<PasswordResetFormProps> = ({ onBack, on
               disabled={isLoading}
             />
           </div>
-          <Button type="submit" variant="navy" className="w-full" disabled={isLoading || !email.trim()}>
+          <Button type="submit" className="w-full" disabled={isLoading || !email.trim()}>
             {isLoading ? 'Sending...' : 'Send Reset Link'}
           </Button>
           <Button onClick={onBack} variant="outline" className="w-full" disabled={isLoading}>
