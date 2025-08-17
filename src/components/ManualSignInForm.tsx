@@ -89,7 +89,7 @@ export const ManualSignInForm: React.FC<ManualSignInFormProps> = ({ onSignIn }) 
           </Button>
         </div>
       </div>
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      <Button type="submit" className="w-full" variant="blue" disabled={isLoading}>
         {isLoading ? 'Signing In...' : 'Sign In'}
       </Button>
     </form>
