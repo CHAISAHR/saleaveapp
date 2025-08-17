@@ -13,7 +13,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 210 100% 25%;
+    --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -30,7 +30,7 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 210 100% 25%;
+    --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
 
@@ -49,13 +49,6 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
-
-    /* Navy Blue Theme Variables */
-    --navy-primary: 210 100% 25%;
-    --navy-primary-light: 210 100% 35%;
-    --navy-primary-dark: 210 100% 15%;
-    --navy-secondary: 210 50% 85%;
-    --navy-accent: 210 100% 45%;
   }
 
   .dark {
