@@ -249,7 +249,7 @@ export const ManualSignUpForm: React.FC<ManualSignUpFormProps> = ({ onSignUp }) 
         </div>
       </div>
 
-      <Button type="submit" className="w-full">
+      <Button type="submit" variant="navy" className="w-full">
         Sign Up
       </Button>
     </form>
