@@ -54,14 +54,14 @@ export const AuthenticationPage = ({ manualLogin, manualSignUp, resetPassword }:
           {/* Auth mode toggle */}
           <div className="flex space-x-2">
             <Button
-              variant={authMode === 'signin' ? 'default' : 'outline'}
+              variant={authMode === 'signin' ? 'blue' : 'outline'}
               className="flex-1"
               onClick={() => setAuthMode('signin')}
             >
               Sign In
             </Button>
             <Button
-              variant={authMode === 'signup' ? 'default' : 'outline'}
+              variant={authMode === 'signup' ? 'blue' : 'outline'}
               className="flex-1"
               onClick={() => setAuthMode('signup')}
             >
