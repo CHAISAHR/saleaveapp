@@ -40,7 +40,7 @@ export const AppSidebar = ({
       {
         value: "dashboard",
         icon: Calendar,
-        label: userRole === 'employee' ? 'Leave Requests' : userRole === 'manager' ? 'Leave Requests' : userRole === 'CD' ? 'Leave Requests' : 'Dashboard'
+        label: userRole === 'employee' ? 'Leave Requests' : userRole === 'manager' ? 'Team Requests' : userRole === 'CD' ? 'Team Requests' : 'Dashboard'
       },
       {
         value: "holidays",
@@ -61,6 +61,12 @@ export const AppSidebar = ({
         icon: Database,
         label: "CD Dashboard"
       });
+      // Add team management for CD
+      baseItems.splice(1, 0, {
+        value: "team-management",
+        icon: Users,
+        label: "Team Management"
+      });
     }
 
     // Add balance tab only for employees, managers, and country directors (not admin)
@@ -68,7 +74,7 @@ export const AppSidebar = ({
       baseItems.splice(-2, 0, {
         value: "balance",
         icon: Calendar,
-        label: userRole === 'employee' ? 'Leave Balances' : 'Leave Balances'
+        label: userRole === 'employee' ? 'Leave Balances' : userRole === 'manager' ? 'Team Balances' : 'Team Balances'
       });
     }
 
