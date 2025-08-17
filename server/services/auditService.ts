@@ -104,38 +104,17 @@ export class AuditService {
   // Get recent audit activity
   static async getRecentActivity(limit: number = 50): Promise<any[]> {
     try {
-      console.log('AuditService: getRecentActivity called with limit:', limit);
-      
-      // First, let's check if there are any entries in audit_log at all
-      const countResults = await executeQuery('SELECT COUNT(*) as total FROM audit_log');
-      console.log('AuditService: Total audit_log entries:', countResults);
-      
-      // Let's try a simpler query first without the JOIN
-      const simpleResults = await executeQuery(
+      // Use simple direct query like leave_attachments approach
+      const results = await executeQuery(
         `SELECT * FROM audit_log 
          ORDER BY changed_at DESC 
          LIMIT ?`,
         [limit]
       );
-      console.log('AuditService: Simple query results count:', Array.isArray(simpleResults) ? simpleResults.length : 0);
-      console.log('AuditService: First simple result:', Array.isArray(simpleResults) && simpleResults.length > 0 ? simpleResults[0] : 'No results');
-      
-      // Now try the full query with JOIN
-      const results = await executeQuery(
-        `SELECT al.*, u.name as changed_by_name 
-         FROM audit_log al 
-         LEFT JOIN users u ON al.changed_by = u.email 
-         ORDER BY al.changed_at DESC 
-         LIMIT ?`,
-        [limit]
-      );
-      console.log('AuditService: JOIN query results count:', Array.isArray(results) ? results.length : 0);
-      console.log('AuditService: First JOIN result:', Array.isArray(results) && results.length > 0 ? results[0] : 'No results');
       
       return Array.isArray(results) ? results : [];
     } catch (error) {
       console.error('Failed to get recent audit activity:', error);
-      console.error('Error details:', error);
       return [];
     }
   }
