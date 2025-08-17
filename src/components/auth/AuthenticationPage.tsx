@@ -27,7 +27,7 @@ export const AuthenticationPage = ({ manualLogin, manualSignUp, resetPassword }:
 
   if (authMode === 'reset') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-navy-primary-dark to-navy-primary flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <PasswordResetForm
           onBack={() => setAuthMode('signin')}
           onResetRequest={resetPassword}
@@ -37,18 +37,18 @@ export const AuthenticationPage = ({ manualLogin, manualSignUp, resetPassword }:
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-navy-primary-dark to-navy-primary flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-2xl border-navy-secondary/20">
-        <CardHeader className="text-center bg-gradient-to-r from-navy-primary to-navy-accent text-white rounded-t-lg">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <img 
               src="/logo/chailogo.png" 
               alt="Company Logo" 
-              className="h-12 w-12 bg-white/10 rounded-full p-2"
+              className="h-12 w-12"
             />
           </div>
-          <CardTitle className="text-2xl font-bold text-white">LeaveApp_SA</CardTitle>
-          <CardDescription className="text-navy-secondary">Leave Management System - South Africa</CardDescription>
+          <CardTitle className="text-2xl">LeaveApp_SA</CardTitle>
+          <CardDescription>Leave Management System - South Africa</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Auth mode toggle */}

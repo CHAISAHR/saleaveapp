@@ -253,7 +253,7 @@ export const LeaveBalanceGrid = ({ leaveBalances: propBalances, userEmail }: Lea
         <CardContent className="space-y-4">
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <h4 className="font-semibold text-yellow-800 mb-2">Annual Leave Carry-over</h4>
-            <p className="text-sm text-yellow-700">Annual leave carried forward expires on the 31st July. Plan your annual leave accordingly.</p>
+            <p className="text-sm text-yellow-700">Annual leave carried forward expires on the 31st July. Plan your vacation time accordingly.</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
