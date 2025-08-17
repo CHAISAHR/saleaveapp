@@ -8,7 +8,8 @@ export class CurrentBalanceCalculations {
     // Calculate accumulated leave dynamically instead of using database field
     const dynamicAccumulatedLeave = AccumulatedLeaveCalculations.calculateAccumulatedLeave(
       new Date(), 
-      balance.Contract_termination_date
+      balance.Contract_termination_date,
+      employeeStartDate
     );
     
     // Save dynamic accumulated leave to database if it differs from stored value
@@ -41,7 +42,7 @@ export class CurrentBalanceCalculations {
       annualUsed - 
       forfeited - 
       adjustments
-    ).toFixed(1));
+    ).toFixed(3));
 
     console.log(`Annual leave balance calculation for ${balance.EmployeeName}:`, {
       broughtforward: balance.Broughtforward,
@@ -60,8 +61,8 @@ export class CurrentBalanceCalculations {
   private static async syncAccumulatedLeaveToDatabase(employeeEmail: string, dynamicValue: number, databaseValue: number | string): Promise<void> {
     const dbValue = Number(databaseValue) || 0;
     
-    // Only update if values differ by more than 0.1 to avoid unnecessary API calls
-    if (Math.abs(dynamicValue - dbValue) > 0.1) {
+    // Only update if values differ by more than 0.001 to avoid unnecessary API calls
+    if (Math.abs(dynamicValue - dbValue) > 0.001) {
       try {
         const { BalanceApiClient } = await import('../balanceApiClient');
         await BalanceApiClient.updateAccumulatedLeave(employeeEmail, dynamicValue);
