@@ -65,6 +65,10 @@ export default {
 				blue: {
 					DEFAULT: 'hsl(var(--blue))',
 					foreground: 'hsl(var(--blue-foreground))'
+				},
+				navy: {
+					DEFAULT: 'hsl(var(--navy))',
+					foreground: 'hsl(var(--navy-foreground))'
 				}
 			},
 			borderRadius: {

@@ -52,6 +52,9 @@
 
     --blue: 210 100% 50%;
     --blue-foreground: 0 0% 100%;
+
+    --navy: 220 100% 20%;
+    --navy-foreground: 0 0% 100%;
   }
 
   .dark {
@@ -93,6 +96,9 @@
 
     --blue: 210 100% 60%;
     --blue-foreground: 0 0% 100%;
+
+    --navy: 220 100% 25%;
+    --navy-foreground: 0 0% 100%;
   }
 }
 

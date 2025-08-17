@@ -47,7 +47,7 @@ export const AuthenticationPage = ({ manualLogin, manualSignUp, resetPassword }:
               className="h-12 w-12"
             />
           </div>
-          <CardTitle className="text-2xl">LeaveApp_SA</CardTitle>
+          <CardTitle className="text-2xl text-navy">LeaveApp_SA</CardTitle>
           <CardDescription>Leave Management System - South Africa</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
