@@ -155,7 +155,7 @@ export const AppSidebar = ({
         </SidebarGroup>
 
         {/* Role switcher for managers, country directors and admins */}
-        {(currentUser.role === 'manager' || currentUser.role === 'admin' || currentUser.role === 'CD') && onRoleChange && (
+        {(currentUser.role === 'manager' || currentUser.role === 'admin' || currentUser.role === 'CD' || userRole === 'manager' || userRole === 'admin' || userRole === 'CD') && onRoleChange && (
           <SidebarGroup>
             <SidebarGroupLabel>View As</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -170,7 +170,7 @@ export const AppSidebar = ({
                   Employee View
                 </Button>
                 
-                {(currentUser.role === 'manager' || currentUser.role === 'admin' || currentUser.role === 'CD') && (
+                {(currentUser.role === 'manager' || currentUser.role === 'admin' || currentUser.role === 'CD' || userRole === 'manager' || userRole === 'admin' || userRole === 'CD') && (
                   <Button
                     variant={userRole === 'manager' ? 'default' : 'ghost'}
                     size="sm"
@@ -182,7 +182,7 @@ export const AppSidebar = ({
                   </Button>
                 )}
                 
-                {(currentUser.role === 'CD' || currentUser.role === 'admin') && (
+                {(currentUser.role === 'CD' || currentUser.role === 'admin' || userRole === 'CD' || userRole === 'admin') && (
                   <Button
                     variant={userRole === 'CD' ? 'default' : 'ghost'}
                     size="sm"
@@ -194,7 +194,7 @@ export const AppSidebar = ({
                   </Button>
                 )}
                 
-                {currentUser.role === 'admin' && (
+                {(currentUser.role === 'admin' || userRole === 'admin') && (
                   <Button
                     variant={userRole === 'admin' ? 'default' : 'ghost'}
                     size="sm"
