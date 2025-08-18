@@ -225,8 +225,8 @@ router.put('/accumulated-leave', authenticateToken, async (req: AuthRequest, res
   }
 });
 
-// Get all balances (admin only)
-router.get('/', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+// Get all balances (admin and CD only)
+router.get('/', authenticateToken, requireRole(['admin', 'cd']), async (req: AuthRequest, res) => {
   try {
     const year = req.query.year || new Date().getFullYear();
     const balances = await executeQuery(
