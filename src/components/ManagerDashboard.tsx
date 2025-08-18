@@ -71,38 +71,26 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
         setPendingRequests(pending);
         setHistoricRequests(historic);
 
-        // Get unique team member emails for balance fetching (use Requester field from leave requests)
-        const teamMemberEmails = [...new Set(requestsArray.map((req: any) => req.Requester).filter(Boolean))];
-        console.log('Team member emails:', teamMemberEmails);
-        
-        // Log a sample request to check field names
-        if (requestsArray.length > 0) {
-          console.log('Sample request fields:', Object.keys(requestsArray[0]));
-          console.log('Sample request:', requestsArray[0]);
-        }
-        
-        // Fetch balances for each team member individually
-        const balancePromises = teamMemberEmails.map(async (email: string) => {
-          try {
-            const response = await makeApiRequest(`${apiConfig.endpoints.balance}/${email}`, {
-              headers: getAuthHeaders(),
-            });
-            if (response.ok) {
-              const data = await response.json();
-              console.log(`Balance data for ${email}:`, data);
-              return data.success ? { ...data.balance, EmployeeEmail: email } : null;
-            }
-            return null;
-          } catch (error) {
-            console.error(`Error fetching balance for ${email}:`, error);
-            return null;
-          }
+        // Fetch team balances directly from the balance endpoint using view=team parameter
+        // This will get all employees managed by this manager/CD, not just those with leave requests
+        const balanceResponse = await makeApiRequest(`${apiConfig.endpoints.balance}?view=team`, {
+          headers: getAuthHeaders(),
         });
 
-        const teamBalancesResults = await Promise.all(balancePromises);
-        const validBalances = teamBalancesResults.filter(balance => balance !== null);
-        console.log('Final team balances:', validBalances);
-        setTeamMembers(validBalances);
+        if (balanceResponse.ok) {
+          const balanceData = await balanceResponse.json();
+          console.log('Team balances data:', balanceData);
+          
+          if (balanceData.success && balanceData.balances) {
+            setTeamMembers(balanceData.balances);
+          } else {
+            console.log('No team balances found or API error');
+            setTeamMembers([]);
+          }
+        } else {
+          console.error('Failed to fetch team balances');
+          setTeamMembers([]);
+        }
       }
 
     } catch (error) {

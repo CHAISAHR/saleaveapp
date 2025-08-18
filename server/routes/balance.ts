@@ -226,14 +226,14 @@ router.put('/accumulated-leave', authenticateToken, async (req: AuthRequest, res
 });
 
 // Get all balances (admin only, CD with view parameter)
-router.get('/', authenticateToken, requireRole(['admin', 'cd']), async (req: AuthRequest, res) => {
+router.get('/', authenticateToken, requireRole(['admin', 'cd', 'manager']), async (req: AuthRequest, res) => {
   try {
     const year = req.query.year || new Date().getFullYear();
     const viewParam = req.query.view || '';
     
     // CD can see all balances for dashboard, or only team balances if view=team parameter is set
-    if (req.user!.role === 'cd' && viewParam === 'team') {
-      // CD sees only their managed team members
+    if ((req.user!.role === 'cd' || req.user!.role === 'manager') && viewParam === 'team') {
+      // CD and Manager see only their managed team members
       const balances = await executeQuery(
         'SELECT * FROM leave_balances WHERE Manager = ? AND Year = ? ORDER BY EmployeeName',
         [req.user!.email, year]
