@@ -400,7 +400,8 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
           department: editUser.department,
           role: editUser.role,
           manager_email: editUser.manager_email,
-          hire_date: editUser.hire_date
+          hire_date: editUser.hire_date,
+          gender: editUser.gender
         })
       });
 
@@ -415,7 +416,8 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                 department: editUser.department,
                 role: editUser.role as 'employee' | 'manager' | 'admin' | 'cd',
                 manager_email: editUser.manager_email || undefined,
-                hire_date: editUser.hire_date
+                hire_date: editUser.hire_date,
+                gender: editUser.gender
               } 
             : user
         ));
@@ -787,6 +789,20 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                     value={editUser.hire_date}
                     onChange={(e) => setEditUser(prev => ({ ...prev, hire_date: e.target.value }))}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-gender">Gender *</Label>
+                  <Select value={editUser.gender} onValueChange={(value) => setEditUser(prev => ({ ...prev, gender: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
