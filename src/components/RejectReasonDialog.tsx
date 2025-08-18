@@ -16,10 +16,6 @@ interface RejectReasonDialogProps {
 
 const rejectionReasons = [
   { value: "operational", label: "Operational reasons" },
-  { value: "insufficient_coverage", label: "Insufficient coverage" },
-  { value: "peak_period", label: "Peak business period" },
-  { value: "budget_constraints", label: "Budget constraints" },
-  { value: "policy_violation", label: "Policy violation" },
   { value: "staff_retracting", label: "Staff retracting leave" },
   { value: "other", label: "Other (specify below)" }
 ];
