@@ -39,7 +39,19 @@ export const AppSidebar = ({
     console.log('[AppSidebar] Current userRole:', userRole);
     console.log('[AppSidebar] Current user object:', currentUser);
     
-    const baseItems = [
+    const baseItems = [];
+
+    // For CD role, add Dashboard (Admin Dashboard) first
+    if (userRole === 'CD') {
+      baseItems.push({
+        value: "admin-dashboard",
+        icon: Database,
+        label: "Dashboard"
+      });
+    }
+
+    // Add main navigation items
+    baseItems.push(
       {
         value: "dashboard",
         icon: Calendar,
@@ -55,16 +67,7 @@ export const AppSidebar = ({
         icon: User,
         label: "About"
       }
-    ];
-
-    // Add CD-specific dashboard tab (Admin Dashboard access)
-    if (userRole === 'CD') {
-      baseItems.splice(1, 0, {
-        value: "admin-dashboard",
-        icon: Database,
-        label: "Dashboard"
-      });
-    }
+    );
 
     // Add balance tab only for employees, managers, and country directors (not admin)
     if (userRole !== 'admin') {
@@ -158,6 +161,7 @@ export const AppSidebar = ({
             <SidebarGroupLabel>View As</SidebarGroupLabel>
             <SidebarGroupContent>
               <div className="space-y-1 px-2">
+                {/* Employee View - Always show for all roles */}
                 <Button
                   variant={userRole === 'employee' ? 'default' : 'ghost'}
                   size="sm"
@@ -181,6 +185,7 @@ export const AppSidebar = ({
                   </Button>
                 )}
                 
+                {/* CD View - Show for CD users and admins */}
                 {(currentUser.role === 'CD' || currentUser.role === 'admin') && (
                   <Button
                     variant={userRole === 'CD' ? 'default' : 'ghost'}
@@ -193,7 +198,8 @@ export const AppSidebar = ({
                   </Button>
                 )}
                 
-                {(currentUser.role === 'admin' || userRole === 'admin') && (
+                {/* Admin View - Show only for admins */}
+                {currentUser.role === 'admin' && (
                   <Button
                     variant={userRole === 'admin' ? 'default' : 'ghost'}
                     size="sm"
