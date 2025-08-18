@@ -28,6 +28,86 @@ router.get('/:email', authenticateToken, async (req: AuthRequest, res) => {
 
     const balance = balances[0];
     
+    // Calculate accumulated leave dynamically based on start_date
+    const startDate = balance.start_date || '2024-01-01';
+    const terminationDate = balance.contract_termination_date || undefined;
+    
+    // Dynamic accumulated leave calculation (1.667 per month, prorated for start date)
+    const calculateAccumulatedLeave = (currentDate = new Date(), terminationDate, startDate) => {
+      const year = currentDate.getFullYear();
+      const targetDate = terminationDate ? new Date(terminationDate) : currentDate;
+      const calculationDate = targetDate.getFullYear() === year ? targetDate : currentDate;
+      
+      let employeeStartDate = new Date(startDate);
+      if (employeeStartDate.getFullYear() < year) {
+        employeeStartDate = new Date(year, 0, 1); // January 1st of current year
+      }
+      if (employeeStartDate > calculationDate) {
+        return 0; // No accumulated leave if start date is after calculation date
+      }
+      
+      let totalAccumulated = 0;
+      const startMonth = employeeStartDate.getMonth();
+      const startYear = employeeStartDate.getFullYear();
+      
+      if (startYear === year) {
+        // First month proration
+        const daysInStartMonth = new Date(startYear, startMonth + 1, 0).getDate();
+        const startDay = employeeStartDate.getDate();
+        const daysWorkedInStartMonth = daysInStartMonth - startDay + 1;
+        
+        const startMonthEndDate = new Date(startYear, startMonth + 1, 0);
+        if (calculationDate >= startMonthEndDate) {
+          totalAccumulated += (daysWorkedInStartMonth / daysInStartMonth) * 1.667;
+        }
+        
+        // Complete months after start month
+        let currentMonth = startMonth + 1;
+        let currentYear = startYear;
+        
+        while (currentYear < calculationDate.getFullYear() || 
+               (currentYear === calculationDate.getFullYear() && currentMonth < calculationDate.getMonth())) {
+          const monthEndDate = new Date(currentYear, currentMonth + 1, 0);
+          if (calculationDate >= monthEndDate) {
+            totalAccumulated += 1.667;
+          }
+          
+          currentMonth += 1;
+          if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear += 1;
+          }
+        }
+      } else {
+        // Started before current year - calculate complete months from Jan 1
+        let currentMonth = 0;
+        while (currentMonth < calculationDate.getMonth()) {
+          const monthEndDate = new Date(year, currentMonth + 1, 0);
+          if (calculationDate >= monthEndDate) {
+            totalAccumulated += 1.667;
+          }
+          currentMonth += 1;
+        }
+      }
+      
+      return Math.min(totalAccumulated, 20); // Cap at 20 days
+    };
+    
+    const dynamicAccumulatedLeave = Number(calculateAccumulatedLeave(new Date(), terminationDate, startDate).toFixed(3));
+    
+    // Update database if accumulated leave differs significantly
+    if (Math.abs(dynamicAccumulatedLeave - (balance.AccumulatedLeave || 0)) > 0.001) {
+      await executeQuery(
+        'UPDATE leave_balances SET AccumulatedLeave = ? WHERE EmployeeEmail = ? AND Year = ?',
+        [dynamicAccumulatedLeave, email, year]
+      );
+      console.log(`Updated accumulated leave for ${email}: ${balance.AccumulatedLeave} → ${dynamicAccumulatedLeave}`);
+    }
+    
+    // Add Start_date mapping for frontend compatibility
+    balance.Start_date = balance.start_date;
+    balance.AccumulatedLeave = dynamicAccumulatedLeave;
+    
     // Transform the balance data to include proper units and structure for frontend
     const transformedBalances = [
       {
@@ -231,22 +311,105 @@ router.get('/', authenticateToken, requireRole(['admin', 'cd', 'manager']), asyn
     const year = req.query.year || new Date().getFullYear();
     const viewParam = req.query.view || '';
     
+    // Dynamic accumulated leave calculation function
+    const calculateAccumulatedLeave = (currentDate = new Date(), terminationDate, startDate) => {
+      const year = currentDate.getFullYear();
+      const targetDate = terminationDate ? new Date(terminationDate) : currentDate;
+      const calculationDate = targetDate.getFullYear() === year ? targetDate : currentDate;
+      
+      let employeeStartDate = new Date(startDate || '2024-01-01');
+      if (employeeStartDate.getFullYear() < year) {
+        employeeStartDate = new Date(year, 0, 1);
+      }
+      if (employeeStartDate > calculationDate) {
+        return 0;
+      }
+      
+      let totalAccumulated = 0;
+      const startMonth = employeeStartDate.getMonth();
+      const startYear = employeeStartDate.getFullYear();
+      
+      if (startYear === year) {
+        const daysInStartMonth = new Date(startYear, startMonth + 1, 0).getDate();
+        const startDay = employeeStartDate.getDate();
+        const daysWorkedInStartMonth = daysInStartMonth - startDay + 1;
+        
+        const startMonthEndDate = new Date(startYear, startMonth + 1, 0);
+        if (calculationDate >= startMonthEndDate) {
+          totalAccumulated += (daysWorkedInStartMonth / daysInStartMonth) * 1.667;
+        }
+        
+        let currentMonth = startMonth + 1;
+        let currentYear = startYear;
+        
+        while (currentYear < calculationDate.getFullYear() || 
+               (currentYear === calculationDate.getFullYear() && currentMonth < calculationDate.getMonth())) {
+          const monthEndDate = new Date(currentYear, currentMonth + 1, 0);
+          if (calculationDate >= monthEndDate) {
+            totalAccumulated += 1.667;
+          }
+          
+          currentMonth += 1;
+          if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear += 1;
+          }
+        }
+      } else {
+        let currentMonth = 0;
+        while (currentMonth < calculationDate.getMonth()) {
+          const monthEndDate = new Date(year, currentMonth + 1, 0);
+          if (calculationDate >= monthEndDate) {
+            totalAccumulated += 1.667;
+          }
+          currentMonth += 1;
+        }
+      }
+      
+      return Math.min(totalAccumulated, 20);
+    };
+
+    let balances;
+    
     // CD can see all balances for dashboard, or only team balances if view=team parameter is set
     if ((req.user!.role === 'cd' || req.user!.role === 'manager') && viewParam === 'team') {
       // CD and Manager see only their managed team members
-      const balances = await executeQuery(
+      balances = await executeQuery(
         'SELECT * FROM leave_balances WHERE Manager = ? AND Year = ? ORDER BY EmployeeName',
         [req.user!.email, year]
       );
-      res.json({ success: true, balances });
     } else {
       // Admin sees all, CD sees all for dashboard
-      const balances = await executeQuery(
+      balances = await executeQuery(
         'SELECT * FROM leave_balances WHERE Year = ? ORDER BY EmployeeName',
         [year]
       );
-      res.json({ success: true, balances });
     }
+
+    // Update all balances with dynamic accumulated leave calculation
+    const updatedBalances = await Promise.all(balances.map(async (balance) => {
+      const startDate = balance.start_date || '2024-01-01';
+      const terminationDate = balance.contract_termination_date || undefined;
+      const dynamicAccumulatedLeave = Number(calculateAccumulatedLeave(new Date(), terminationDate, startDate).toFixed(3));
+      
+      // Update database if accumulated leave differs significantly
+      if (Math.abs(dynamicAccumulatedLeave - (balance.AccumulatedLeave || 0)) > 0.001) {
+        await executeQuery(
+          'UPDATE leave_balances SET AccumulatedLeave = ? WHERE EmployeeEmail = ? AND Year = ?',
+          [dynamicAccumulatedLeave, balance.EmployeeEmail, year]
+        );
+        console.log(`Updated accumulated leave for ${balance.EmployeeEmail}: ${balance.AccumulatedLeave} → ${dynamicAccumulatedLeave}`);
+      }
+      
+      // Add Start_date mapping for frontend compatibility and update AccumulatedLeave
+      return {
+        ...balance,
+        Start_date: balance.start_date,
+        AccumulatedLeave: dynamicAccumulatedLeave
+      };
+    }));
+
+    res.json({ success: true, balances: updatedBalances });
   } catch (error) {
     console.error('Get all balances error:', error);
     res.status(500).json({ success: false, message: 'Failed to get balances' });
