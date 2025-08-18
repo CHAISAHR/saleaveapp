@@ -42,8 +42,12 @@ export const ManagerDashboard = ({ currentUser, activeView = 'requests' }: Manag
 
   const fetchTeamData = async () => {
     try {
-      // Fetch leave requests - server already filters for manager's team
-      const requestsResponse = await makeApiRequest(`${apiConfig.endpoints.leave}/requests`, {
+      // Fetch leave requests - add view=team parameter for CD users to get only team requests
+      const requestsUrl = currentUser.role === 'cd' 
+        ? `${apiConfig.endpoints.leave}/requests?view=team`
+        : `${apiConfig.endpoints.leave}/requests`;
+      
+      const requestsResponse = await makeApiRequest(requestsUrl, {
         headers: getAuthHeaders()
       });
 
