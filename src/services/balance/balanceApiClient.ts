@@ -83,7 +83,8 @@ export class BalanceApiClient {
             WellnessUsed: 0,
             Current_leave_balance: mockBalance.annualLeave || 0,
             Manager: 'jane.smith@example.com',
-            Start_date: '2024-01-01'
+            Start_date: '2024-01-01',
+            gender: mockBalance.gender || 'female' // Include gender field for proper maternity calculation
           };
           console.log('Converted balance object:', converted);
           return converted;
