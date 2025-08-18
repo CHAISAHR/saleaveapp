@@ -45,15 +45,24 @@ export const DepartmentManager = () => {
     try {
       setLoading(true);
       
+      console.log('Fetching departments from:', apiConfig.endpoints.departments);
+      console.log('Auth headers:', getAuthHeaders());
+      
       const response = await fetch(apiConfig.endpoints.departments, {
         headers: getAuthHeaders()
       });
 
+      console.log('Departments API response status:', response.status);
+      console.log('Departments API response ok:', response.ok);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('Departments API response data:', data);
         setDepartments(data.departments || []);
       } else {
-        throw new Error('Failed to fetch departments');
+        const errorText = await response.text();
+        console.error('Departments API error:', errorText);
+        throw new Error(`Failed to fetch departments: ${response.status} ${errorText}`);
       }
     } catch (error) {
       console.error('Error fetching departments:', error);

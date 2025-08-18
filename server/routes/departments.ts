@@ -1,11 +1,12 @@
 
 import express from 'express';
 import { executeQuery } from '../config/database';
+import { authenticateToken } from '../middleware/auth';
 
 const router = express.Router();
 
-// Get all active departments
-router.get('/', async (req, res) => {
+// Get all active departments (requires authentication)
+router.get('/', authenticateToken, async (req, res) => {
   try {
     // Since there might not be a departments table yet, return default departments
     const defaultDepartments = [
