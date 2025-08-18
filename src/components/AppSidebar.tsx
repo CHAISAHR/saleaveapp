@@ -181,7 +181,7 @@ export const AppSidebar = ({
                   </Button>
                 )}
                 
-                {currentUser.role === 'CD' && (
+                {(currentUser.role === 'CD' || currentUser.role === 'admin') && (
                   <Button
                     variant={userRole === 'CD' ? 'default' : 'ghost'}
                     size="sm"
