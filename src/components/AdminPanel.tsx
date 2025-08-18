@@ -23,7 +23,7 @@ interface User {
   name: string;
   email: string;
   department: string;
-  role: 'employee' | 'manager' | 'admin' | 'CD';
+  role: 'employee' | 'manager' | 'admin' | 'cd';
   hire_date: string;
   is_active: boolean;
   manager_email?: string;
@@ -41,7 +41,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
   
   const formatRoleName = (role: string) => {
     switch (role) {
-      case 'CD':
+      case 'cd':
         return 'CD';
       case 'manager':
         return 'Manager';
@@ -405,7 +405,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                 name: editUser.name, 
                 email: editUser.email, 
                 department: editUser.department,
-                role: editUser.role as 'employee' | 'manager' | 'admin' | 'CD',
+                role: editUser.role as 'employee' | 'manager' | 'admin' | 'cd',
                 manager_email: editUser.manager_email || undefined,
                 hire_date: editUser.hire_date
               } 
@@ -446,7 +446,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
       if (response.ok) {
         // Update local state
         setUsers(prev => prev.map(user => 
-          user.id === userId ? { ...user, role: newRole as 'employee' | 'manager' | 'admin' | 'CD' } : user
+          user.id === userId ? { ...user, role: newRole as 'employee' | 'manager' | 'admin' | 'cd' } : user
         ));
 
         const user = users.find(u => u.id === userId);
@@ -566,7 +566,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
     );
   }
 
-  const managers = users.filter(user => user.role === 'manager' || user.role === 'admin' || user.role === 'CD');
+  const managers = users.filter(user => user.role === 'manager' || user.role === 'admin' || user.role === 'cd');
   const activeDepartments = departments.filter(dept => dept.is_active);
 
   console.log('Rendering main AdminPanel content');
@@ -680,7 +680,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                           <SelectItem value="employee">Employee</SelectItem>
                           <SelectItem value="manager">Manager</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="CD">CD</SelectItem>
+                          <SelectItem value="cd">CD</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -798,7 +798,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                         <SelectItem value="employee">Employee</SelectItem>
                         <SelectItem value="manager">Manager</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="CD">CD</SelectItem>
+                        <SelectItem value="cd">CD</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -857,7 +857,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                   <div>
                     <p className="text-sm text-gray-600">Managers</p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {users.filter(u => u.role === 'manager' || u.role === 'CD').length}
+                      {users.filter(u => u.role === 'manager' || u.role === 'cd').length}
                     </p>
                   </div>
                 </div>
@@ -909,7 +909,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{user.department}</TableCell>
                         <TableCell>
-                          <Badge variant={user.role === 'admin' ? 'destructive' : user.role === 'manager' || user.role === 'CD' ? 'default' : 'secondary'}>
+                          <Badge variant={user.role === 'admin' ? 'destructive' : user.role === 'manager' || user.role === 'cd' ? 'default' : 'secondary'}>
                             {formatRoleName(user.role)}
                           </Badge>
                           <Select
@@ -923,7 +923,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                               <SelectItem value="employee">Employee</SelectItem>
                               <SelectItem value="manager">Manager</SelectItem>
                               <SelectItem value="admin">Admin</SelectItem>
-                              <SelectItem value="CD">CD</SelectItem>
+                              <SelectItem value="cd">CD</SelectItem>
                             </SelectContent>
                           </Select>
                         </TableCell>

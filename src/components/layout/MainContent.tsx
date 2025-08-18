@@ -10,7 +10,7 @@ import { DocumentManager } from "@/components/DocumentManager";
 
 interface MainContentProps {
   activeTab: string;
-  userRole: 'employee' | 'manager' | 'admin' | 'CD';
+  userRole: 'employee' | 'manager' | 'admin' | 'cd';
   currentUser: any;
   onNewRequest: () => void;
 }
@@ -23,14 +23,14 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
           <EmployeeDashboard onNewRequest={onNewRequest} currentUser={currentUser} />
         ) : userRole === 'manager' ? (
           <ManagerDashboard currentUser={currentUser} />
-        ) : userRole === 'CD' ? (
+        ) : userRole === 'cd' ? (
           <ManagerDashboard currentUser={currentUser} />
         ) : (
           <AdminDashboard currentUser={currentUser} />
         );
 
       case 'admin-dashboard':
-        return (userRole === 'CD' || userRole === 'admin') ? (
+        return (userRole === 'cd' || userRole === 'admin') ? (
           <AdminDashboard currentUser={{ ...currentUser, role: 'admin' }} />
         ) : null;
 
@@ -39,7 +39,7 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
           <EmployeeDashboard onNewRequest={onNewRequest} currentUser={currentUser} activeView="balance" />
         ) : userRole === 'manager' ? (
           <ManagerDashboard currentUser={currentUser} activeView="balance" />
-        ) : userRole === 'CD' ? (
+        ) : userRole === 'cd' ? (
           <ManagerDashboard currentUser={currentUser} activeView="balance" />
         ) : (
           <AdminDashboard currentUser={currentUser} activeView="balances" />
@@ -55,7 +55,7 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
         return userRole === 'admin' ? <AdminPanel currentUser={currentUser} /> : null;
 
       case 'documents':
-        return (userRole === 'manager' || userRole === 'admin' || userRole === 'CD') ? <DocumentManager userRole={userRole} /> : null;
+        return (userRole === 'manager' || userRole === 'admin' || userRole === 'cd') ? <DocumentManager userRole={userRole} /> : null;
 
       case 'holidays':
         return <HolidayCalendar userRole={userRole} />;
@@ -65,7 +65,7 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
 
       
       case 'team-management':
-        return userRole === 'CD' ? (
+        return userRole === 'cd' ? (
           <AdminAllRequests />
         ) : null;
 
