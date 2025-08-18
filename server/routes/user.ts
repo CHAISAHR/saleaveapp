@@ -11,7 +11,7 @@ const normalizeRole = (role: string): string => role?.toLowerCase() || '';
 router.get('/basic', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const userEmail = req.user?.email;
-    const userRole = req.user?.role;
+    const userRole = req.user?.role || '';
     
     let users;
     
