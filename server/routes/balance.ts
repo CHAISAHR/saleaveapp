@@ -380,13 +380,19 @@ router.get('/', authenticateToken, requireRole(['admin', 'cd', 'manager']), asyn
     // CD can see all balances for dashboard, or only team balances if view=team parameter is set
     if ((normalizeRole(req.user!.role) === 'cd' || normalizeRole(req.user!.role) === 'manager') && viewParam === 'team') {
       // CD and Manager see only their managed team members
+      console.log(`Fetching team balances for manager: ${req.user!.email}, year: ${year}`);
+      
+      // Use the users table manager_email field instead of leave_balances Manager field
       balances = await executeQuery(
         `SELECT lb.*, u.gender 
          FROM leave_balances lb 
          LEFT JOIN users u ON lb.EmployeeEmail = u.email 
-         WHERE lb.Manager = ? AND lb.Year = ? ORDER BY lb.EmployeeName`,
+         WHERE u.manager_email = ? AND lb.Year = ? AND u.is_active = 1 
+         ORDER BY lb.EmployeeName`,
         [req.user!.email, year]
       );
+      
+      console.log(`Found ${balances.length} team members for manager ${req.user!.email}`);
     } else {
       // Admin sees all, CD sees all for dashboard
       balances = await executeQuery(
