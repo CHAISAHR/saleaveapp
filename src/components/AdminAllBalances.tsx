@@ -6,6 +6,7 @@ import { AdminAllBalancesHeader } from "./admin/AdminAllBalancesHeader";
 import { AdminAllBalancesTable } from "./admin/AdminAllBalancesTable";
 import { EditBalanceDialog } from "./admin/EditBalanceDialog";
 import { WarningDialogs } from "./admin/WarningDialogs";
+import { AddEmployeeDialog } from "./admin/AddEmployeeDialog";
 import { apiConfig } from "@/config/apiConfig";
 import { usePagination } from "@/hooks/usePagination";
 import { useSorting } from "@/hooks/useSorting";
@@ -60,6 +61,7 @@ export const AdminAllBalances = () => {
   const [currentYear] = useState(new Date().getFullYear());
   const [balances, setBalances] = useState<EmployeeBalance[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAddEmployeeDialog, setShowAddEmployeeDialog] = useState(false);
 
   const getAuthHeaders = () => {
     const authToken = localStorage.getItem('auth_token');
@@ -466,6 +468,10 @@ export const AdminAllBalances = () => {
     });
   };
 
+  const handleAddEmployee = () => {
+    setShowAddEmployeeDialog(true);
+  };
+
   // Apply sorting to balances
   const { sortedData: sortedBalances, sortConfig, handleSort } = useSorting(
     balances,
@@ -505,6 +511,7 @@ export const AdminAllBalances = () => {
         onRolloverWarning={handleRolloverWarning}
         onForfeitWarning={handleForfeitWarning}
         onDownloadCSV={downloadCSV}
+        onAddEmployee={handleAddEmployee}
       />
 
       <AdminAllBalancesTable
@@ -560,6 +567,12 @@ export const AdminAllBalances = () => {
         onOpenChange={setShowRolloverDialog}
         currentYear={currentYear}
         onRolloverComplete={handleRolloverComplete}
+      />
+
+      <AddEmployeeDialog
+        open={showAddEmployeeDialog}
+        onOpenChange={setShowAddEmployeeDialog}
+        onEmployeeAdded={fetchBalances}
       />
     </div>
   );

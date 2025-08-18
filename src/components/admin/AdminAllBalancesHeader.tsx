@@ -7,13 +7,15 @@ interface AdminAllBalancesHeaderProps {
   onRolloverWarning: () => void;
   onForfeitWarning: () => void;
   onDownloadCSV: () => void;
+  onAddEmployee: () => void;
 }
 
 export const AdminAllBalancesHeader = ({
   isAfterJuly31,
   onRolloverWarning,
   onForfeitWarning,
-  onDownloadCSV
+  onDownloadCSV,
+  onAddEmployee
 }: AdminAllBalancesHeaderProps) => {
   return (
     <div className="flex justify-between items-center">
@@ -47,7 +49,7 @@ export const AdminAllBalancesHeader = ({
           <Download className="h-4 w-4 mr-2" />
           Download CSV
         </Button>
-        <Button variant="outline">
+        <Button onClick={onAddEmployee} variant="outline">
           <Plus className="h-4 w-4 mr-2" />
           Add New Employee
         </Button>
