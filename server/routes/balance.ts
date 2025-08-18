@@ -225,16 +225,28 @@ router.put('/accumulated-leave', authenticateToken, async (req: AuthRequest, res
   }
 });
 
-// Get all balances (admin and CD only)
-router.get('/', authenticateToken, requireRole(['admin', 'cd']), async (req: AuthRequest, res) => {
+// Get all balances (admin only, CD with view parameter)
+router.get('/', authenticateToken, requireRole(['admin', 'cd', 'manager']), async (req: AuthRequest, res) => {
   try {
     const year = req.query.year || new Date().getFullYear();
-    const balances = await executeQuery(
-      'SELECT * FROM leave_balances WHERE Year = ? ORDER BY EmployeeName',
-      [year]
-    );
-
-    res.json({ success: true, balances });
+    const viewParam = req.query.view || '';
+    
+    // CD can see all balances for dashboard, or only team balances if view=team parameter is set
+    if ((req.user!.role === 'cd' || req.user!.role === 'manager') && viewParam === 'team') {
+      // CD and Manager see only their managed team members
+      const balances = await executeQuery(
+        'SELECT * FROM leave_balances WHERE Manager = ? AND Year = ? ORDER BY EmployeeName',
+        [req.user!.email, year]
+      );
+      res.json({ success: true, balances });
+    } else {
+      // Admin sees all, CD sees all for dashboard
+      const balances = await executeQuery(
+        'SELECT * FROM leave_balances WHERE Year = ? ORDER BY EmployeeName',
+        [year]
+      );
+      res.json({ success: true, balances });
+    }
   } catch (error) {
     console.error('Get all balances error:', error);
     res.status(500).json({ success: false, message: 'Failed to get balances' });
