@@ -33,7 +33,7 @@ router.get('/:email', authenticateToken, async (req: AuthRequest, res) => {
     const terminationDate = balance.contract_termination_date || undefined;
     
     // Dynamic accumulated leave calculation (1.667 per month, prorated for start date)
-    const calculateAccumulatedLeave = (currentDate = new Date(), terminationDate, startDate) => {
+    const calculateAccumulatedLeave = (currentDate = new Date(), terminationDate?: string, startDate?: string) => {
       const year = currentDate.getFullYear();
       const targetDate = terminationDate ? new Date(terminationDate) : currentDate;
       const calculationDate = targetDate.getFullYear() === year ? targetDate : currentDate;
@@ -312,7 +312,7 @@ router.get('/', authenticateToken, requireRole(['admin', 'cd', 'manager']), asyn
     const viewParam = req.query.view || '';
     
     // Dynamic accumulated leave calculation function
-    const calculateAccumulatedLeave = (currentDate = new Date(), terminationDate, startDate) => {
+    const calculateAccumulatedLeave = (currentDate = new Date(), terminationDate?: string, startDate?: string) => {
       const year = currentDate.getFullYear();
       const targetDate = terminationDate ? new Date(terminationDate) : currentDate;
       const calculationDate = targetDate.getFullYear() === year ? targetDate : currentDate;
@@ -387,7 +387,7 @@ router.get('/', authenticateToken, requireRole(['admin', 'cd', 'manager']), asyn
     }
 
     // Update all balances with dynamic accumulated leave calculation
-    const updatedBalances = await Promise.all(balances.map(async (balance) => {
+    const updatedBalances = await Promise.all(balances.map(async (balance: any) => {
       const startDate = balance.start_date || '2024-01-01';
       const terminationDate = balance.contract_termination_date || undefined;
       const dynamicAccumulatedLeave = Number(calculateAccumulatedLeave(new Date(), terminationDate, startDate).toFixed(3));
