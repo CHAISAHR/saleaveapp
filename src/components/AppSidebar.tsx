@@ -72,8 +72,8 @@ export const AppSidebar = ({
       });
     }
 
-    // Admin-only features
-    if (userRole === 'admin') {
+    // Admin and CD features
+    if (userRole === 'admin' || userRole === 'CD') {
       baseItems.splice(1, 0, {
         value: "all-requests",
         icon: Database,
