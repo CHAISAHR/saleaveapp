@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { AccountInfo } from '@azure/msal-browser';
+import { normalizeRole } from '@/lib/utils';
 
 export const useUserRole = (user: AccountInfo | null) => {
   const [userRole, setUserRole] = useState<'employee' | 'manager' | 'admin' | 'cd'>(() => {
@@ -80,7 +81,7 @@ export const useUserRole = (user: AccountInfo | null) => {
       console.log('[useUserRole] Auth token present:', !!authToken);
       
       // Force a re-render when role changes to cd
-      if (actualRole === 'cd') {
+      if (normalizeRole(actualRole) === 'cd') {
         console.log('[useUserRole] cd role detected, forcing state update');
       }
     }
@@ -88,10 +89,10 @@ export const useUserRole = (user: AccountInfo | null) => {
 
   // Helper function to determine if user can switch to a role
   const canSwitchToRole = (actualRole: string, targetRole: string): boolean => {
-    if (actualRole === 'admin') return true; // Admin can switch to any role
-    if (actualRole === 'cd') return ['employee', 'manager', 'cd'].includes(targetRole);
-    if (actualRole === 'manager') return ['employee', 'manager'].includes(targetRole);
-    return targetRole === 'employee'; // Employees can only be employees
+    if (normalizeRole(actualRole) === 'admin') return true; // Admin can switch to any role
+    if (normalizeRole(actualRole) === 'cd') return ['employee', 'manager', 'cd'].includes(normalizeRole(targetRole));
+    if (normalizeRole(actualRole) === 'manager') return ['employee', 'manager'].includes(normalizeRole(targetRole));
+    return normalizeRole(targetRole) === 'employee'; // Employees can only be employees
   };
 
   // Enhanced setUserRole that persists to localStorage

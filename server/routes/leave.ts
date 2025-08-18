@@ -7,6 +7,9 @@ import { AuditService } from '../services/auditService';
 
 const router = express.Router();
 
+// Helper function to normalize role comparison (case-insensitive)
+const normalizeRole = (role: string): string => role?.toLowerCase() || '';
+
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
 const upload = multer({ 
@@ -376,7 +379,7 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
     let params: any[] = [];
     const currentYear = new Date().getFullYear();
 
-    if (req.user!.role === 'admin') {
+    if (normalizeRole(req.user!.role) === 'admin') {
       // Admin can see all requests (no year filtering for admin)
       query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
                lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, 
@@ -385,7 +388,7 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
                LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
                LEFT JOIN users u ON lt.Modified_By = u.email
                GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
-    } else if (req.user!.role === 'cd') {
+    } else if (normalizeRole(req.user!.role) === 'cd') {
       // CD can see all requests for dashboard, or only team requests if view=team parameter is set
       const viewParam = req.query.view || '';
       if (viewParam === 'team') {
@@ -412,7 +415,7 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
                  LEFT JOIN users u ON lt.Modified_By = u.email
                  GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
       }
-    } else if (req.user!.role === 'manager') {
+    } else if (normalizeRole(req.user!.role) === 'manager') {
       // Manager can see current year requests only:
       // 1. Requests where they are the approver (but not their own requests)
       // 2. Requests where they are the alternative approver (but not their own requests)  
@@ -442,7 +445,7 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
       params = [req.user!.email, currentYear];
     }
 
-    console.log(`Fetching leave requests for role: ${req.user!.role}, user: ${req.user!.email}, view: ${req.query.view || 'default'}, year filter: ${req.user!.role === 'admin' || (req.user!.role === 'cd' && req.query.view !== 'team') ? 'none' : currentYear}`);
+    console.log(`Fetching leave requests for role: ${req.user!.role}, user: ${req.user!.email}, view: ${req.query.view || 'default'}, year filter: ${normalizeRole(req.user!.role) === 'admin' || (normalizeRole(req.user!.role) === 'cd' && req.query.view !== 'team') ? 'none' : currentYear}`);
 
     const requests = await executeQuery(query, params);
     res.json({ success: true, requests });
@@ -469,7 +472,7 @@ router.put('/requests/:id/status', authenticateToken, requireRole(['manager', 'a
     }
 
     // Prevent self-approval: managers and country directors cannot approve their own leave requests
-    if ((req.user!.role === 'manager' || req.user!.role === 'cd') && currentLeave[0].Requester === req.user!.email) {
+    if ((normalizeRole(req.user!.role) === 'manager' || normalizeRole(req.user!.role) === 'cd') && currentLeave[0].Requester === req.user!.email) {
       return res.status(403).json({ 
         success: false, 
         message: 'You cannot approve your own leave request' 
@@ -700,7 +703,7 @@ router.get('/documents', authenticateToken, requireRole(['manager', 'admin', 'cd
         let query = '';
         let params: any[] = [];
 
-        if (req.user!.role === 'admin') {
+        if (normalizeRole(req.user!.role) === 'admin') {
             // Admin can see all documents
             query = `
                 SELECT
@@ -713,7 +716,7 @@ router.get('/documents', authenticateToken, requireRole(['manager', 'admin', 'cd
                 JOIN users u ON lt.Requester = u.email
                 ORDER BY la.${timestampColumn} DESC
             `;
-        } else if (req.user!.role === 'manager' || req.user!.role === 'cd') {
+        } else if (normalizeRole(req.user!.role) === 'manager' || normalizeRole(req.user!.role) === 'cd') {
             // Manager can see documents from their team and alternative approvals
             query = `
                 SELECT
@@ -775,14 +778,14 @@ router.get('/documents/:id/download', authenticateToken, requireRole(['manager',
         // This query implicitly includes the permission check.
         // For admin, it's simpler.
 
-        if (req.user!.role === 'admin') {
+        if (normalizeRole(req.user!.role) === 'admin') {
             query = `
                 SELECT la.original_name, la.file_type, la.file_data, lt.Requester
                 FROM leave_attachments la
                 JOIN leave_taken lt ON la.leave_id = lt.LeaveID
                 WHERE la.id = ?
             `;
-        } else if (req.user!.role === 'manager' || req.user!.role === 'cd') {
+        } else if (normalizeRole(req.user!.role) === 'manager' || normalizeRole(req.user!.role) === 'cd') {
             query = `
                 SELECT la.original_name, la.file_type, la.file_data, lt.Requester
                 FROM leave_attachments la

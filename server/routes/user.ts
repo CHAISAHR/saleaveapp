@@ -4,6 +4,9 @@ import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth'
 
 const router = express.Router();
 
+// Helper function to normalize role comparison (case-insensitive)
+const normalizeRole = (role: string): string => role?.toLowerCase() || '';
+
 // Get basic user info for leave requests (all authenticated users)
 router.get('/basic', authenticateToken, async (req: AuthRequest, res) => {
   try {
@@ -12,12 +15,12 @@ router.get('/basic', authenticateToken, async (req: AuthRequest, res) => {
     
     let users;
     
-    if (userRole === 'admin' || userRole === 'cd') {
+    if (normalizeRole(userRole) === 'admin' || normalizeRole(userRole) === 'cd') {
       // Admins and CD can see all users
       users = await executeQuery(
         'SELECT email, name, department, role, manager_email FROM users WHERE is_active = 1 ORDER BY name'
       );
-    } else if (userRole === 'manager') {
+    } else if (normalizeRole(userRole) === 'manager') {
       // Managers can see users in their department and other managers/admins
       users = await executeQuery(
         `SELECT DISTINCT u.email, u.name, u.department, u.role, u.manager_email 

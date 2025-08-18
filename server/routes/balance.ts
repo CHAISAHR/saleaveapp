@@ -6,6 +6,9 @@ import { AuditService } from '../services/auditService';
 
 const router = express.Router();
 
+// Helper function to normalize role comparison (case-insensitive)
+const normalizeRole = (role: string): string => role?.toLowerCase() || '';
+
 // Get employee balance
 router.get('/:email', authenticateToken, async (req: AuthRequest, res) => {
   try {
@@ -13,7 +16,7 @@ router.get('/:email', authenticateToken, async (req: AuthRequest, res) => {
     const year = req.query.year || new Date().getFullYear();
 
     // Check if user has permission to view this balance
-    if (req.user!.role === 'employee' && req.user!.email !== email) {
+    if (normalizeRole(req.user!.role) === 'employee' && req.user!.email !== email) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
@@ -375,7 +378,7 @@ router.get('/', authenticateToken, requireRole(['admin', 'cd', 'manager']), asyn
     let balances;
     
     // CD can see all balances for dashboard, or only team balances if view=team parameter is set
-    if ((req.user!.role === 'cd' || req.user!.role === 'manager') && viewParam === 'team') {
+    if ((normalizeRole(req.user!.role) === 'cd' || normalizeRole(req.user!.role) === 'manager') && viewParam === 'team') {
       // CD and Manager see only their managed team members
       balances = await executeQuery(
         `SELECT lb.*, u.gender 
