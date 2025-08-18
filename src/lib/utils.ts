@@ -6,6 +6,22 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// Helper function to normalize role comparison (case-insensitive)
+export function normalizeRole(role: string): string {
+  return role?.toLowerCase() || '';
+}
+
+// Helper function for case-insensitive role comparison
+export function isRole(userRole: string, expectedRole: string): boolean {
+  return normalizeRole(userRole) === normalizeRole(expectedRole);
+}
+
+// Helper function to check if user has any of the specified roles
+export function hasAnyRole(userRole: string, expectedRoles: string[]): boolean {
+  const normalizedUserRole = normalizeRole(userRole);
+  return expectedRoles.some(role => normalizedUserRole === normalizeRole(role));
+}
+
 export function calculateWorkingDays(
   startDate: Date,
   endDate: Date,

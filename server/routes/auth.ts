@@ -99,7 +99,7 @@ router.post('/register', async (req, res) => {
 
     // Create initial leave balance with gender-based maternity allocation and prorated accumulated leave
     const currentYear = new Date().getFullYear();
-    const maternityAllocation = gender === 'male' ? 0 : 90;
+    const maternityAllocation = gender?.toLowerCase() === 'male' ? 0 : 90;
     
     // Import and use the existing accumulated leave calculation that handles 27th-of-month rule
     const { AccumulatedLeaveCalculations } = require('../src/services/balance/calculations/accumulatedLeaveCalculations');

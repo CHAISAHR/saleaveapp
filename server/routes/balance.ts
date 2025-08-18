@@ -6,6 +6,9 @@ import { AuditService } from '../services/auditService';
 
 const router = express.Router();
 
+// Helper function to normalize role comparison (case-insensitive)
+const normalizeRole = (role: string): string => role?.toLowerCase() || '';
+
 // Get employee balance
 router.get('/:email', authenticateToken, async (req: AuthRequest, res) => {
   try {
@@ -13,12 +16,15 @@ router.get('/:email', authenticateToken, async (req: AuthRequest, res) => {
     const year = req.query.year || new Date().getFullYear();
 
     // Check if user has permission to view this balance
-    if (req.user!.role === 'employee' && req.user!.email !== email) {
+    if (normalizeRole(req.user!.role) === 'employee' && req.user!.email !== email) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
     const balances = await executeQuery(
-      'SELECT * FROM leave_balances WHERE EmployeeEmail = ? AND Year = ?',
+      `SELECT lb.*, u.gender 
+       FROM leave_balances lb 
+       LEFT JOIN users u ON lb.EmployeeEmail = u.email 
+       WHERE lb.EmployeeEmail = ? AND lb.Year = ?`,
       [email, year]
     );
 
@@ -372,16 +378,28 @@ router.get('/', authenticateToken, requireRole(['admin', 'cd', 'manager']), asyn
     let balances;
     
     // CD can see all balances for dashboard, or only team balances if view=team parameter is set
-    if ((req.user!.role === 'cd' || req.user!.role === 'manager') && viewParam === 'team') {
+    if ((normalizeRole(req.user!.role) === 'cd' || normalizeRole(req.user!.role) === 'manager') && viewParam === 'team') {
       // CD and Manager see only their managed team members
+      console.log(`Fetching team balances for manager: ${req.user!.email}, year: ${year}`);
+      
+      // Use the users table manager_email field instead of leave_balances Manager field
       balances = await executeQuery(
-        'SELECT * FROM leave_balances WHERE Manager = ? AND Year = ? ORDER BY EmployeeName',
+        `SELECT lb.*, u.gender 
+         FROM leave_balances lb 
+         LEFT JOIN users u ON lb.EmployeeEmail = u.email 
+         WHERE u.manager_email = ? AND lb.Year = ? AND u.is_active = 1 
+         ORDER BY lb.EmployeeName`,
         [req.user!.email, year]
       );
+      
+      console.log(`Found ${balances.length} team members for manager ${req.user!.email}`);
     } else {
       // Admin sees all, CD sees all for dashboard
       balances = await executeQuery(
-        'SELECT * FROM leave_balances WHERE Year = ? ORDER BY EmployeeName',
+        `SELECT lb.*, u.gender 
+         FROM leave_balances lb 
+         LEFT JOIN users u ON lb.EmployeeEmail = u.email 
+         WHERE lb.Year = ? ORDER BY lb.EmployeeName`,
         [year]
       );
     }

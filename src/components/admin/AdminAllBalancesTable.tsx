@@ -100,7 +100,7 @@ export const AdminAllBalancesTable = ({
         )}
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -109,6 +109,7 @@ export const AdminAllBalancesTable = ({
                   currentSortKey={sorting?.sortConfig?.key} 
                   currentSortDirection={sorting?.sortConfig?.direction} 
                   onSort={sorting?.onSort || (() => {})}
+                  className="sticky left-0 z-10 bg-background border-r min-w-[100px]"
                 >
                   Balance ID
                 </SortableTableHead>
@@ -117,6 +118,7 @@ export const AdminAllBalancesTable = ({
                   currentSortKey={sorting?.sortConfig?.key} 
                   currentSortDirection={sorting?.sortConfig?.direction} 
                   onSort={sorting?.onSort || (() => {})}
+                  className="sticky left-[100px] z-10 bg-background border-r min-w-[200px]"
                 >
                   Employee Name
                 </SortableTableHead>
@@ -228,8 +230,8 @@ export const AdminAllBalancesTable = ({
             <TableBody>
               {balances.map((balance) => (
                 <TableRow key={balance.BalanceID}>
-                  <TableCell className="font-medium">{balance.BalanceID}</TableCell>
-                  <TableCell>{balance.EmployeeName}</TableCell>
+                  <TableCell className="font-medium sticky left-0 z-10 bg-background border-r min-w-[100px]">{balance.BalanceID}</TableCell>
+                  <TableCell className="sticky left-[100px] z-10 bg-background border-r min-w-[200px]">{balance.EmployeeName}</TableCell>
                   <TableCell>{balance.EmployeeEmail}</TableCell>
                   <TableCell>
                     <Input

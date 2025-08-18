@@ -27,6 +27,8 @@ interface User {
   hire_date: string;
   is_active: boolean;
   manager_email?: string;
+  gender?: string;
+  contract_start_date?: string;
 }
 
 interface Department {
@@ -81,7 +83,8 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
     role: "employee",
     password: "",
     manager_email: "",
-    gender: ""
+    gender: "",
+    contract_start_date: ""
   });
 
   const [editUser, setEditUser] = useState({
@@ -90,7 +93,9 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
     department: "",
     role: "employee",
     manager_email: "",
-    hire_date: ""
+    hire_date: "",
+    gender: "",
+    contract_start_date: ""
   });
 
   // Check if we have a valid token
@@ -313,7 +318,8 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
           role: "employee",
           password: "",
           manager_email: "",
-          gender: ""
+          gender: "",
+          contract_start_date: ""
         });
         setShowUserForm(false);
 
@@ -355,7 +361,9 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
       department: user.department,
       role: user.role,
       manager_email: user.manager_email || "",
-      hire_date: user.hire_date.split('T')[0] // Convert to YYYY-MM-DD format
+      hire_date: user.hire_date.split('T')[0], // Convert to YYYY-MM-DD format
+      gender: user.gender || "",
+      contract_start_date: user.contract_start_date || ""
     });
     setShowEditForm(true);
   };
@@ -392,7 +400,8 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
           department: editUser.department,
           role: editUser.role,
           manager_email: editUser.manager_email,
-          hire_date: editUser.hire_date
+          hire_date: editUser.hire_date,
+          gender: editUser.gender
         })
       });
 
@@ -407,7 +416,8 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                 department: editUser.department,
                 role: editUser.role as 'employee' | 'manager' | 'admin' | 'cd',
                 manager_email: editUser.manager_email || undefined,
-                hire_date: editUser.hire_date
+                hire_date: editUser.hire_date,
+                gender: editUser.gender
               } 
             : user
         ));
@@ -717,6 +727,16 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                     </Select>
                   </div>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="contract-start-date">Contract Start Date</Label>
+                    <Input
+                      id="contract-start-date"
+                      type="date"
+                      value={newUser.contract_start_date}
+                      onChange={(e) => setNewUser(prev => ({ ...prev, contract_start_date: e.target.value }))}
+                    />
+                  </div>
+
                   <div className="flex justify-end space-x-2">
                     <Button variant="outline" onClick={() => setShowUserForm(false)}>
                       Cancel
@@ -769,6 +789,20 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                     value={editUser.hire_date}
                     onChange={(e) => setEditUser(prev => ({ ...prev, hire_date: e.target.value }))}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-gender">Gender *</Label>
+                  <Select value={editUser.gender} onValueChange={(value) => setEditUser(prev => ({ ...prev, gender: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -896,6 +930,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                       <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Department</TableHead>
+                      <TableHead>Gender</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Manager</TableHead>
                       <TableHead>Hire Date</TableHead>
@@ -908,6 +943,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
                         <TableCell className="font-medium">{user.name}</TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{user.department}</TableCell>
+                        <TableCell className="capitalize">{user.gender || 'Not specified'}</TableCell>
                         <TableCell>
                           <Badge variant={user.role === 'admin' ? 'destructive' : user.role === 'manager' || user.role === 'cd' ? 'default' : 'secondary'}>
                             {formatRoleName(user.role)}
