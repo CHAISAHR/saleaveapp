@@ -101,13 +101,13 @@ router.post('/register', async (req, res) => {
     const currentYear = new Date().getFullYear();
     const maternityAllocation = gender?.toLowerCase() === 'male' ? 0 : 90;
     
-    // Import and use the existing accumulated leave calculation that handles 27th-of-month rule
-    const { AccumulatedLeaveCalculations } = require('../src/services/balance/calculations/accumulatedLeaveCalculations');
+    // Calculate prorated accumulated leave for new employee (1.667 per month from hire date)
+    const currentMonth = new Date().getMonth() + 1;
+    const proratedAccumulatedLeave = Math.min(currentMonth * 1.667, 20);
     
-    // Calculate accumulated leave using the proper monthly accrual logic (1.667 on 27th of each month)
+    // Set hire date and calculate accumulated leave
     const hireDate = new Date(); // Using current date as hire date
     const hireDateString = hireDate.toISOString().split('T')[0];
-    const proratedAccumulatedLeave = AccumulatedLeaveCalculations.calculateAccumulatedLeave(hireDate, undefined, hireDateString);
     
     console.log('Creating leave balance:', {
       maternityAllocation,
