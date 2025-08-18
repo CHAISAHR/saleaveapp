@@ -24,7 +24,7 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
         ) : userRole === 'manager' ? (
           <ManagerDashboard currentUser={currentUser} />
         ) : userRole === 'CD' ? (
-          <AdminDashboard currentUser={currentUser} />
+          <ManagerDashboard currentUser={currentUser} />
         ) : (
           <AdminDashboard currentUser={currentUser} />
         );
@@ -42,7 +42,7 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
         ) : userRole === 'manager' ? (
           <ManagerDashboard currentUser={currentUser} activeView="balance" />
         ) : userRole === 'CD' ? (
-          <AdminDashboard currentUser={currentUser} activeView="balances" />
+          <ManagerDashboard currentUser={currentUser} activeView="balance" />
         ) : (
           <AdminDashboard currentUser={currentUser} activeView="balances" />
         );
