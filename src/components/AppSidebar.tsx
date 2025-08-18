@@ -36,6 +36,9 @@ export const AppSidebar = ({
   const { logout } = useAuth();
 
   const getNavigationItems = () => {
+    console.log('[AppSidebar] Current userRole:', userRole);
+    console.log('[AppSidebar] Current user object:', currentUser);
+    
     const baseItems = [
       {
         value: "dashboard",
