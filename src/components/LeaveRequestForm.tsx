@@ -406,6 +406,10 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     return false;
   };
 
+  const allowsOptionalAttachment = () => {
+    return formData.leaveType === 'study';
+  };
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
@@ -907,9 +911,11 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
             </CardContent>
           </Card>
 
-          {requiresDocumentAttachment() && (
+          {(requiresDocumentAttachment() || allowsOptionalAttachment()) && (
             <div className="space-y-3">
-              <Label htmlFor="documents">Supporting Documents *</Label>
+              <Label htmlFor="documents">
+                Supporting Documents {requiresDocumentAttachment() ? '*' : '(Optional)'}
+              </Label>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
                 <div className="text-center">
                   <Upload className="mx-auto h-8 w-8 text-gray-400" />
@@ -928,7 +934,10 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                       />
                     </Label>
                     <p className="text-xs text-gray-500 mt-1">
-                      PDF, Word documents, or images (max 5MB each)
+                      {allowsOptionalAttachment() 
+                        ? "Upload study plans, course materials, or enrollment confirmation (PDF, Word documents, or images, max 5MB each)"
+                        : "PDF, Word documents, or images (max 5MB each)"
+                      }
                     </p>
                   </div>
                 </div>
@@ -976,6 +985,15 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
                   <Upload className="h-4 w-4 text-purple-600" />
                   <AlertDescription className="text-purple-800">
                     <strong>Document Required:</strong> Please attach supporting documents (medical certificate, doctor's note, etc.) for sick leave of 2 or more days.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {allowsOptionalAttachment() && (
+                <Alert className="border-blue-200 bg-blue-50">
+                  <Upload className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-blue-800">
+                    <strong>Optional Documents:</strong> You may attach study plans, course enrollment confirmations, or training materials to support your study leave request.
                   </AlertDescription>
                 </Alert>
               )}
