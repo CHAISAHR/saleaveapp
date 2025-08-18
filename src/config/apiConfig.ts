@@ -78,8 +78,7 @@ export const apiConfig = {
         balance: `${API_BASE_URL}/api/balance`,
         holiday: `${API_BASE_URL}/api/holiday`,
         rollover: `${API_BASE_URL}/api/rollover`,
-        departments: `${API_BASE_URL}/api/departments`,
-        audit: `${API_BASE_URL}/api/audit`
+        departments: `${API_BASE_URL}/api/departments`
     }
 };
 
@@ -220,17 +219,6 @@ const createMockResponse = (url: string, responseType?: 'json' | 'blob' | 'text'
             { id: 3, email: 'jane.smith@example.com', name: 'Jane Smith', department: 'Marketing', role: 'manager', manager: null },
             { id: 4, email: 'admin@example.com', name: 'Admin User', department: 'IT', role: 'admin', manager: null }
         ];
-    } else if (url.includes('/api/audit')) {
-        mockData = {
-            success: true,
-            activity: [
-                { id: 1, table_name: 'leave_taken', record_id: '123', action: 'INSERT', old_values: null, new_values: '{"title":"Vacation","leaveType":"Annual Leave"}', changed_by: 'john.doe@example.com', changed_by_name: 'John Doe', changed_at: '2025-01-26T10:00:00Z' },
-                { id: 2, table_name: 'users', record_id: '456', action: 'UPDATE', old_values: '{"name":"Old Name"}', new_values: '{"name":"New Name"}', changed_by: 'admin@example.com', changed_by_name: 'Admin User', changed_at: '2025-01-26T11:00:00Z' },
-                { id: 3, table_name: 'leave_balances', record_id: '789', action: 'DELETE', old_values: '{"balance":"5"}', new_values: null, changed_by: 'manager@example.com', changed_by_name: 'Manager User', changed_at: '2025-01-26T12:00:00Z' },
-                { id: 4, table_name: 'holidays', record_id: '101', action: 'INSERT', old_values: null, new_values: '{"name":"New Year","date":"2025-01-01"}', changed_by: 'admin@example.com', changed_by_name: 'Admin User', changed_at: '2025-01-26T13:00:00Z' },
-                { id: 5, table_name: 'departments', record_id: '202', action: 'UPDATE', old_values: '{"name":"IT"}', new_values: '{"name":"Information Technology"}', changed_by: 'admin@example.com', changed_by_name: 'Admin User', changed_at: '2025-01-26T14:00:00Z' }
-            ]
-        };
     } else {
         mockData = { message: 'Mock data not found for this URL.' };
     }

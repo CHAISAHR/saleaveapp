@@ -94,11 +94,6 @@ export const AppSidebar = ({
         icon: Users,
         label: "User Management"
       });
-      baseItems.splice(5, 0, {
-        value: "audit",
-        icon: Eye,
-        label: "Audit Log"
-      });
     }
 
     // Add documents tab for managers and country directors (not employees or admin)
