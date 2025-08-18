@@ -21,7 +21,7 @@ CREATE TABLE users (
     name VARCHAR(255) NOT NULL,
     department VARCHAR(100) NOT NULL,
     gender ENUM('male', 'female', 'other') NULL,
-    role ENUM('employee', 'manager', 'admin','cd') DEFAULT 'employee',
+    role ENUM('employee', 'manager', 'admin','CD') DEFAULT 'employee',
     hire_date DATE NOT NULL,
     manager_email VARCHAR(255),
     avatar_url VARCHAR(500),
