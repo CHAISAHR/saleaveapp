@@ -102,9 +102,9 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
             console.log('Manager fetch - No manager_email found for current user');
           }
           
-          // Set available managers (users with manager, admin, or CD role)
+          // Set available managers (users with manager, admin, or cd role)
           const managers = allUsers.filter((u: any) => 
-            u.role === 'manager' || u.role === 'admin' || u.role === 'CD'
+            u.role === 'manager' || u.role === 'admin' || u.role === 'cd'
           );
           console.log('Manager fetch - Available managers count:', managers.length);
           setAvailableManagers(managers);

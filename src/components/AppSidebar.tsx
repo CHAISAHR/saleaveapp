@@ -20,10 +20,10 @@ import { Calendar, Users, Settings, Database, LogOut, User, FileText, Eye } from
 
 interface AppSidebarProps {
   currentUser: any;
-  userRole: 'employee' | 'manager' | 'admin' | 'CD';
+  userRole: 'employee' | 'manager' | 'admin' | 'cd';
   activeTab: string;
   onTabChange: (tab: string) => void;
-  onRoleChange?: (role: 'employee' | 'manager' | 'admin' | 'CD') => void;
+  onRoleChange?: (role: 'employee' | 'manager' | 'admin' | 'cd') => void;
 }
 
 export const AppSidebar = ({ 
@@ -41,8 +41,8 @@ export const AppSidebar = ({
     
     const baseItems = [];
 
-    // For CD role, add Dashboard (Admin Dashboard) first
-    if (userRole === 'CD') {
+    // For cd role, add Dashboard (Admin Dashboard) first
+    if (userRole === 'cd') {
       baseItems.push({
         value: "admin-dashboard",
         icon: Database,
@@ -55,7 +55,7 @@ export const AppSidebar = ({
       {
         value: "dashboard",
         icon: Calendar,
-        label: userRole === 'employee' ? 'Leave Requests' : userRole === 'manager' ? 'Team Requests' : userRole === 'CD' ? 'Team Requests' : 'Dashboard'
+        label: userRole === 'employee' ? 'Leave Requests' : userRole === 'manager' ? 'Team Requests' : userRole === 'cd' ? 'Team Requests' : 'Dashboard'
       },
       {
         value: "holidays",
@@ -103,7 +103,7 @@ export const AppSidebar = ({
     }
 
     // Add documents tab for managers and country directors (not employees or admin)
-    if (userRole === 'manager' || userRole === 'CD') {
+    if (userRole === 'manager' || userRole === 'cd') {
       baseItems.splice(-2, 0, {
         value: "documents",
         icon: FileText,
@@ -156,7 +156,7 @@ export const AppSidebar = ({
         </SidebarGroup>
 
         {/* Role switcher for managers, country directors and admins */}
-        {(currentUser.role === 'manager' || currentUser.role === 'admin' || currentUser.role === 'CD' || userRole === 'manager' || userRole === 'admin' || userRole === 'CD') && onRoleChange && (
+        {(currentUser.role === 'manager' || currentUser.role === 'admin' || currentUser.role === 'cd' || userRole === 'manager' || userRole === 'admin' || userRole === 'cd') && onRoleChange && (
           <SidebarGroup>
             <SidebarGroupLabel>View As</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -186,12 +186,12 @@ export const AppSidebar = ({
                 )}
                 
                 {/* CD View - Show for CD users and admins */}
-                {(currentUser.role === 'CD' || currentUser.role === 'admin') && (
+                {(currentUser.role === 'cd' || currentUser.role === 'admin') && (
                   <Button
-                    variant={userRole === 'CD' ? 'default' : 'ghost'}
+                    variant={userRole === 'cd' ? 'default' : 'ghost'}
                     size="sm"
                     className="w-full justify-start"
-                    onClick={() => onRoleChange('CD')}
+                    onClick={() => onRoleChange('cd')}
                   >
                     <Database className="h-4 w-4 mr-2" />
                     CD View
@@ -233,8 +233,8 @@ export const AppSidebar = ({
           </div>
           
           {/* Role badge */}
-          <Badge variant={userRole === 'admin' ? 'default' : userRole === 'CD' ? 'default' : userRole === 'manager' ? 'secondary' : 'outline'} className="w-full justify-center">
-            {userRole === 'CD' ? 'CD' : userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+          <Badge variant={userRole === 'admin' ? 'default' : userRole === 'cd' ? 'default' : userRole === 'manager' ? 'secondary' : 'outline'} className="w-full justify-center">
+            {userRole === 'cd' ? 'CD' : userRole.charAt(0).toUpperCase() + userRole.slice(1)}
           </Badge>
           
           {/* Sign out button */}

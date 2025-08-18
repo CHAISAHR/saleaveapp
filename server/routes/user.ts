@@ -12,7 +12,7 @@ router.get('/basic', authenticateToken, async (req: AuthRequest, res) => {
     
     let users;
     
-    if (userRole === 'admin' || userRole === 'CD') {
+    if (userRole === 'admin' || userRole === 'cd') {
       // Admins and CD can see all users
       users = await executeQuery(
         'SELECT email, name, department, role, manager_email FROM users WHERE is_active = 1 ORDER BY name'
@@ -23,7 +23,7 @@ router.get('/basic', authenticateToken, async (req: AuthRequest, res) => {
         `SELECT DISTINCT u.email, u.name, u.department, u.role, u.manager_email 
          FROM users u 
          WHERE u.is_active = 1 
-         AND (u.manager_email = ? OR u.role IN ('manager', 'admin', 'CD') OR u.email = ?)
+         AND (u.manager_email = ? OR u.role IN ('manager', 'admin', 'cd') OR u.email = ?)
          ORDER BY u.name`,
         [userEmail, userEmail]
       );
@@ -33,7 +33,7 @@ router.get('/basic', authenticateToken, async (req: AuthRequest, res) => {
         `SELECT email, name, department, role, manager_email 
          FROM users 
          WHERE is_active = 1 
-         AND (role IN ('manager', 'admin', 'CD') OR email = ?)
+         AND (role IN ('manager', 'admin', 'cd') OR email = ?)
          ORDER BY name`,
         [userEmail]
       );
@@ -47,7 +47,7 @@ router.get('/basic', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Get all users (admin and CD only)
-router.get('/', authenticateToken, requireRole(['admin', 'CD']), async (req: AuthRequest, res) => {
+router.get('/', authenticateToken, requireRole(['admin', 'cd']), async (req: AuthRequest, res) => {
   try {
     const users = await executeQuery(
       'SELECT id, email, name, department, role, hire_date, is_active, manager_email FROM users ORDER BY name'
@@ -61,7 +61,7 @@ router.get('/', authenticateToken, requireRole(['admin', 'CD']), async (req: Aut
 });
 
 // Update user information (admin and CD only)
-router.put('/:id', authenticateToken, requireRole(['admin', 'CD']), async (req: AuthRequest, res) => {
+router.put('/:id', authenticateToken, requireRole(['admin', 'cd']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const { name, email, department, role, manager_email, hire_date } = req.body;
@@ -119,18 +119,18 @@ router.put('/:id', authenticateToken, requireRole(['admin', 'CD']), async (req: 
 });
 
 // Update user role (admin and CD only)
-router.put('/:id/role', authenticateToken, requireRole(['admin', 'CD']), async (req: AuthRequest, res) => {
+router.put('/:id/role', authenticateToken, requireRole(['admin', 'cd']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
 
     // Validate role - keep original case for CD
-    const validRoles = ['employee', 'manager', 'admin', 'CD'];
+    const validRoles = ['employee', 'manager', 'admin', 'cd'];
     
     if (!validRoles.includes(role)) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Invalid role. Must be one of: employee, manager, admin, CD' 
+        message: 'Invalid role. Must be one of: employee, manager, admin, cd' 
       });
     }
 
@@ -147,7 +147,7 @@ router.put('/:id/role', authenticateToken, requireRole(['admin', 'CD']), async (
 });
 
 // Update user manager (admin and CD only)
-router.put('/:id/manager', authenticateToken, requireRole(['admin', 'CD']), async (req: AuthRequest, res) => {
+router.put('/:id/manager', authenticateToken, requireRole(['admin', 'cd']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const { manager_email } = req.body;

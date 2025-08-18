@@ -102,7 +102,7 @@ export const EditLeaveRequestDialog = ({ request, isOpen, onClose, onSuccess }: 
           
           // Set available managers (users with manager or admin role)
           const managers = allUsers.filter((u: any) => 
-            u.role === 'manager' || u.role === 'admin' || u.role === 'CD'
+            u.role === 'manager' || u.role === 'admin' || u.role === 'cd'
           );
           setAvailableManagers(managers);
           

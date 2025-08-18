@@ -19,7 +19,7 @@ interface DocumentAttachment {
 }
 
 interface DocumentManagerProps {
-    userRole: 'manager' | 'admin' | 'CD';
+    userRole: 'manager' | 'admin' | 'cd';
 }
 
 export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
@@ -88,7 +88,7 @@ export const DocumentManager = ({ userRole }: DocumentManagerProps) => {
     };
 
     useEffect(() => {
-        if (userRole === 'admin' || userRole === 'manager' || userRole === 'CD') {
+        if (userRole === 'admin' || userRole === 'manager' || userRole === 'cd') {
             fetchDocuments();
         } else {
             setLoading(false);
