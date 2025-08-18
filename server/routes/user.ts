@@ -168,4 +168,69 @@ router.put('/:id/manager', authenticateToken, requireRole(['admin', 'cd']), asyn
   }
 });
 
+// Create new user (admin and CD only)
+router.post('/', authenticateToken, requireRole(['admin', 'cd']), async (req: AuthRequest, res) => {
+  try {
+    const { name, surname, email, department, role, manager_email, hire_date, gender } = req.body;
+
+    // Validate required fields
+    if (!name || !surname || !email || !department || !hire_date) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Name, surname, email, department, and hire date are required' 
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid email format' 
+      });
+    }
+
+    // Check if email is already taken
+    const existingUsers = await executeQuery(
+      'SELECT id FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (existingUsers.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email is already taken' 
+      });
+    }
+
+    // Validate role
+    const validRoles = ['employee', 'manager', 'admin', 'cd'];
+    if (role && !validRoles.includes(role)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid role. Must be one of: employee, manager, admin, cd' 
+      });
+    }
+
+    // Create the full name
+    const fullName = `${name} ${surname}`;
+
+    // Insert new user
+    const result = await executeQuery(
+      `INSERT INTO users (name, email, department, role, manager_email, hire_date, gender, is_active, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())`,
+      [fullName, email, department, role || 'employee', manager_email || null, hire_date, gender]
+    );
+
+    res.status(201).json({ 
+      success: true, 
+      message: 'User created successfully',
+      userId: result.insertId 
+    });
+  } catch (error) {
+    console.error('Create user error:', error);
+    res.status(500).json({ success: false, message: 'Failed to create user' });
+  }
+});
+
 export default router;
