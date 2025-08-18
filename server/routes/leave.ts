@@ -376,8 +376,8 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
     let params: any[] = [];
     const currentYear = new Date().getFullYear();
 
-    if (req.user!.role === 'admin') {
-      // Admin can see all requests (no year filtering for admin)
+    if (req.user!.role === 'admin' || req.user!.role === 'cd') {
+      // Admin and CD can see all requests (no year filtering for admin/cd)
       query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
                lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, 
                lt.Modified_By, u.name as ModifiedBy, lt.workingDays, COUNT(la.id) as attachment_count
@@ -385,8 +385,8 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
                LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
                LEFT JOIN users u ON lt.Modified_By = u.email
                GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
-    } else if (req.user!.role === 'manager' || req.user!.role === 'cd') {
-      // Manager/CD can see current year requests only:
+    } else if (req.user!.role === 'manager') {
+      // Manager can see current year requests only:
       // 1. Requests where they are the approver (but not their own requests)
       // 2. Requests where they are the alternative approver (but not their own requests)  
       // 3. Their own requests (for viewing only, not for approval)
@@ -415,7 +415,7 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
       params = [req.user!.email, currentYear];
     }
 
-    console.log(`Fetching leave requests for role: ${req.user!.role}, user: ${req.user!.email}, year filter: ${req.user!.role !== 'admin' ? currentYear : 'none'}`);
+    console.log(`Fetching leave requests for role: ${req.user!.role}, user: ${req.user!.email}, year filter: ${req.user!.role === 'admin' || req.user!.role === 'cd' ? 'none' : currentYear}`);
 
     const requests = await executeQuery(query, params);
     res.json({ success: true, requests });
