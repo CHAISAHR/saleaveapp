@@ -7,7 +7,6 @@ import { AdminPanel } from "@/components/AdminPanel";
 import { HolidayCalendar } from "@/components/HolidayCalendar";
 import { PolicyGuide } from "@/components/PolicyGuide";
 import { DocumentManager } from "@/components/DocumentManager";
-import { AuditLog } from "@/components/admin/AuditLog";
 
 interface MainContentProps {
   activeTab: string;
@@ -66,8 +65,6 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
       case 'about':
         return <PolicyGuide />;
 
-      case 'audit':
-        return userRole === 'admin' ? <AuditLog /> : null;
       
       case 'team-management':
         return userRole === 'CD' ? (
