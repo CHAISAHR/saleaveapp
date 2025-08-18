@@ -53,7 +53,7 @@ router.get('/basic', authenticateToken, async (req: AuthRequest, res) => {
 router.get('/', authenticateToken, requireRole(['admin', 'cd']), async (req: AuthRequest, res) => {
   try {
     const users = await executeQuery(
-      'SELECT id, email, name, department, role, hire_date, is_active, manager_email FROM users ORDER BY name'
+      'SELECT id, email, name, department, role, hire_date, is_active, manager_email, gender FROM users ORDER BY name'
     );
 
     res.json({ success: true, users });
