@@ -289,6 +289,7 @@ export const AddEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: AddEm
                   <SelectItem value="employee">Employee</SelectItem>
                   <SelectItem value="manager">Manager</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="cd">CD</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -316,7 +317,6 @@ export const AddEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: AddEm
                   <SelectItem value="Male">Male</SelectItem>
                   <SelectItem value="Female">Female</SelectItem>
                   <SelectItem value="Other">Other</SelectItem>
-                  <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
                 </SelectContent>
               </Select>
             </div>
