@@ -57,14 +57,8 @@ export const AppSidebar = ({
       }
     ];
 
-    // Add Dashboard tab for CD (first position) 
-    if (userRole === 'CD') {
-      baseItems.unshift({
-        value: "admin-dashboard",
-        icon: Database,
-        label: "CD Dashboard"
-      });
-    }
+    // CD uses the main dashboard (no separate admin-dashboard needed)
+    // The dashboard tab will show AdminDashboard for CD role
 
     // Add balance tab only for employees, managers, and country directors (not admin)
     if (userRole !== 'admin') {
@@ -168,7 +162,8 @@ export const AppSidebar = ({
                   Employee View
                 </Button>
                 
-                {(currentUser.role === 'manager' || currentUser.role === 'admin' || currentUser.role === 'CD' || userRole === 'manager' || userRole === 'admin' || userRole === 'CD') && (
+                {/* Show Manager View only for actual managers and admins, NOT for CD */}
+                {(currentUser.role === 'manager' || currentUser.role === 'admin') && (
                   <Button
                     variant={userRole === 'manager' ? 'default' : 'ghost'}
                     size="sm"
