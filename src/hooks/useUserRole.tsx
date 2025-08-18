@@ -49,11 +49,12 @@ export const useUserRole = (user: AccountInfo | null) => {
       
       if (user.idTokenClaims?.role) {
         console.log('[useUserRole] User role from token claims:', user.idTokenClaims.role);
-        // Ensure CD role is properly handled
-        if (user.idTokenClaims.role === 'CD') {
+        // Normalize CD role handling (handle both 'CD' and 'Cd')
+        const roleFromToken = user.idTokenClaims.role.toString();
+        if (roleFromToken.toLowerCase() === 'cd') {
           actualRole = 'CD';
         } else {
-          actualRole = user.idTokenClaims.role as 'employee' | 'manager' | 'admin' | 'CD';
+          actualRole = roleFromToken as 'employee' | 'manager' | 'admin' | 'CD';
         }
       } else {
         console.log('[useUserRole] No role in token claims, defaulting to employee');
