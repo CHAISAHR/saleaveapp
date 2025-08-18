@@ -18,7 +18,10 @@ router.get('/:email', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     const balances = await executeQuery(
-      'SELECT * FROM leave_balances WHERE EmployeeEmail = ? AND Year = ?',
+      `SELECT lb.*, u.gender 
+       FROM leave_balances lb 
+       LEFT JOIN users u ON lb.EmployeeEmail = u.email 
+       WHERE lb.EmployeeEmail = ? AND lb.Year = ?`,
       [email, year]
     );
 
@@ -375,13 +378,19 @@ router.get('/', authenticateToken, requireRole(['admin', 'cd', 'manager']), asyn
     if ((req.user!.role === 'cd' || req.user!.role === 'manager') && viewParam === 'team') {
       // CD and Manager see only their managed team members
       balances = await executeQuery(
-        'SELECT * FROM leave_balances WHERE Manager = ? AND Year = ? ORDER BY EmployeeName',
+        `SELECT lb.*, u.gender 
+         FROM leave_balances lb 
+         LEFT JOIN users u ON lb.EmployeeEmail = u.email 
+         WHERE lb.Manager = ? AND lb.Year = ? ORDER BY lb.EmployeeName`,
         [req.user!.email, year]
       );
     } else {
       // Admin sees all, CD sees all for dashboard
       balances = await executeQuery(
-        'SELECT * FROM leave_balances WHERE Year = ? ORDER BY EmployeeName',
+        `SELECT lb.*, u.gender 
+         FROM leave_balances lb 
+         LEFT JOIN users u ON lb.EmployeeEmail = u.email 
+         WHERE lb.Year = ? ORDER BY lb.EmployeeName`,
         [year]
       );
     }
