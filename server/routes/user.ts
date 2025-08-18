@@ -67,7 +67,7 @@ router.get('/', authenticateToken, requireRole(['admin', 'cd']), async (req: Aut
 router.put('/:id', authenticateToken, requireRole(['admin', 'cd']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
-    const { name, email, department, role, manager_email, hire_date } = req.body;
+    const { name, email, department, role, manager_email, hire_date, gender } = req.body;
 
     // Validate required fields
     if (!name || !email || !department || !hire_date) {
@@ -99,9 +99,10 @@ router.put('/:id', authenticateToken, requireRole(['admin', 'cd']), async (req: 
          role = ?, 
          manager_email = ?, 
          hire_date = ?,
+         gender = ?,
          updated_at = NOW() 
        WHERE id = ?`,
-      [name, email, department, role, manager_email || null, hire_date, id]
+      [name, email, department, role, manager_email || null, hire_date, gender, id]
     );
 
     // Also update leave_balances table to keep it in sync
