@@ -38,7 +38,7 @@ router.get('/:email', authenticateToken, async (req: AuthRequest, res) => {
       const targetDate = terminationDate ? new Date(terminationDate) : currentDate;
       const calculationDate = targetDate.getFullYear() === year ? targetDate : currentDate;
       
-      let employeeStartDate = new Date(startDate);
+      let employeeStartDate = new Date(startDate || '2024-01-01');
       if (employeeStartDate.getFullYear() < year) {
         employeeStartDate = new Date(year, 0, 1); // January 1st of current year
       }
