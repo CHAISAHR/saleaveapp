@@ -219,6 +219,28 @@ const createMockResponse = (url: string, responseType?: 'json' | 'blob' | 'text'
             { id: 3, email: 'jane.smith@example.com', name: 'Jane Smith', department: 'Marketing', role: 'manager', manager: null },
             { id: 4, email: 'admin@example.com', name: 'Admin User', department: 'IT', role: 'admin', manager: null }
         ];
+    } else if (url.includes('/api/departments')) {
+        mockData = {
+            success: true,
+            departments: [
+                { id: 1, name: 'HR & Operations', description: 'HR department managing personnel and policies', is_active: true, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+                { id: 2, name: 'Access to Medicines', description: 'HIV Access', is_active: true, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+                { id: 3, name: 'Finance', description: 'Finance department managing company finances', is_active: true, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+                { id: 4, name: 'Assistive Technologies', description: 'Assistive technologies team', is_active: true, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+                { id: 5, name: 'SHF', description: 'Health Financing', is_active: true, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+                { id: 6, name: 'TB', description: 'TB Access', is_active: true, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+                { id: 7, name: 'HIV Prevention', description: 'HIV team', is_active: true, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+                { id: 8, name: 'Cancer', description: 'Cervical Cancer', is_active: true, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+                { id: 9, name: 'Global', description: 'Global Team', is_active: true, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+                { id: 10, name: 'FCDO', description: 'FCDO', is_active: true, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+                { id: 11, name: 'Malaria', description: 'Malaria team', is_active: true, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+                { id: 12, name: 'SRMNH', description: 'HIV team', is_active: true, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+                { id: 13, name: 'Pediatric and Adolescent HIV', description: 'HIV team', is_active: true, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+                { id: 14, name: 'Syphilis', description: 'HIV team', is_active: true, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+                { id: 15, name: 'Senior Leadership', description: 'Senior Leadership', is_active: true, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+                { id: 16, name: 'Other', description: 'Any other team', is_active: true, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' }
+            ]
+        };
     } else {
         mockData = { message: 'Mock data not found for this URL.' };
     }
