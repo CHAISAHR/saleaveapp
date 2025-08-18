@@ -3,7 +3,11 @@ import { useState, useEffect } from "react";
 import { AccountInfo } from '@azure/msal-browser';
 
 export const useUserRole = (user: AccountInfo | null) => {
-  const [userRole, setUserRole] = useState<'employee' | 'manager' | 'admin' | 'CD'>('employee');
+  const [userRole, setUserRole] = useState<'employee' | 'manager' | 'admin' | 'CD'>(() => {
+    // Try to get persisted role from localStorage first
+    const persistedRole = localStorage.getItem('selectedRole');
+    return persistedRole as 'employee' | 'manager' | 'admin' | 'CD' || 'employee';
+  });
 
   // Get user's full name from different sources
   const getUserFullName = () => {
@@ -45,18 +49,31 @@ export const useUserRole = (user: AccountInfo | null) => {
       
       if (user.idTokenClaims?.role) {
         console.log('[useUserRole] User role from token claims:', user.idTokenClaims.role);
-        // Ensure CD role is properly handled
-        if (user.idTokenClaims.role === 'CD') {
+        // Normalize CD role handling (handle both 'CD' and 'Cd')
+        const roleFromToken = user.idTokenClaims.role.toString();
+        if (roleFromToken.toLowerCase() === 'cd') {
           actualRole = 'CD';
         } else {
-          actualRole = user.idTokenClaims.role as 'employee' | 'manager' | 'admin' | 'CD';
+          actualRole = roleFromToken as 'employee' | 'manager' | 'admin' | 'CD';
         }
       } else {
         console.log('[useUserRole] No role in token claims, defaulting to employee');
       }
       
       console.log('[useUserRole] Setting user role to:', actualRole);
-      setUserRole(actualRole);
+      
+      // Check if there's a persisted role that's valid for this user
+      const persistedRole = localStorage.getItem('selectedRole') as 'employee' | 'manager' | 'admin' | 'CD' | null;
+      
+      // Only use persisted role if user has permission for it
+      if (persistedRole && canSwitchToRole(actualRole, persistedRole)) {
+        console.log('[useUserRole] Using persisted role:', persistedRole);
+        setUserRole(persistedRole);
+      } else {
+        console.log('[useUserRole] Using actual role:', actualRole);
+        setUserRole(actualRole);
+        localStorage.removeItem('selectedRole'); // Clear invalid persisted role
+      }
       
       // Log token info for debugging
       const authToken = localStorage.getItem('auth_token');
@@ -69,5 +86,20 @@ export const useUserRole = (user: AccountInfo | null) => {
     }
   }, [user]);
 
-  return { userRole, setUserRole, currentUser };
+  // Helper function to determine if user can switch to a role
+  const canSwitchToRole = (actualRole: string, targetRole: string): boolean => {
+    if (actualRole === 'admin') return true; // Admin can switch to any role
+    if (actualRole === 'CD') return ['employee', 'manager', 'CD'].includes(targetRole);
+    if (actualRole === 'manager') return ['employee', 'manager'].includes(targetRole);
+    return targetRole === 'employee'; // Employees can only be employees
+  };
+
+  // Enhanced setUserRole that persists to localStorage
+  const setUserRoleWithPersistence = (role: 'employee' | 'manager' | 'admin' | 'CD') => {
+    console.log('[useUserRole] Setting role with persistence:', role);
+    localStorage.setItem('selectedRole', role);
+    setUserRole(role);
+  };
+
+  return { userRole, setUserRole: setUserRoleWithPersistence, currentUser };
 };
