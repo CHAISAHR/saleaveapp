@@ -64,18 +64,28 @@ export const AddEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: AddEm
 
       if (response.ok) {
         const data = await response.json();
-        setDepartments(data.filter((dept: Department) => dept.is_active));
+        setDepartments((data.departments || []).filter((dept: Department) => dept.is_active));
       }
     } catch (error) {
       console.error('Error fetching departments:', error);
-      // Fallback departments
+      // Fallback departments - match the same ones as AdminPanel
       setDepartments([
-        { id: 1, name: 'Human Resources', is_active: true },
-        { id: 2, name: 'Finance', is_active: true },
-        { id: 3, name: 'Information Technology', is_active: true },
-        { id: 4, name: 'Operations', is_active: true },
-        { id: 5, name: 'Marketing', is_active: true },
-        { id: 6, name: 'Sales', is_active: true }
+        { id: 1, name: 'HR & Operations', description: 'HR department managing personnel and policies', is_active: true},
+        { id: 2, name: 'Access to Medicines', description: 'HIV Access', is_active: true},
+        { id: 3, name: 'Finance', description: 'Finance department managing company finances', is_active: true},
+        { id: 4, name: 'Assistive Technologies', description: 'Assistive technologies team', is_active: true},
+        { id: 5, name: 'SHF', description: 'Health Financing', is_active: true},
+        { id: 6, name: 'TB', description: 'TB Access', is_active: true},
+        { id: 7, name: 'HIV Prevention', description: 'HIV team', is_active: true},
+        { id: 8, name: 'Cancer', description: 'Cervical Cancer', is_active: true},
+        { id: 9, name: 'Global', description: 'Global Team', is_active: true},
+        { id: 10, name: 'FCDO', description: 'FCDO', is_active: true},
+        { id: 11, name: 'Malaria', description: 'Malaria team', is_active: true},
+        { id: 12, name: 'SRMNH', description: 'HIV team', is_active: true},
+        { id: 13, name: 'Pediatric and Adolescent HIV', description: 'HIV team', is_active: true},
+        { id: 14, name: 'Syphilis', description: 'HIV team', is_active: true},
+        { id: 15, name: 'Senior Leadership', description: 'Senior Leadership', is_active: true},
+        { id: 16, name: 'Other', description: 'Any other team', is_active: true}
       ]);
     }
   };
