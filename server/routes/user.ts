@@ -222,6 +222,32 @@ router.post('/', authenticateToken, requireRole(['admin', 'cd']), async (req: Au
       [fullName, email, department, role || 'employee', manager_email || null, hire_date, gender]
     );
 
+    // Create initial leave balance record
+    const currentYear = new Date().getFullYear();
+    const maternityAllocation = gender?.toLowerCase() === 'male' ? 0 : 90;
+    
+    // Calculate prorated accumulated leave for new employee (1.667 per month from hire date)
+    const hireMonth = new Date(hire_date).getMonth() + 1;
+    const currentMonth = new Date().getMonth() + 1;
+    const monthsToAccumulate = Math.max(0, currentMonth - hireMonth + 1);
+    const proratedAccumulatedLeave = Math.min(monthsToAccumulate * 1.667, 20);
+
+    try {
+      await executeQuery(
+        `INSERT INTO leave_balances (
+          EmployeeName, EmployeeEmail, Department, Start_date, Year, 
+          Broughtforward, Annual, AccumulatedLeave, AnnualUsed, Forfeited, 
+          Annual_leave_adjustments, SickUsed, MaternityUsed, ParentalUsed, 
+          FamilyUsed, AdoptionUsed, StudyUsed, WellnessUsed, 
+          Current_leave_balance, Manager, gender
+        ) VALUES (?, ?, ?, ?, ?, 0, 20, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ?, ?, ?)`,
+        [fullName, email, department, hire_date, currentYear, proratedAccumulatedLeave, proratedAccumulatedLeave, manager_email || null, gender]
+      );
+    } catch (balanceError) {
+      console.error('Error creating leave balance:', balanceError);
+      // Don't fail user creation if leave balance creation fails
+    }
+
     res.status(201).json({ 
       success: true, 
       message: 'User created successfully',
@@ -230,6 +256,51 @@ router.post('/', authenticateToken, requireRole(['admin', 'cd']), async (req: Au
   } catch (error) {
     console.error('Create user error:', error);
     res.status(500).json({ success: false, message: 'Failed to create user' });
+  }
+});
+
+// Delete user (admin and CD only)
+router.delete('/:id', authenticateToken, requireRole(['admin', 'cd']), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if user exists
+    const users = await executeQuery(
+      'SELECT id, email, name FROM users WHERE id = ?',
+      [id]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+
+    const user = users[0];
+
+    // Delete from leave_balances first (if exists)
+    await executeQuery(
+      'DELETE FROM leave_balances WHERE EmployeeEmail = ?',
+      [user.email]
+    );
+
+    // Delete user
+    await executeQuery(
+      'DELETE FROM users WHERE id = ?',
+      [id]
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'User deleted successfully' 
+    });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete user' 
+    });
   }
 });
 
