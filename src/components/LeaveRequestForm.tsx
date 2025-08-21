@@ -46,6 +46,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
   const [userBalance, setUserBalance] = useState<EmployeeBalance | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [existingLeaveRequests, setExistingLeaveRequests] = useState<any[]>([]);
 
   // Fetch manager info and available managers on component mount
   useEffect(() => {
@@ -170,7 +171,32 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       }
     };
 
+    const fetchExistingLeaveRequests = async () => {
+      try {
+        const authToken = localStorage.getItem('auth_token');
+        if (!authToken) return;
+
+        const response = await fetch(`${apiConfig.endpoints.leave}`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          // Filter for pending and approved requests only
+          const activeRequests = data.filter((request: any) => 
+            request.Status === 'pending' || request.Status === 'approved'
+          );
+          setExistingLeaveRequests(activeRequests);
+        }
+      } catch (error) {
+        console.error('Error fetching existing leave requests:', error);
+      }
+    };
+
     fetchUserBalance();
+    fetchExistingLeaveRequests();
   }, [currentUser?.email]);
 
   // Generate leave types based on user's actual balance data
@@ -527,6 +553,29 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     }
   };
 
+  // Check for overlapping leave dates
+  const checkForOverlappingDates = (startDate: Date, endDate: Date): { hasOverlap: boolean; conflictingRequest?: any } => {
+    const requestStart = new Date(startDate);
+    const requestEnd = new Date(endDate);
+    
+    for (const existingRequest of existingLeaveRequests) {
+      const existingStart = new Date(existingRequest.StartDate);
+      const existingEnd = new Date(existingRequest.EndDate);
+      
+      // Check if dates overlap: NOT (end < start OR start > end)
+      const hasOverlap = !(requestEnd < existingStart || requestStart > existingEnd);
+      
+      if (hasOverlap) {
+        return { 
+          hasOverlap: true, 
+          conflictingRequest: existingRequest 
+        };
+      }
+    }
+    
+    return { hasOverlap: false };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -560,6 +609,18 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
       toast({
         title: "Document Required",
         description: "Please attach supporting documents for sick leave of 2 or more days.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check for overlapping dates
+    const overlapCheck = checkForOverlappingDates(formData.startDate!, formData.endDate!);
+    if (overlapCheck.hasOverlap) {
+      const conflicting = overlapCheck.conflictingRequest;
+      toast({
+        title: "Overlapping Leave Dates",
+        description: `You already have ${conflicting.Status} leave from ${new Date(conflicting.StartDate).toLocaleDateString()} to ${new Date(conflicting.EndDate).toLocaleDateString()} (${conflicting.LeaveType}). Leave dates cannot overlap.`,
         variant: "destructive",
       });
       return;
