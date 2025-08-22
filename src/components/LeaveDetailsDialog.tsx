@@ -83,10 +83,10 @@ export const LeaveDetailsDialog = ({
   const modified = request.Modified;
   const modifiedBy = request.ModifiedBy;
 
-  // Fetch employee balance for managers/admins
+  // Always call the hook but only pass params when needed
   const shouldShowBalance = userRole !== 'employee' && requester;
   const { balance, loading: balanceLoading, error: balanceError } = useEmployeeBalance(
-    shouldShowBalance ? requester : '', 
+    requester || '', 
     leaveType || ''
   );
 
