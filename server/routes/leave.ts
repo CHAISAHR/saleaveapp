@@ -225,13 +225,14 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
       title, detail, startDate, endDate, leaveType, requester, workingDays
     });
 
-    // Check for duplicate requests (same user, same dates, same type, within last 5 minutes)
+    // Enhanced duplicate check - prevent same user, dates, type combination regardless of time
+    // Also check for any pending/approved requests with same details
     const duplicateCheck = await executeQuery(
-      `SELECT LeaveID FROM leave_taken 
+      `SELECT LeaveID, Status, Created FROM leave_taken 
        WHERE Requester = ? AND StartDate = ? AND EndDate = ? AND LeaveType = ? 
-       AND Created > DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+       AND Status IN ('pending', 'approved')
        ORDER BY Created DESC LIMIT 1`,
-      [requester, startDate, endDate, leaveType]
+      [requester, formattedStartDate, formattedEndDate, leaveType]
     );
 
     if (duplicateCheck.length > 0) {
