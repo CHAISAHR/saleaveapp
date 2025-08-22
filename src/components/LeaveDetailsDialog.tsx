@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, XCircle, AlertCircle, Clock, Calendar, User, FileText, Edit } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Clock, Calendar, User, FileText, Edit, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { RejectReasonDialog } from "./RejectReasonDialog";
+import { useEmployeeBalance } from "@/hooks/useEmployeeBalance";
 
 interface LeaveRequest {
   LeaveID?: number;
@@ -81,6 +82,13 @@ export const LeaveDetailsDialog = ({
   const created = request.Created || request.submittedDate;
   const modified = request.Modified;
   const modifiedBy = request.ModifiedBy;
+
+  // Fetch employee balance for managers/admins
+  const shouldShowBalance = userRole !== 'employee' && requester;
+  const { balance, loading: balanceLoading, error: balanceError } = useEmployeeBalance(
+    shouldShowBalance ? requester : '', 
+    leaveType || ''
+  );
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -259,6 +267,32 @@ export const LeaveDetailsDialog = ({
                   </div>
                 </div>
               </div>
+
+              {/* Leave Balance - Show for managers/admins */}
+              {shouldShowBalance && (
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <div className="text-sm text-muted-foreground">Current {leaveType} Balance</div>
+                    <div className="font-medium">
+                      {balanceLoading ? (
+                        <span className="text-muted-foreground">Loading...</span>
+                      ) : balanceError ? (
+                        <span className="text-destructive">Unable to load</span>
+                      ) : (
+                        <span className={balance !== null && balance < days ? "text-destructive" : ""}>
+                          {balance !== null ? `${balance.toFixed(1)} days` : 'N/A'}
+                          {balance !== null && balance < days && (
+                            <span className="text-xs text-destructive ml-2">
+                              (Insufficient balance)
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-4">
