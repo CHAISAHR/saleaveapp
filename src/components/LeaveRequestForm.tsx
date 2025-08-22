@@ -578,19 +578,25 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     
-    // Prevent duplicate submissions
+    // Immediate double-click protection - set submitting state first
     if (isSubmitting) {
       console.log('Submission already in progress, ignoring duplicate click');
       return;
     }
     
+    // Set submitting state immediately to prevent race conditions
+    setIsSubmitting(true);
+    
+    // Validation checks
     if (!formData.title || !formData.leaveType || !formData.startDate || !formData.endDate) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
         variant: "destructive",
       });
+      setIsSubmitting(false);
       return;
     }
 
@@ -601,6 +607,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
           description: "Please select an alternative manager and provide a reason.",
           variant: "destructive",
         });
+        setIsSubmitting(false);
         return;
       }
     }
@@ -611,6 +618,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         description: "Please attach supporting documents for sick leave of 2 or more days.",
         variant: "destructive",
       });
+      setIsSubmitting(false);
       return;
     }
 
@@ -623,6 +631,7 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
         description: `You already have ${conflicting.Status} leave from ${new Date(conflicting.StartDate).toLocaleDateString()} to ${new Date(conflicting.EndDate).toLocaleDateString()} (${conflicting.LeaveType}). Leave dates cannot overlap.`,
         variant: "destructive",
       });
+      setIsSubmitting(false);
       return;
     }
 
@@ -640,9 +649,6 @@ export const LeaveRequestForm = ({ isOpen, onClose, currentUser }: LeaveRequestF
     };
 
     console.log("Leave request submitted:", requestData);
-
-    // Set loading state
-    setIsSubmitting(true);
     
     // Show immediate feedback to user
     toast({
