@@ -66,6 +66,13 @@ export const LeaveDetailsDialog = ({
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
+  // Always call hooks before any conditional returns
+  // Always call the hook with the same parameters to avoid React hooks error
+  const { balance, loading: balanceLoading, error: balanceError } = useEmployeeBalance(
+    request?.Requester || request?.requester || '', 
+    request?.LeaveType || request?.type || ''
+  );
+
   if (!request) return null;
 
   // Handle different data structure formats
@@ -83,12 +90,6 @@ export const LeaveDetailsDialog = ({
   const modified = request.Modified;
   const modifiedBy = request.ModifiedBy;
 
-  // Always call the hook with the same parameters to avoid React hooks error
-  const { balance, loading: balanceLoading, error: balanceError } = useEmployeeBalance(
-    requester || '', 
-    leaveType || ''
-  );
-  
   // Only show balance for non-employees
   const shouldShowBalance = userRole !== 'employee' && requester;
 
