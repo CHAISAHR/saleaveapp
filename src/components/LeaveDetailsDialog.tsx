@@ -83,11 +83,11 @@ export const LeaveDetailsDialog = ({
   const modified = request.Modified;
   const modifiedBy = request.ModifiedBy;
 
-  // Always call the hook but only pass params when needed
+  // Always call the hook with consistent parameters
   const shouldShowBalance = userRole !== 'employee' && requester;
   const { balance, loading: balanceLoading, error: balanceError } = useEmployeeBalance(
-    requester || '', 
-    leaveType || ''
+    shouldShowBalance ? (requester || '') : '', 
+    shouldShowBalance ? (leaveType || '') : ''
   );
 
   const getStatusIcon = (status: string) => {
