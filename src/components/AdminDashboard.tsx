@@ -24,60 +24,19 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
 
   const getAuthHeaders = () => {
     const authToken = localStorage.getItem('auth_token');
-    if (!authToken) {
-      console.error('[AdminDashboard] No auth token found');
-      return null;
-    }
     return {
       'Authorization': `Bearer ${authToken}`,
       'Content-Type': 'application/json'
     };
   };
 
-  // Check if user is authenticated and has admin permissions
-  const hasAdminAccess = () => {
-    const authToken = localStorage.getItem('auth_token');
-    if (!authToken || !currentUser) {
-      console.error('[AdminDashboard] User not authenticated or missing user data');
-      return false;
-    }
-    
-    // Check if user has admin or cd role
-    const userRole = currentUser.role || localStorage.getItem('selectedRole');
-    if (!['admin', 'cd'].includes(userRole)) {
-      console.error('[AdminDashboard] User does not have admin permissions:', userRole);
-      return false;
-    }
-    
-    return true;
-  };
-
   const fetchDatabaseStats = async () => {
-    // Check authentication and permissions first
-    if (!hasAdminAccess()) {
-      console.error('[AdminDashboard] Access denied - user not authenticated or insufficient permissions');
-      toast({
-        title: "Access Denied",
-        description: "You need admin permissions to view this dashboard.",
-        variant: "destructive"
-      });
-      setLoading(false);
-      return;
-    }
-
-    const authHeaders = getAuthHeaders();
-    if (!authHeaders) {
-      console.error('[AdminDashboard] Cannot get auth headers');
-      setLoading(false);
-      return;
-    }
-
     try {
       console.log('AdminDashboard - Fetching database stats...');
       
       // Fetch leave requests for total count
       const requestsResponse = await makeApiRequest(`${apiConfig.endpoints.leave}/requests`, {
-        headers: authHeaders
+        headers: getAuthHeaders()
       });
 
       const requestsData = await requestsResponse.json();
@@ -95,7 +54,7 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
       try {
         // Attempt to fetch users data to estimate database size
         const usersResponse = await makeApiRequest(`${apiConfig.endpoints.users}`, {
-          headers: authHeaders
+          headers: getAuthHeaders()
         });
         const usersData = await usersResponse.json();
         const usersArray = Array.isArray(usersData) ? usersData : 
@@ -104,7 +63,7 @@ export const AdminDashboard = ({ currentUser, activeView = 'dashboard', onViewCh
 
         // Fetch balance data for more comprehensive size estimation
         const balanceResponse = await makeApiRequest(`${apiConfig.endpoints.balance}`, {
-          headers: authHeaders
+          headers: getAuthHeaders()
         });
         const balanceData = await balanceResponse.json();
         const balanceArray = Array.isArray(balanceData) ? balanceData : 

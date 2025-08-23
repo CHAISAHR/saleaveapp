@@ -14,10 +14,6 @@ export const AdminStatsCards = () => {
 
   const getAuthHeaders = () => {
     const authToken = localStorage.getItem('auth_token');
-    if (!authToken) {
-      console.error('[AdminStatsCards] No auth token found');
-      return null;
-    }
     return {
       'Authorization': `Bearer ${authToken}`,
       'Content-Type': 'application/json'
@@ -25,12 +21,6 @@ export const AdminStatsCards = () => {
   };
 
   const fetchStats = async () => {
-    const authHeaders = getAuthHeaders();
-    if (!authHeaders) {
-      console.error('[AdminStatsCards] Cannot get auth headers, skipping stats fetch');
-      return;
-    }
-
     try {
       console.log('AdminStatsCards - Starting to fetch stats...');
       
@@ -38,7 +28,7 @@ export const AdminStatsCards = () => {
       try {
         console.log('AdminStatsCards - Fetching users data from:', `${apiConfig.endpoints.users}`);
         const usersResponse = await makeApiRequest(`${apiConfig.endpoints.users}`, {
-          headers: authHeaders
+          headers: getAuthHeaders()
         });
         
         const usersData = await usersResponse.json();
@@ -79,7 +69,7 @@ export const AdminStatsCards = () => {
         
         try {
           const balanceResponse = await makeApiRequest(`${apiConfig.endpoints.balance}`, {
-            headers: authHeaders
+            headers: getAuthHeaders()
           });
           
           const balanceData = await balanceResponse.json();
@@ -114,7 +104,7 @@ export const AdminStatsCards = () => {
 
       // Fetch requests data
       const requestsResponse = await makeApiRequest(`${apiConfig.endpoints.leave}/requests`, {
-        headers: authHeaders
+        headers: getAuthHeaders()
       });
 
       const requestsData = await requestsResponse.json();
