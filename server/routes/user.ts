@@ -235,13 +235,13 @@ router.post('/', authenticateToken, requireRole(['admin', 'cd']), async (req: Au
     try {
       await executeQuery(
         `INSERT INTO leave_balances (
-          EmployeeName, EmployeeEmail, Department, Start_date, Year, 
+          EmployeeName, EmployeeEmail, Department, start_date, Year, 
           Broughtforward, Annual, AccumulatedLeave, AnnualUsed, Forfeited, 
           Annual_leave_adjustments, SickUsed, MaternityUsed, ParentalUsed, 
           FamilyUsed, AdoptionUsed, StudyUsed, WellnessUsed, 
-          Current_leave_balance, Manager, gender
-        ) VALUES (?, ?, ?, ?, ?, 0, 20, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ?, ?, ?)`,
-        [fullName, email, department, hire_date, currentYear, proratedAccumulatedLeave, proratedAccumulatedLeave, manager_email || null, gender]
+          Manager, Maternity, Sick, Parental, Family, Adoption, Study, Wellness
+        ) VALUES (?, ?, ?, ?, ?, 0, 20, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ?, ?, 36, 4, 3, 4, 6, 2)`,
+        [fullName, email, department, hire_date, currentYear, proratedAccumulatedLeave, manager_email || null, maternityAllocation]
       );
     } catch (balanceError) {
       console.error('Error creating leave balance:', balanceError);
