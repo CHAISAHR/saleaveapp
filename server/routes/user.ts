@@ -224,7 +224,7 @@ router.post('/', authenticateToken, requireRole(['admin', 'cd']), async (req: Au
 
     // Create initial leave balance record
     const currentYear = new Date().getFullYear();
-    const maternityAllocation = gender?.toLowerCase() === 'male' ? 0 : 90;
+    const maternityAllocation = gender?.toLowerCase() === 'male' ? 0 : 3; // 3 months for females, 0 for males
     
     // Calculate prorated accumulated leave for new employee (1.667 per month from hire date)
     const hireMonth = new Date(hire_date).getMonth() + 1;
@@ -241,10 +241,14 @@ router.post('/', authenticateToken, requireRole(['admin', 'cd']), async (req: Au
           FamilyUsed, AdoptionUsed, StudyUsed, WellnessUsed, 
           Manager, Maternity, Sick, Parental, Family, Adoption, Study, Wellness
         ) VALUES (?, ?, ?, ?, ?, 0, 20, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ?, ?, 36, 4, 3, 4, 6, 2)`,
-        [fullName, email, department, hire_date, currentYear, proratedAccumulatedLeave, manager_email || null, maternityAllocation]
+        [fullName, email, department, hire_date, currentYear, proratedAccumulatedLeave, manager_email || null, maternityAllocation, 36, 4, 3, 4, 6, 2]
       );
     } catch (balanceError) {
       console.error('Error creating leave balance:', balanceError);
+      console.error('Balance creation details:', {
+        fullName, email, department, hire_date, currentYear, 
+        proratedAccumulatedLeave, manager_email, maternityAllocation
+      });
       // Don't fail user creation if leave balance creation fails
     }
 
