@@ -446,21 +446,19 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
       // CD can see all requests for dashboard, or only team requests if view=team parameter is set
       const viewParam = req.query.view || '';
       if (viewParam === 'team') {
-        // CD sees requests from users they manage (via manager_email), requests they approve, or their own requests
+        // CD sees only their managed team members (like manager view)
         query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
                  lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, 
                  lt.Modified_By, u.name as ModifiedBy, lt.workingDays, COUNT(la.id) as attachment_count
                  FROM leave_taken lt 
                  LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
                  LEFT JOIN users u ON lt.Modified_By = u.email
-                 LEFT JOIN users requester_user ON lt.Requester = requester_user.email
-                 WHERE (requester_user.manager_email = ? OR 
-                        lt.Approver = ? OR 
-                        lt.AlternativeApprover = ? OR 
-                        lt.Requester = ?) 
-                        AND YEAR(lt.StartDate) = ?
+                 WHERE ((lt.Approver = ? AND lt.Requester != ?) OR 
+                       (lt.AlternativeApprover = ? AND lt.Requester != ?) OR 
+                       lt.Requester = ?) 
+                       AND YEAR(lt.StartDate) = ?
                  GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
-        params = [req.user!.email, req.user!.email, req.user!.email, req.user!.email, currentYear];
+        params = [req.user!.email, req.user!.email, req.user!.email, req.user!.email, req.user!.email, currentYear];
       } else {
         // CD sees all requests (like admin view) for dashboard
         query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
