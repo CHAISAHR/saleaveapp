@@ -25,10 +25,8 @@ interface LeaveRequest {
   type?: string;
   Requester?: string;
   requester?: string;
-  RequesterName?: string;
   Approver?: string;
   approver?: string;
-  ApproverName?: string;
   Status?: string;
   status?: string;
   workingDays?: number;
@@ -85,9 +83,7 @@ export const LeaveDetailsDialog = ({
   const endDate = request.EndDate || request.endDate;
   const leaveType = request.LeaveType || request.type;
   const requester = request.Requester || request.requester;
-  const requesterName = request.RequesterName;
   const approver = request.Approver || request.approver;
-  const approverName = request.ApproverName;
   const status = (request.Status || request.status || '').toLowerCase();
   const days = request.workingDays || request.days;
   const created = request.Created || request.submittedDate;
@@ -305,7 +301,7 @@ export const LeaveDetailsDialog = ({
             <div className="space-y-4">
               {approver && (
                 <div>
-                  <div className="text-sm text-muted-foreground">Approver</div>
+                  <div className="text-sm text-muted-foreground">Approved by</div>
                   <div className="font-medium">{approver}</div>
                 </div>
               )}

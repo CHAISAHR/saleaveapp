@@ -437,13 +437,10 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
       // Admin can see all requests (no year filtering for admin)
       query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
                lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, 
-               lt.Modified_By, u.name as ModifiedBy, lt.workingDays, COUNT(la.id) as attachment_count,
-               approver_user.name as ApproverName, requester_user.name as RequesterName
+               lt.Modified_By, u.name as ModifiedBy, lt.workingDays, COUNT(la.id) as attachment_count
                FROM leave_taken lt 
                LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
                LEFT JOIN users u ON lt.Modified_By = u.email
-               LEFT JOIN users approver_user ON lt.Approver = approver_user.email
-               LEFT JOIN users requester_user ON lt.Requester = requester_user.email
                GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
     } else if (normalizeRole(req.user!.role) === 'cd') {
       // CD can see all requests for dashboard, or only team requests if view=team parameter is set
@@ -452,13 +449,10 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
         // CD sees only their managed team members (like manager view)
         query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
                  lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, 
-                 lt.Modified_By, u.name as ModifiedBy, lt.workingDays, COUNT(la.id) as attachment_count,
-                 approver_user.name as ApproverName, requester_user.name as RequesterName
+                 lt.Modified_By, u.name as ModifiedBy, lt.workingDays, COUNT(la.id) as attachment_count
                  FROM leave_taken lt 
                  LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
                  LEFT JOIN users u ON lt.Modified_By = u.email
-                 LEFT JOIN users approver_user ON lt.Approver = approver_user.email
-                 LEFT JOIN users requester_user ON lt.Requester = requester_user.email
                  WHERE ((lt.Approver = ? AND lt.Requester != ?) OR 
                        (lt.AlternativeApprover = ? AND lt.Requester != ?) OR 
                        lt.Requester = ?) 
@@ -469,13 +463,10 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
         // CD sees all requests (like admin view) for dashboard
         query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
                  lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, 
-                 lt.Modified_By, u.name as ModifiedBy, lt.workingDays, COUNT(la.id) as attachment_count,
-                 approver_user.name as ApproverName, requester_user.name as RequesterName
+                 lt.Modified_By, u.name as ModifiedBy, lt.workingDays, COUNT(la.id) as attachment_count
                  FROM leave_taken lt 
                  LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
                  LEFT JOIN users u ON lt.Modified_By = u.email
-                 LEFT JOIN users approver_user ON lt.Approver = approver_user.email
-                 LEFT JOIN users requester_user ON lt.Requester = requester_user.email
                  GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
       }
     } else if (normalizeRole(req.user!.role) === 'manager') {
@@ -485,13 +476,10 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
       // 3. Their own requests (for viewing only, not for approval)
       query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
                lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, 
-               lt.Modified_By, u.name as ModifiedBy, lt.workingDays, COUNT(la.id) as attachment_count,
-               approver_user.name as ApproverName, requester_user.name as RequesterName
+               lt.Modified_By, u.name as ModifiedBy, lt.workingDays, COUNT(la.id) as attachment_count
                FROM leave_taken lt 
                LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
                LEFT JOIN users u ON lt.Modified_By = u.email
-               LEFT JOIN users approver_user ON lt.Approver = approver_user.email
-               LEFT JOIN users requester_user ON lt.Requester = requester_user.email
                WHERE ((lt.Approver = ? AND lt.Requester != ?) OR 
                      (lt.AlternativeApprover = ? AND lt.Requester != ?) OR 
                      lt.Requester = ?) 
@@ -502,13 +490,10 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
       // Employee can only see their own requests for current year
       query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
                lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, 
-               lt.Modified_By, u.name as ModifiedBy, lt.workingDays, COUNT(la.id) as attachment_count,
-               approver_user.name as ApproverName, requester_user.name as RequesterName
+               lt.Modified_By, u.name as ModifiedBy, lt.workingDays, COUNT(la.id) as attachment_count
                FROM leave_taken lt 
                LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
                LEFT JOIN users u ON lt.Modified_By = u.email
-               LEFT JOIN users approver_user ON lt.Approver = approver_user.email
-               LEFT JOIN users requester_user ON lt.Requester = requester_user.email
                WHERE lt.Requester = ? AND YEAR(lt.StartDate) = ?
                GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
       params = [req.user!.email, currentYear];
