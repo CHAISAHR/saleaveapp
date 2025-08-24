@@ -47,6 +47,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   console.log('[AuthProvider] Mounting AuthProvider...');
   const [user, setUser] = useState<AccountInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Activity tracking for auto-logout
+  const INACTIVITY_TIMEOUT = 20 * 60 * 1000; // 20 minutes in milliseconds
+  const inactivityTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -339,8 +343,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Reset inactivity timer on user activity
+  const resetInactivityTimer = React.useCallback(() => {
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+    
+    // Only set timer if user is authenticated
+    if (user) {
+      inactivityTimerRef.current = setTimeout(() => {
+        console.log('[AuthContext] Auto-logout due to inactivity');
+        logout();
+      }, INACTIVITY_TIMEOUT);
+    }
+  }, [user, INACTIVITY_TIMEOUT]);
+
+  // Track user activity
+  React.useEffect(() => {
+    if (!user) return;
+
+    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    
+    const handleUserActivity = () => {
+      resetInactivityTimer();
+    };
+
+    // Add event listeners for user activity
+    activityEvents.forEach(event => {
+      document.addEventListener(event, handleUserActivity, true);
+    });
+
+    // Start the initial timer
+    resetInactivityTimer();
+
+    // Cleanup on unmount or user change
+    return () => {
+      activityEvents.forEach(event => {
+        document.removeEventListener(event, handleUserActivity, true);
+      });
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+    };
+  }, [user, resetInactivityTimer]);
+
   const logout = async () => {
     try {
+      // Clear inactivity timer
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+      
       localStorage.removeItem('manualUser');
       localStorage.removeItem('auth_token');
       localStorage.removeItem('mockUser');
