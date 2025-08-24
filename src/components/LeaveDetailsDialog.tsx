@@ -258,10 +258,7 @@ export const LeaveDetailsDialog = ({
                 <User className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <div className="text-sm text-muted-foreground">Requested by</div>
-                  <div className="font-medium">{requesterName || requester}</div>
-                  {requesterName && (
-                    <div className="text-xs text-muted-foreground">{requester}</div>
-                  )}
+                  <div className="font-medium">{requester}</div>
                 </div>
               </div>
 
@@ -309,10 +306,7 @@ export const LeaveDetailsDialog = ({
               {approver && (
                 <div>
                   <div className="text-sm text-muted-foreground">Approver</div>
-                  <div className="font-medium">{approverName || approver}</div>
-                  {approverName && (
-                    <div className="text-xs text-muted-foreground">{approver}</div>
-                  )}
+                  <div className="font-medium">{approver}</div>
                 </div>
               )}
 
