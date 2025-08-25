@@ -82,6 +82,34 @@ router.put('/:leaveId', authenticateToken, async (req, res) => {
     const formattedStartDate = formatDateForMySQL(startDate);
     const formattedEndDate = formatDateForMySQL(endDate);
 
+    // Check for overlapping leave requests (excluding current request being updated)
+    const overlapCheck = await executeQuery(
+      `SELECT LeaveID, LeaveType, StartDate, EndDate, Status FROM leave_taken 
+       WHERE Requester = ? 
+       AND LeaveID != ?
+       AND Status IN ('pending', 'approved') 
+       AND NOT (EndDate < ? OR StartDate > ?)
+       ORDER BY StartDate`,
+      [requester, leaveId, formattedStartDate, formattedEndDate]
+    );
+
+    if (overlapCheck.length > 0) {
+      const conflictingRequest = overlapCheck[0];
+      console.log('Overlapping request detected during update:', conflictingRequest);
+      return res.status(409).json({ 
+        success: false, 
+        message: `You already have ${conflictingRequest.Status} leave from ${conflictingRequest.StartDate} to ${conflictingRequest.EndDate} (${conflictingRequest.LeaveType}). Leave dates cannot overlap.`,
+        conflictingRequest: {
+          id: conflictingRequest.LeaveID,
+          type: conflictingRequest.LeaveType,
+          startDate: conflictingRequest.StartDate,
+          endDate: conflictingRequest.EndDate,
+          status: conflictingRequest.Status
+        }
+      });
+    }
+
+
     console.log('Date formatting for update:', { 
       originalStartDate: startDate, 
       formattedStartDate,
@@ -215,14 +243,40 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
       });
     }
 
-    // Convert ISO date strings to MySQL DATE format (YYYY-MM-DD)
+    // Convert ISO date strings to MySQL DATE format (YYYY-MM-DD) for overlap check
     const formatDateForMySQL = (dateString: string) => {
       const date = new Date(dateString);
-      return date.toISOString().split('T')[0]; // Gets YYYY-MM-DD part
+      return date.toISOString().split('T')[0];
     };
 
     const formattedStartDate = formatDateForMySQL(startDate);
     const formattedEndDate = formatDateForMySQL(endDate);
+
+    // Check for overlapping leave requests (same user, overlapping dates, regardless of leave type)
+    const overlapCheck = await executeQuery(
+      `SELECT LeaveID, LeaveType, StartDate, EndDate, Status FROM leave_taken 
+       WHERE Requester = ? 
+       AND Status IN ('pending', 'approved') 
+       AND NOT (EndDate < ? OR StartDate > ?)
+       ORDER BY StartDate`,
+      [requester, formattedStartDate, formattedEndDate]
+    );
+
+    if (overlapCheck.length > 0) {
+      const conflictingRequest = overlapCheck[0];
+      console.log('Overlapping request detected:', conflictingRequest);
+      return res.status(409).json({ 
+        success: false, 
+        message: `You already have ${conflictingRequest.Status} leave from ${conflictingRequest.StartDate} to ${conflictingRequest.EndDate} (${conflictingRequest.LeaveType}). Leave dates cannot overlap.`,
+        conflictingRequest: {
+          id: conflictingRequest.LeaveID,
+          type: conflictingRequest.LeaveType,
+          startDate: conflictingRequest.StartDate,
+          endDate: conflictingRequest.EndDate,
+          status: conflictingRequest.Status
+        }
+      });
+    }
 
     console.log('Date formatting:', { 
       originalStartDate: startDate, 

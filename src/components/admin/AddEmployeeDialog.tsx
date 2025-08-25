@@ -148,51 +148,7 @@ export const AddEmployeeDialog = ({ open, onOpenChange, onEmployeeAdded }: AddEm
         throw new Error(errorData.message || 'Failed to create user account');
       }
 
-      // Create initial leave balance for the new employee
-      const currentYear = new Date().getFullYear();
-      const balanceResponse = await fetch(`${apiConfig.endpoints.balance}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          EmployeeEmail: formData.email,
-          EmployeeName: `${formData.name} ${formData.surname}`,
-          Department: formData.department,
-          Year: currentYear,
-          Start_date: formData.start_date,
-          Manager: formData.manager_email || '',
-          // Initialize with default values
-          Broughtforward: 0,
-          Annual: 25, // Default annual leave allocation
-          AccumulatedLeave: 0,
-          AnnualUsed: 0,
-          Forfeited: 0,
-          Annual_leave_adjustments: 0,
-          SickBroughtforward: 0,
-          Sick: 30, // Default sick leave allocation
-          SickUsed: 0,
-          Maternity: 90,
-          MaternityUsed: 0,
-          Parental: 10,
-          ParentalUsed: 0,
-          Family: 5,
-          FamilyUsed: 0,
-          Adoption: 90,
-          AdoptionUsed: 0,
-          Study: 5,
-          StudyUsed: 0,
-          Wellness: 2,
-          WellnessUsed: 0,
-          Status: 'Active'
-        })
-      });
-
-      if (!balanceResponse.ok) {
-        const errorData = await balanceResponse.json();
-        console.warn('Failed to create leave balance, but user was created:', errorData.message);
-      }
+      // User creation is complete - the backend automatically creates leave balance records
 
       toast({
         title: "Employee Added",

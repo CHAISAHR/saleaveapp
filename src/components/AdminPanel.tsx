@@ -524,13 +524,36 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
     }
   };
 
-  const handleDeleteUser = (userId: number, userName: string) => {
-    // For now, just show a message that this feature is not implemented
-    toast({
-      title: "Feature Not Available",
-      description: "User deletion will be implemented in a future update.",
-      variant: "destructive",
-    });
+  const handleDeleteUser = async (userId: number, userName: string) => {
+    if (!confirm(`Are you sure you want to delete ${userName}? This action cannot be undone and will also delete their leave balance records.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${process.env.VITE_API_URL || 'http://localhost:3001'}/api/user/${userId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setUsers(prev => prev.filter(user => user.id !== userId));
+        toast({
+          title: "Success",
+          description: "User deleted successfully",
+        });
+      } else {
+        throw new Error(data.message || 'Failed to delete user');
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete user",
+        variant: "destructive",
+      });
+    }
   };
 
   console.log('AdminPanel about to render, backendError:', backendError);
