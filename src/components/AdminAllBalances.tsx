@@ -365,6 +365,37 @@ export const AdminAllBalances = () => {
     setShowEditDialog(true);
   };
 
+  const handleDelete = async (balance: EmployeeBalance) => {
+    if (!confirm(`Are you sure you want to delete ${balance.EmployeeName}'s balance record? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${apiConfig.endpoints.balance}/${balance.BalanceID}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+
+      if (response.ok) {
+        setBalances(prev => prev.filter(b => b.BalanceID !== balance.BalanceID));
+        toast({
+          title: "Balance Deleted",
+          description: `${balance.EmployeeName}'s balance record has been deleted successfully.`,
+        });
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete balance');
+      }
+    } catch (error) {
+      console.error('Error deleting balance:', error);
+      toast({
+        title: "Delete Failed",
+        description: `Failed to delete balance record: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSave = async () => {
     if (!selectedBalance) return;
 
@@ -542,6 +573,7 @@ export const AdminAllBalances = () => {
         onDepartmentChange={handleDepartmentChange}
         onManagerChange={handleManagerChange}
         onEdit={handleEdit}
+        onDelete={handleDelete}
       />
 
       <WarningDialogs

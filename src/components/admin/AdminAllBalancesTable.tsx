@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Edit } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { BalanceCalculations } from "@/services/balance/balanceCalculations";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { SortableTableHead } from "@/components/ui/sortable-table-head";
@@ -74,6 +74,7 @@ interface AdminAllBalancesTableProps {
   onDepartmentChange: (balanceId: number, value: string) => void;
   onManagerChange: (balanceId: number, value: string) => void;
   onEdit: (balance: EmployeeBalance) => void;
+  onDelete: (balance: EmployeeBalance) => void;
 }
 
 export const AdminAllBalancesTable = ({
@@ -87,7 +88,8 @@ export const AdminAllBalancesTable = ({
   onForfeitedChange,
   onDepartmentChange,
   onManagerChange,
-  onEdit
+  onEdit,
+  onDelete
 }: AdminAllBalancesTableProps) => {
   return (
     <Card>
@@ -309,15 +311,25 @@ export const AdminAllBalancesTable = ({
                       placeholder="Manager email"
                     />
                   </TableCell>
-                  <TableCell>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onEdit(balance)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+                   <TableCell>
+                     <div className="flex gap-2">
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         onClick={() => onEdit(balance)}
+                       >
+                         <Edit className="h-4 w-4" />
+                       </Button>
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         onClick={() => onDelete(balance)}
+                         className="text-destructive hover:text-destructive"
+                       >
+                         <Trash2 className="h-4 w-4" />
+                       </Button>
+                     </div>
+                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
