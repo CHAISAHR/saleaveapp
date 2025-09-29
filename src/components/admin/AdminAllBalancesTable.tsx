@@ -251,12 +251,12 @@ export const AdminAllBalancesTable = ({
                     </span>
                   </TableCell>
                   <TableCell>{balance.Year}</TableCell>
-                  <TableCell>{balance.Broughtforward}</TableCell>
-                  <TableCell>{balance.Annual}</TableCell>
+                  <TableCell>{Number(balance.Broughtforward).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.Annual).toFixed(3)}</TableCell>
                    <TableCell className="font-medium text-purple-600">
-                     {BalanceCalculations.calculateAccumulatedLeave(new Date(), balance.Contract_termination_date)}
+                     {BalanceCalculations.calculateAccumulatedLeave(new Date(), balance.Contract_termination_date).toFixed(3)}
                    </TableCell>
-                  <TableCell>{balance.AnnualUsed}</TableCell>
+                  <TableCell>{Number(balance.AnnualUsed).toFixed(3)}</TableCell>
                   <TableCell>
                     <Input
                       type="number"
@@ -266,32 +266,32 @@ export const AdminAllBalancesTable = ({
                       className="w-20 h-8 text-sm"
                     />
                   </TableCell>
-                  <TableCell>{balance.Annual_leave_adjustments}</TableCell>
-                  <TableCell>{balance.SickBroughtforward}</TableCell>
-                  <TableCell>{balance.Sick}</TableCell>
-                  <TableCell>{balance.SickUsed}</TableCell>
-                  <TableCell>{balance.Maternity}</TableCell>
-                  <TableCell>{balance.MaternityUsed}</TableCell>
-                  <TableCell>{balance.Parental}</TableCell>
-                  <TableCell>{balance.ParentalUsed}</TableCell>
-                  <TableCell>{balance.Family}</TableCell>
-                  <TableCell>{balance.FamilyUsed}</TableCell>
-                  <TableCell>{balance.Adoption}</TableCell>
-                  <TableCell>{balance.AdoptionUsed}</TableCell>
-                  <TableCell>{balance.Study}</TableCell>
-                  <TableCell>{balance.StudyUsed}</TableCell>
-                  <TableCell>{balance.Wellness}</TableCell>
-                  <TableCell>{balance.WellnessUsed}</TableCell>
+                  <TableCell>{Number(balance.Annual_leave_adjustments).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.SickBroughtforward).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.Sick).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.SickUsed).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.Maternity).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.MaternityUsed).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.Parental).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.ParentalUsed).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.Family).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.FamilyUsed).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.Adoption).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.AdoptionUsed).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.Study).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.StudyUsed).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.Wellness).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.WellnessUsed).toFixed(3)}</TableCell>
                   <TableCell className="font-medium text-blue-600">
-                    {calculateCurrentBalance(balance)}
+                    {calculateCurrentBalance(balance).toFixed(3)}
                   </TableCell>
-                  <TableCell>{balance.Leave_balance_previous_month}</TableCell>
+                  <TableCell>{Number(balance.Leave_balance_previous_month).toFixed(3)}</TableCell>
                   <TableCell>
                     {balance.Contract_termination_date ? 
                       new Date(balance.Contract_termination_date).toLocaleDateString() : '-'}
                   </TableCell>
                   <TableCell className="font-medium text-orange-600">
-                    {calculateTerminationBalance(balance) || '-'}
+                    {calculateTerminationBalance(balance)?.toFixed(3) || '-'}
                   </TableCell>
                   <TableCell>
                     <div className="max-w-[100px] truncate" title={balance.Comment}>
