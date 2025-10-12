@@ -530,7 +530,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
     }
 
     try {
-      const response = await makeApiRequest(`${apiConfig.baseURL}/api/user/${userId}`, {
+      const response = await makeApiRequest(`${apiConfig.endpoints.users}/${userId}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
