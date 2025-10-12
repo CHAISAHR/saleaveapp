@@ -12,7 +12,7 @@ import { Users, Plus, Edit, Trash2, AlertCircle, Building } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { DepartmentManager } from "@/components/DepartmentManager";
-import { apiConfig } from "@/config/apiConfig";
+import { apiConfig, makeApiRequest } from "@/config/apiConfig";
 
 interface AdminPanelProps {
   currentUser: any;
@@ -530,7 +530,7 @@ export const AdminPanel = ({ currentUser }: AdminPanelProps) => {
     }
 
     try {
-      const response = await fetch(`${process.env.VITE_API_URL || 'http://localhost:3001'}/api/user/${userId}`, {
+      const response = await makeApiRequest(`${apiConfig.endpoints.users}/${userId}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });

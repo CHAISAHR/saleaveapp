@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Edit } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { BalanceCalculations } from "@/services/balance/balanceCalculations";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { SortableTableHead } from "@/components/ui/sortable-table-head";
@@ -74,6 +74,7 @@ interface AdminAllBalancesTableProps {
   onDepartmentChange: (balanceId: number, value: string) => void;
   onManagerChange: (balanceId: number, value: string) => void;
   onEdit: (balance: EmployeeBalance) => void;
+  onDelete: (balance: EmployeeBalance) => void;
 }
 
 export const AdminAllBalancesTable = ({
@@ -87,7 +88,8 @@ export const AdminAllBalancesTable = ({
   onForfeitedChange,
   onDepartmentChange,
   onManagerChange,
-  onEdit
+  onEdit,
+  onDelete
 }: AdminAllBalancesTableProps) => {
   return (
     <Card>
@@ -249,12 +251,12 @@ export const AdminAllBalancesTable = ({
                     </span>
                   </TableCell>
                   <TableCell>{balance.Year}</TableCell>
-                  <TableCell>{balance.Broughtforward}</TableCell>
-                  <TableCell>{balance.Annual}</TableCell>
+                  <TableCell>{Number(balance.Broughtforward).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.Annual).toFixed(3)}</TableCell>
                    <TableCell className="font-medium text-purple-600">
-                     {BalanceCalculations.calculateAccumulatedLeave(new Date(), balance.Contract_termination_date)}
+                     {BalanceCalculations.calculateAccumulatedLeave(new Date(), balance.Contract_termination_date).toFixed(3)}
                    </TableCell>
-                  <TableCell>{balance.AnnualUsed}</TableCell>
+                  <TableCell>{Number(balance.AnnualUsed).toFixed(3)}</TableCell>
                   <TableCell>
                     <Input
                       type="number"
@@ -264,32 +266,32 @@ export const AdminAllBalancesTable = ({
                       className="w-20 h-8 text-sm"
                     />
                   </TableCell>
-                  <TableCell>{balance.Annual_leave_adjustments}</TableCell>
-                  <TableCell>{balance.SickBroughtforward}</TableCell>
-                  <TableCell>{balance.Sick}</TableCell>
-                  <TableCell>{balance.SickUsed}</TableCell>
-                  <TableCell>{balance.Maternity}</TableCell>
-                  <TableCell>{balance.MaternityUsed}</TableCell>
-                  <TableCell>{balance.Parental}</TableCell>
-                  <TableCell>{balance.ParentalUsed}</TableCell>
-                  <TableCell>{balance.Family}</TableCell>
-                  <TableCell>{balance.FamilyUsed}</TableCell>
-                  <TableCell>{balance.Adoption}</TableCell>
-                  <TableCell>{balance.AdoptionUsed}</TableCell>
-                  <TableCell>{balance.Study}</TableCell>
-                  <TableCell>{balance.StudyUsed}</TableCell>
-                  <TableCell>{balance.Wellness}</TableCell>
-                  <TableCell>{balance.WellnessUsed}</TableCell>
+                  <TableCell>{Number(balance.Annual_leave_adjustments).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.SickBroughtforward).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.Sick).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.SickUsed).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.Maternity).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.MaternityUsed).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.Parental).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.ParentalUsed).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.Family).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.FamilyUsed).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.Adoption).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.AdoptionUsed).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.Study).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.StudyUsed).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.Wellness).toFixed(3)}</TableCell>
+                  <TableCell>{Number(balance.WellnessUsed).toFixed(3)}</TableCell>
                   <TableCell className="font-medium text-blue-600">
-                    {calculateCurrentBalance(balance)}
+                    {calculateCurrentBalance(balance).toFixed(3)}
                   </TableCell>
-                  <TableCell>{balance.Leave_balance_previous_month}</TableCell>
+                  <TableCell>{Number(balance.Leave_balance_previous_month).toFixed(3)}</TableCell>
                   <TableCell>
                     {balance.Contract_termination_date ? 
                       new Date(balance.Contract_termination_date).toLocaleDateString() : '-'}
                   </TableCell>
                   <TableCell className="font-medium text-orange-600">
-                    {calculateTerminationBalance(balance) || '-'}
+                    {calculateTerminationBalance(balance)?.toFixed(3) || '-'}
                   </TableCell>
                   <TableCell>
                     <div className="max-w-[100px] truncate" title={balance.Comment}>
@@ -309,15 +311,25 @@ export const AdminAllBalancesTable = ({
                       placeholder="Manager email"
                     />
                   </TableCell>
-                  <TableCell>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onEdit(balance)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+                   <TableCell>
+                     <div className="flex gap-2">
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         onClick={() => onEdit(balance)}
+                       >
+                         <Edit className="h-4 w-4" />
+                       </Button>
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         onClick={() => onDelete(balance)}
+                         className="text-destructive hover:text-destructive"
+                       >
+                         <Trash2 className="h-4 w-4" />
+                       </Button>
+                     </div>
+                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>

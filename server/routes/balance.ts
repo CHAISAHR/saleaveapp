@@ -531,4 +531,57 @@ router.put('/update-field', authenticateToken, requireRole(['admin']), async (re
   }
 });
 
+// Delete employee balance (admin only)
+router.delete('/:balanceId', authenticateToken, requireRole(['admin', 'cd']), async (req: AuthRequest, res) => {
+  try {
+    const { balanceId } = req.params;
+    const auditService = new AuditService();
+
+    // Check if balance exists
+    const balances = await executeQuery(
+      'SELECT * FROM leave_balances WHERE BalanceID = ?',
+      [balanceId]
+    );
+
+    if (balances.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Balance record not found' 
+      });
+    }
+
+    const balance = balances[0];
+
+    // Delete the balance record
+    await executeQuery(
+      'DELETE FROM leave_balances WHERE BalanceID = ?',
+      [balanceId]
+    );
+
+    // Log the deletion action
+    await AuditService.logDelete(
+      'leave_balances',
+      balanceId,
+      {
+        balanceId: balanceId,
+        employeeName: balance.EmployeeName,
+        employeeEmail: balance.EmployeeEmail,
+        year: balance.Year
+      },
+      req.user!.email
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'Balance record deleted successfully' 
+    });
+  } catch (error) {
+    console.error('Delete balance error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete balance record' 
+    });
+  }
+});
+
 export default router;
