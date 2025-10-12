@@ -8,13 +8,20 @@ const router = express.Router();
 // Get all holidays
 router.get('/', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const year = req.query.year || new Date().getFullYear();
-    console.log('Fetching holidays for year:', year);
+    const year = req.query.year;
+    console.log('Fetching holidays, year filter:', year || 'all years');
     
-    const holidays = await executeQuery(
-      'SELECT * FROM company_holidays WHERE YEAR(date) = ? ORDER BY date',
-      [year]
-    );
+    let query = 'SELECT * FROM company_holidays';
+    let params: any[] = [];
+    
+    if (year) {
+      query += ' WHERE YEAR(date) = ?';
+      params.push(year);
+    }
+    
+    query += ' ORDER BY date';
+    
+    const holidays = await executeQuery(query, params);
 
     console.log('Found holidays:', holidays.length);
     res.json({ success: true, holidays });
