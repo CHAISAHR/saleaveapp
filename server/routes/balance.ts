@@ -559,15 +559,16 @@ router.delete('/:balanceId', authenticateToken, requireRole(['admin', 'cd']), as
     );
 
     // Log the deletion action
-    await auditService.logAction(
-      req.user!.email,
-      'DELETE_BALANCE',
+    await auditService.logDelete(
+      'leave_balances',
+      balanceId,
       {
         balanceId: balanceId,
         employeeName: balance.EmployeeName,
         employeeEmail: balance.EmployeeEmail,
         year: balance.Year
-      }
+      },
+      req.user!.email
     );
 
     res.json({ 
