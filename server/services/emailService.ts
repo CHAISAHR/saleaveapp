@@ -18,32 +18,51 @@ class EmailService {
   private readonly FROM_EMAIL = process.env.SMTP_USER || 'noreply@company.com';
 
   constructor() {
-    // Initialize email transporter with better error handling
+    // Initialize email transporter with production-ready configuration
+    const smtpPort = parseInt(process.env.SMTP_PORT || '587');
     const smtpConfig = {
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false, // true for 465, false for other ports
+      port: smtpPort,
+      secure: smtpPort === 465, // true for 465, false for other ports
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
+      // Production-friendly settings
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 5000,
+      socketTimeout: 15000,
+      pool: true, // Use connection pooling
+      maxConnections: 5,
+      maxMessages: 100,
+      // Retry settings
+      requireTLS: true,
+      tls: {
+        rejectUnauthorized: process.env.NODE_ENV === 'production'
+      }
     };
 
     console.log('Initializing email service with config:', {
       host: smtpConfig.host,
       port: smtpConfig.port,
+      secure: smtpConfig.secure,
       user: smtpConfig.auth.user ? '***configured***' : 'NOT_CONFIGURED',
-      pass: smtpConfig.auth.pass ? '***configured***' : 'NOT_CONFIGURED'
+      pass: smtpConfig.auth.pass ? '***configured***' : 'NOT_CONFIGURED',
+      nodeEnv: process.env.NODE_ENV
     });
 
     this.transporter = nodemailer.createTransport(smtpConfig);
     
-    // Verify connection configuration
+    // Verify connection configuration (don't block startup)
     this.transporter.verify((error, success) => {
       if (error) {
-        console.error('Email service verification failed:', error);
+        console.error('⚠️ Email service verification failed:', {
+          error: error.message,
+          code: error.code,
+          hint: 'Check if SMTP port is blocked in production. Try port 465 (secure) or ensure port 587 is allowed in firewall.'
+        });
       } else {
-        console.log('Email service is ready to send messages');
+        console.log('✅ Email service is ready to send messages');
       }
     });
   }
