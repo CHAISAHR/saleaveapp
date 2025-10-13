@@ -58,7 +58,7 @@ class EmailService {
       if (error) {
         console.error('⚠️ Email service verification failed:', {
           error: error.message,
-          code: error.code,
+          code: (error as any).code,
           hint: 'Check if SMTP port is blocked in production. Try port 465 (secure) or ensure port 587 is allowed in firewall.'
         });
       } else {
