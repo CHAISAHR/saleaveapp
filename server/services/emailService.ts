@@ -18,8 +18,8 @@ class EmailService {
   private readonly FROM_EMAIL = process.env.SMTP_USER || 'noreply@company.com';
 
   constructor() {
-    // Initialize email transporter
-    this.transporter = nodemailer.createTransport({
+    // Initialize email transporter with better error handling
+    const smtpConfig = {
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: false, // true for 465, false for other ports
@@ -27,6 +27,24 @@ class EmailService {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
+    };
+
+    console.log('Initializing email service with config:', {
+      host: smtpConfig.host,
+      port: smtpConfig.port,
+      user: smtpConfig.auth.user ? '***configured***' : 'NOT_CONFIGURED',
+      pass: smtpConfig.auth.pass ? '***configured***' : 'NOT_CONFIGURED'
+    });
+
+    this.transporter = nodemailer.createTransport(smtpConfig);
+    
+    // Verify connection configuration
+    this.transporter.verify((error, success) => {
+      if (error) {
+        console.error('Email service verification failed:', error);
+      } else {
+        console.log('Email service is ready to send messages');
+      }
     });
   }
 
@@ -366,6 +384,17 @@ class EmailService {
 
   // Generic method to send email using nodemailer
   private async sendEmail(notification: EmailNotification): Promise<void> {
+    // Check if SMTP is configured
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.warn('SMTP credentials not configured. Email notification not sent:', {
+        to: notification.recipient_email,
+        subject: notification.subject,
+        type: notification.notification_type
+      });
+      console.warn('To enable email notifications, configure SMTP_USER and SMTP_PASS in environment variables');
+      return;
+    }
+
     try {
       console.log('Sending email notification:', {
         to: notification.recipient_email,
@@ -384,13 +413,21 @@ class EmailService {
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      console.log('Email sent successfully:', info.messageId);
+      console.log('✅ Email sent successfully:', {
+        messageId: info.messageId,
+        to: notification.recipient_email,
+        subject: notification.subject
+      });
       
       // Store notification in database log
       await this.logEmailNotification(notification);
       
     } catch (error) {
-      console.error('Failed to send email notification:', error);
+      console.error('❌ Failed to send email notification:', {
+        error: error instanceof Error ? error.message : error,
+        to: notification.recipient_email,
+        subject: notification.subject
+      });
       // Don't throw error to prevent breaking the main process
       // Just log it and continue
     }
