@@ -1,4 +1,4 @@
-import { Resend } from 'resend';
+import sgMail from '@sendgrid/mail';
 
 // Email notification service for leave requests and approvals
 export interface EmailNotification {
@@ -12,22 +12,20 @@ export interface EmailNotification {
 }
 
 class EmailService {
-  private resend: Resend;
   private readonly ADMIN_EMAIL = 'chaisahr@clintonhealthaccess.org';
-  private readonly FROM_EMAIL = 'Leave Management <onboarding@resend.dev>';
+  private readonly FROM_EMAIL = 'Leave Management <noreply@yourdomain.com>';
 
   constructor() {
-    const apiKey = process.env.RESEND_API_KEY;
+    const apiKey = process.env.SENDGRID_API_KEY;
 
     if (!apiKey) {
-      console.warn('⚠️ RESEND_API_KEY is not set. Email notifications will not be sent.');
-      console.warn('Please add RESEND_API_KEY to your environment variables.');
-      console.warn('Get your API key from: https://resend.com/api-keys');
+      console.warn('⚠️ SENDGRID_API_KEY is not set. Email notifications will not be sent.');
+      console.warn('Please add SENDGRID_API_KEY to your environment variables.');
+      console.warn('Get your API key from: https://app.sendgrid.com/settings/api_keys');
     } else {
-      console.log('✅ Resend email service initialized');
+      sgMail.setApiKey(apiKey);
+      console.log('✅ SendGrid email service initialized');
     }
-
-    this.resend = new Resend(apiKey);
   }
 
   // Send password reset email
@@ -364,48 +362,39 @@ class EmailService {
     });
   }
 
-  // Generic method to send email using Resend
+  // Generic method to send email using SendGrid
   private async sendEmail(notification: EmailNotification): Promise<void> {
-    // Check if Resend API key is configured
-    if (!process.env.RESEND_API_KEY) {
-      console.warn('RESEND_API_KEY not configured. Email notification not sent:', {
+    // Check if SendGrid API key is configured
+    if (!process.env.SENDGRID_API_KEY) {
+      console.warn('SENDGRID_API_KEY not configured. Email notification not sent:', {
         to: notification.recipient_email,
         subject: notification.subject,
         type: notification.notification_type
       });
-      console.warn('To enable email notifications, configure RESEND_API_KEY in environment variables');
-      console.warn('Get your API key from: https://resend.com/api-keys');
+      console.warn('To enable email notifications, configure SENDGRID_API_KEY in environment variables');
+      console.warn('Get your API key from: https://app.sendgrid.com/settings/api_keys');
       return;
     }
 
     try {
-      console.log('📧 Sending email via Resend:', {
+      console.log('📧 Sending email via SendGrid:', {
         to: notification.recipient_email,
         cc: notification.cc_email,
         subject: notification.subject,
         type: notification.notification_type
       });
 
-      const emailOptions: any = {
+      const emailData: sgMail.MailDataRequired = {
         from: notification.sender_email || this.FROM_EMAIL,
-        to: [notification.recipient_email],
+        to: notification.recipient_email,
         subject: notification.subject,
-        html: notification.message.replace(/\n/g, '<br>')
+        html: notification.message.replace(/\n/g, '<br>'),
+        ...(notification.cc_email && { cc: notification.cc_email })
       };
 
-      // Add CC if provided
-      if (notification.cc_email) {
-        emailOptions.cc = [notification.cc_email];
-      }
+      await sgMail.send(emailData);
 
-      const { data, error } = await this.resend.emails.send(emailOptions);
-      
-      if (error) {
-        throw error;
-      }
-
-      console.log('✅ Email sent successfully via Resend:', {
-        messageId: data?.id,
+      console.log('✅ Email sent successfully via SendGrid:', {
         to: notification.recipient_email,
         subject: notification.subject
       });
