@@ -420,6 +420,7 @@ class EmailService {
         subject: notification.subject
       });
       // Don't throw error to prevent breaking the main process
+    }
   }
 
   // Log email notification to database
