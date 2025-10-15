@@ -1,5 +1,4 @@
-
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 // Email notification service for leave requests and approvals
 export interface EmailNotification {
@@ -13,58 +12,22 @@ export interface EmailNotification {
 }
 
 class EmailService {
-  private transporter: nodemailer.Transporter;
+  private resend: Resend;
   private readonly ADMIN_EMAIL = 'chaisahr@clintonhealthaccess.org';
-  private readonly FROM_EMAIL = process.env.SMTP_USER || 'noreply@company.com';
+  private readonly FROM_EMAIL = 'Leave Management <onboarding@resend.dev>';
 
   constructor() {
-    // Initialize email transporter with production-ready configuration
-    const smtpPort = parseInt(process.env.SMTP_PORT || '587');
-    const smtpConfig = {
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: smtpPort,
-      secure: smtpPort === 465, // true for 465, false for other ports
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-      // Production-friendly settings
-      connectionTimeout: 10000, // 10 seconds
-      greetingTimeout: 5000,
-      socketTimeout: 15000,
-      pool: true, // Use connection pooling
-      maxConnections: 5,
-      maxMessages: 100,
-      // Retry settings
-      requireTLS: true,
-      tls: {
-        rejectUnauthorized: process.env.NODE_ENV === 'production'
-      }
-    };
+    const apiKey = process.env.RESEND_API_KEY;
 
-    console.log('Initializing email service with config:', {
-      host: smtpConfig.host,
-      port: smtpConfig.port,
-      secure: smtpConfig.secure,
-      user: smtpConfig.auth.user ? '***configured***' : 'NOT_CONFIGURED',
-      pass: smtpConfig.auth.pass ? '***configured***' : 'NOT_CONFIGURED',
-      nodeEnv: process.env.NODE_ENV
-    });
+    if (!apiKey) {
+      console.warn('⚠️ RESEND_API_KEY is not set. Email notifications will not be sent.');
+      console.warn('Please add RESEND_API_KEY to your environment variables.');
+      console.warn('Get your API key from: https://resend.com/api-keys');
+    } else {
+      console.log('✅ Resend email service initialized');
+    }
 
-    this.transporter = nodemailer.createTransport(smtpConfig);
-    
-    // Verify connection configuration (don't block startup)
-    this.transporter.verify((error, success) => {
-      if (error) {
-        console.error('⚠️ Email service verification failed:', {
-          error: error.message,
-          code: (error as any).code,
-          hint: 'Check if SMTP port is blocked in production. Try port 465 (secure) or ensure port 587 is allowed in firewall.'
-        });
-      } else {
-        console.log('✅ Email service is ready to send messages');
-      }
-    });
+    this.resend = new Resend(apiKey);
   }
 
   // Send password reset email
@@ -401,39 +364,48 @@ class EmailService {
     });
   }
 
-  // Generic method to send email using nodemailer
+  // Generic method to send email using Resend
   private async sendEmail(notification: EmailNotification): Promise<void> {
-    // Check if SMTP is configured
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.warn('SMTP credentials not configured. Email notification not sent:', {
+    // Check if Resend API key is configured
+    if (!process.env.RESEND_API_KEY) {
+      console.warn('RESEND_API_KEY not configured. Email notification not sent:', {
         to: notification.recipient_email,
         subject: notification.subject,
         type: notification.notification_type
       });
-      console.warn('To enable email notifications, configure SMTP_USER and SMTP_PASS in environment variables');
+      console.warn('To enable email notifications, configure RESEND_API_KEY in environment variables');
+      console.warn('Get your API key from: https://resend.com/api-keys');
       return;
     }
 
     try {
-      console.log('Sending email notification:', {
+      console.log('📧 Sending email via Resend:', {
         to: notification.recipient_email,
         cc: notification.cc_email,
         subject: notification.subject,
         type: notification.notification_type
       });
 
-      const mailOptions = {
-        from: notification.sender_email,
-        to: notification.recipient_email,
-        cc: notification.cc_email,
+      const emailOptions: any = {
+        from: notification.sender_email || this.FROM_EMAIL,
+        to: [notification.recipient_email],
         subject: notification.subject,
-        text: notification.message,
         html: notification.message.replace(/\n/g, '<br>')
       };
 
-      const info = await this.transporter.sendMail(mailOptions);
-      console.log('✅ Email sent successfully:', {
-        messageId: info.messageId,
+      // Add CC if provided
+      if (notification.cc_email) {
+        emailOptions.cc = [notification.cc_email];
+      }
+
+      const { data, error } = await this.resend.emails.send(emailOptions);
+      
+      if (error) {
+        throw error;
+      }
+
+      console.log('✅ Email sent successfully via Resend:', {
+        messageId: data?.id,
         to: notification.recipient_email,
         subject: notification.subject
       });
@@ -448,7 +420,6 @@ class EmailService {
         subject: notification.subject
       });
       // Don't throw error to prevent breaking the main process
-      // Just log it and continue
     }
   }
 
