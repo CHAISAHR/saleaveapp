@@ -13,7 +13,9 @@ export interface EmailNotification {
 
 class EmailService {
   private readonly ADMIN_EMAIL = 'chaisahr@clintonhealthaccess.org';
-  private readonly FROM_EMAIL = 'Leave Management <noreply@yourdomain.com>';
+  // IMPORTANT: Replace with your verified SendGrid sender email
+  // Get verified sender at: https://app.sendgrid.com/settings/sender_auth
+  private readonly FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'noreply@yourdomain.com';
 
   constructor() {
     const apiKey = process.env.SENDGRID_API_KEY;
