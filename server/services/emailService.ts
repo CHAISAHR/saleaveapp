@@ -13,7 +13,9 @@ export interface EmailNotification {
 
 class EmailService {
   private readonly ADMIN_EMAIL = 'chaisahr@clintonhealthaccess.org';
-  private readonly FROM_EMAIL = 'Leave Management <noreply@yourdomain.com>';
+  // IMPORTANT: Replace with your verified SendGrid sender email
+  // Get verified sender at: https://app.sendgrid.com/settings/sender_auth
+  private readonly FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'noreply@yourdomain.com';
 
   constructor() {
     const apiKey = process.env.SENDGRID_API_KEY;
@@ -25,6 +27,9 @@ class EmailService {
     } else {
       sgMail.setApiKey(apiKey);
       console.log('✅ SendGrid email service initialized');
+      if (!process.env.SENDGRID_FROM_EMAIL) {
+        console.warn('⚠️ SENDGRID_FROM_EMAIL is not set. Using default "noreply@yourdomain.com". This must be a verified sender or domain in SendGrid.');
+      }
     }
   }
 
@@ -378,6 +383,7 @@ class EmailService {
 
     try {
       console.log('📧 Sending email via SendGrid:', {
+        from: notification.sender_email || this.FROM_EMAIL,
         to: notification.recipient_email,
         cc: notification.cc_email,
         subject: notification.subject,
@@ -403,13 +409,17 @@ class EmailService {
       await this.logEmailNotification(notification);
       
     } catch (error) {
+      const statusCode = (error as any)?.code || (error as any)?.response?.statusCode;
+      const responseBody = (error as any)?.response?.body;
       console.error('❌ Failed to send email notification:', {
-        error: error instanceof Error ? error.message : error,
+        error: (error as any)?.message || error,
+        statusCode,
+        responseBody,
+        from: notification.sender_email || this.FROM_EMAIL,
         to: notification.recipient_email,
         subject: notification.subject
       });
       // Don't throw error to prevent breaking the main process
-    }
   }
 
   // Log email notification to database
