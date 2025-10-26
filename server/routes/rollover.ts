@@ -64,20 +64,21 @@ router.post('/year-rollover', authenticateToken, requireRole(['admin']), async (
 
         await executeQuery(`
           INSERT INTO leave_balances (
-            EmployeeName, EmployeeEmail, Department, Status, Year,
+            EmployeeName, EmployeeEmail, Department, Status, Year, start_date,
             Broughtforward, Annual, AccumulatedLeave, AnnualUsed, Forfeited, Annual_leave_adjustments,
             SickBroughtforward, Sick, SickUsed,
             Maternity, MaternityUsed, Parental, ParentalUsed, 
             Family, FamilyUsed, Adoption, AdoptionUsed,
             Study, StudyUsed, Wellness, WellnessUsed,
             Manager, Contract_termination_date, Comment
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, [
           balance.EmployeeName,
           balance.EmployeeEmail,
           balance.Department,
           balance.Status,
           toYear, // Updated year
+          balance.start_date, // Preserve start_date from previous year
           Math.max(0, newBroughtForward), // Ensure non-negative brought forward
           balance.Annual, // Keep legacy annual field
           0, // Reset AccumulatedLeave to 0 for new year

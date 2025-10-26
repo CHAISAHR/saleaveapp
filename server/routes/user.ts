@@ -241,7 +241,7 @@ router.post('/', authenticateToken, requireRole(['admin', 'cd']), async (req: Au
           FamilyUsed, AdoptionUsed, StudyUsed, WellnessUsed, 
           Manager, Maternity, Sick, Parental, Family, Adoption, Study, Wellness
         ) VALUES (?, ?, ?, ?, ?, 0, 20, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ?, ?, 36, 4, 3, 4, 6, 2)`,
-        [fullName, email, department, hire_date, currentYear, proratedAccumulatedLeave, manager_email || null, maternityAllocation, 36, 4, 3, 4, 6, 2]
+        [fullName, email, department, hire_date, currentYear, proratedAccumulatedLeave, manager_email || null, maternityAllocation]
       );
     } catch (balanceError) {
       console.error('Error creating leave balance:', balanceError);
