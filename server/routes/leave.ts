@@ -352,12 +352,12 @@ router.post('/request', authenticateToken, upload.array('attachments', 10), asyn
     try {
       // Get employee's current balance and name
       const balanceQuery = await executeQuery(
-        'SELECT lb.Current_leave_balance, u.name FROM leave_balances lb JOIN users u ON lb.EmployeeEmail = u.email WHERE lb.EmployeeEmail = ?',
+        'SELECT annual_leave, name FROM leave_balances lb JOIN users u ON lb.email = u.email WHERE lb.email = ?',
         [requester]
       );
       
       if (balanceQuery.length > 0) {
-        availableBalance = balanceQuery[0].Current_leave_balance || 0;
+        availableBalance = balanceQuery[0].annual_leave || 0;
         employeeName = balanceQuery[0].name || requester;
         
         // Check if requested days exceed available balance
