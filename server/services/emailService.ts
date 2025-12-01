@@ -51,7 +51,13 @@ class EmailService {
       nodeEnv: process.env.NODE_ENV
     });
 
-    this.transporter = nodemailer.createTransport(smtpConfig);
+    this.transporter = nodemailer.createTransport({
+      ...smtpConfig,
+      // Prevent duplicate sending
+      pool: false, // Disable connection pooling to prevent duplicate sends
+      maxConnections: 1,
+      maxMessages: 1,
+    });
     
     // Verify connection configuration (don't block startup)
     this.transporter.verify((error, success) => {
@@ -221,7 +227,7 @@ class EmailService {
     const notification: EmailNotification = {
       recipient_email: leaveRequest.Requester || leaveRequest.employeeEmail,
       sender_email: this.FROM_EMAIL,
-      cc_email: this.ADMIN_EMAIL,
+      // Remove CC to HR to avoid duplicate emails (HR already gets notified separately)
       subject: `Leave Request Approved: ${leaveRequest.Title || leaveRequest.title}`,
       message: `
         Hello,
