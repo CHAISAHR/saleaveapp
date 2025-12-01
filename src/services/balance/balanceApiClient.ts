@@ -122,6 +122,12 @@ export class BalanceApiClient {
   // Update balance when leave is approved
   static async updateBalanceOnApproval(leaveRequest: LeaveRequest): Promise<void> {
     try {
+      console.log('Updating balance for approved leave:', {
+        leaveId: leaveRequest.LeaveID,
+        requester: leaveRequest.Requester,
+        days: leaveRequest.workingDays
+      });
+      
       await this.apiRequest('/update', {
         method: 'PUT',
         body: JSON.stringify({
@@ -129,11 +135,12 @@ export class BalanceApiClient {
           leaveType: leaveRequest.LeaveType.toLowerCase(),
           daysUsed: leaveRequest.workingDays,
           action: 'approve',
+          leaveId: leaveRequest.LeaveID, // Include leaveId for duplicate prevention
           year: new Date().getFullYear()
         })
       });
       
-      console.log('Balance updated for approved leave:', leaveRequest);
+      console.log('Balance updated successfully for approved leave:', leaveRequest.LeaveID);
     } catch (error) {
       console.error('Failed to update balance:', error);
       throw error;

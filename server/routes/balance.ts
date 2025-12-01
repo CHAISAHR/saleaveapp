@@ -193,8 +193,21 @@ router.get('/:email', authenticateToken, async (req: AuthRequest, res) => {
 // Update balance when leave is approved/cancelled
 router.put('/update', authenticateToken, requireRole(['manager', 'admin']), async (req: AuthRequest, res) => {
   try {
-    const { employeeEmail, leaveType, daysUsed, action, year } = req.body;
+    const { employeeEmail, leaveType, daysUsed, action, year, leaveId } = req.body;
     const currentYear = year || new Date().getFullYear();
+
+    // Prevent duplicate balance updates for the same leave request
+    if (leaveId && action === 'approve') {
+      const existingUpdate = await executeQuery(
+        'SELECT LeaveID FROM leave_taken WHERE LeaveID = ? AND Status = ?',
+        [leaveId, 'approved']
+      );
+      
+      if (existingUpdate.length > 0) {
+        console.log(`Balance already updated for leave ${leaveId}, skipping duplicate update`);
+        return res.json({ success: true, message: 'Balance already updated (duplicate prevented)' });
+      }
+    }
 
     let updateQuery = '';
     let params: any[] = [];
