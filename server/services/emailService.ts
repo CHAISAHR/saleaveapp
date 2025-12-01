@@ -51,13 +51,7 @@ class EmailService {
       nodeEnv: process.env.NODE_ENV
     });
 
-    this.transporter = nodemailer.createTransport({
-      ...smtpConfig,
-      // Prevent duplicate sending
-      pool: false, // Disable connection pooling to prevent duplicate sends
-      maxConnections: 1,
-      maxMessages: 1,
-    });
+    this.transporter = nodemailer.createTransport(smtpConfig);
     
     // Verify connection configuration (don't block startup)
     this.transporter.verify((error, success) => {
