@@ -40,6 +40,8 @@ interface EmployeeBalance {
   Leave_balance_previous_month: number;
   Contract_termination_date?: string;
   termination_balance?: number;
+  Start_date?: string;
+  start_date?: string;
   Comment?: string;
   Annual_leave_adjustment_comments?: string;
   Manager: string;
@@ -254,7 +256,7 @@ export const AdminAllBalancesTable = ({
                   <TableCell>{Number(balance.Broughtforward).toFixed(3)}</TableCell>
                   <TableCell>{Number(balance.Annual).toFixed(3)}</TableCell>
                    <TableCell className="font-medium text-purple-600">
-                     {BalanceCalculations.calculateAccumulatedLeave(new Date(), balance.Contract_termination_date).toFixed(3)}
+                     {BalanceCalculations.calculateAccumulatedLeave(new Date(), balance.Contract_termination_date, balance.Start_date || balance.start_date).toFixed(3)}
                    </TableCell>
                   <TableCell>{Number(balance.AnnualUsed).toFixed(3)}</TableCell>
                   <TableCell>
