@@ -105,14 +105,15 @@ router.put('/:id', authenticateToken, requireRole(['admin', 'cd']), async (req: 
       [name, email, department, role, manager_email || null, hire_date, gender, id]
     );
 
-    // Also update leave_balances table to keep it in sync
+    // Also update leave_balances table to keep it in sync (including start_date = hire_date)
     await executeQuery(
       `UPDATE leave_balances SET 
          EmployeeName = ?, 
          EmployeeEmail = ?, 
-         Department = ? 
+         Department = ?,
+         start_date = ?
        WHERE EmployeeEmail = (SELECT email FROM users WHERE id = ?)`,
-      [name, email, department, id]
+      [name, email, department, hire_date, id]
     );
 
     res.json({ success: true, message: 'User updated successfully' });
