@@ -191,19 +191,28 @@ router.get('/:email', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Update balance when leave is approved/cancelled
-router.put('/update', authenticateToken, requireRole(['manager', 'admin']), async (req: AuthRequest, res) => {
+router.put('/update', authenticateToken, requireRole(['manager', 'admin', 'cd']), async (req: AuthRequest, res) => {
   try {
     const { employeeEmail, leaveType, daysUsed, action, year, leaveId } = req.body;
     const currentYear = year || new Date().getFullYear();
 
-    // Prevent duplicate balance updates for the same leave request
+    console.log('=== BALANCE UPDATE REQUEST ===');
+    console.log('Received:', { employeeEmail, leaveType, daysUsed, action, year: currentYear, leaveId });
+
+    // Validate required fields
+    if (!employeeEmail || !leaveType || daysUsed === undefined || !action) {
+      console.error('Missing required fields:', { employeeEmail, leaveType, daysUsed, action });
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    // Prevent duplicate balance updates using balance_updated flag
     if (leaveId && action === 'approve') {
       const existingUpdate = await executeQuery(
-        'SELECT LeaveID FROM leave_taken WHERE LeaveID = ? AND Status = ?',
-        [leaveId, 'approved']
+        'SELECT LeaveID, balance_updated FROM leave_taken WHERE LeaveID = ?',
+        [leaveId]
       );
       
-      if (existingUpdate.length > 0) {
+      if (existingUpdate.length > 0 && existingUpdate[0].balance_updated === 1) {
         console.log(`Balance already updated for leave ${leaveId}, skipping duplicate update`);
         return res.json({ success: true, message: 'Balance already updated (duplicate prevented)' });
       }
@@ -269,6 +278,8 @@ router.put('/update', authenticateToken, requireRole(['manager', 'admin']), asyn
           updateQuery = 'UPDATE leave_balances SET WellnessUsed = WellnessUsed - ? WHERE EmployeeEmail = ? AND Year = ?';
         }
         break;
+      default:
+        console.error(`Unknown leave type: ${leaveType}`);
     }
 
     if (updateQuery) {
@@ -279,8 +290,43 @@ router.put('/update', authenticateToken, requireRole(['manager', 'admin']), asyn
       );
       const oldBalance = currentBalances[0];
 
+      if (!oldBalance) {
+        console.error(`No balance record found for ${employeeEmail} in year ${currentYear}`);
+        return res.status(404).json({ success: false, message: 'No balance record found for employee' });
+      }
+
       params = [daysUsed, employeeEmail, currentYear];
-      await executeQuery(updateQuery, params);
+      console.log('Executing balance update:', { query: updateQuery, params });
+      
+      const result = await executeQuery(updateQuery, params);
+      console.log('Balance update result:', result);
+
+      // Mark the leave request as having its balance updated (to prevent duplicates)
+      if (leaveId && action === 'approve') {
+        try {
+          await executeQuery(
+            'UPDATE leave_taken SET balance_updated = 1 WHERE LeaveID = ?',
+            [leaveId]
+          );
+          console.log(`Marked leave ${leaveId} as balance_updated`);
+        } catch (flagError) {
+          // Column might not exist yet - log but don't fail
+          console.warn('Could not set balance_updated flag (column may not exist):', flagError);
+        }
+      }
+
+      // Reset the flag if cancelling
+      if (leaveId && action === 'cancel') {
+        try {
+          await executeQuery(
+            'UPDATE leave_taken SET balance_updated = 0 WHERE LeaveID = ?',
+            [leaveId]
+          );
+          console.log(`Reset balance_updated flag for leave ${leaveId}`);
+        } catch (flagError) {
+          console.warn('Could not reset balance_updated flag:', flagError);
+        }
+      }
 
       // Log the balance update to audit
       await AuditService.logUpdate(
@@ -295,9 +341,13 @@ router.put('/update', authenticateToken, requireRole(['manager', 'admin']), asyn
         },
         req.user!.email
       );
-    }
 
-    res.json({ success: true, message: 'Balance updated successfully' });
+      console.log(`Balance ${action === 'approve' ? 'deducted' : 'restored'} successfully: ${daysUsed} ${leaveType} days for ${employeeEmail}`);
+      res.json({ success: true, message: 'Balance updated successfully' });
+    } else {
+      console.error(`No update query generated for leaveType: ${leaveType}, action: ${action}`);
+      res.status(400).json({ success: false, message: `Unknown leave type: ${leaveType}` });
+    }
   } catch (error) {
     console.error('Update balance error:', error);
     res.status(500).json({ success: false, message: 'Failed to update balance' });
