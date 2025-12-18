@@ -232,7 +232,17 @@ export const AdminAllRequests = () => {
   };
 
   const handleDialogApprove = async (requestId: number, reason?: string) => {
+    // Find the request to update balance
+    const request = requests.find(r => r.LeaveID === requestId);
+    
     await handleStatusUpdate(requestId, 'approved', reason);
+    
+    // Update balance for approved leave
+    if (request && request.Status === 'pending') {
+      await balanceService.updateBalanceOnApproval(request);
+      console.log('Balance updated for approved leave via dialog:', requestId);
+    }
+    
     await fetchRequests(); // Refresh data
   };
 
@@ -242,6 +252,15 @@ export const AdminAllRequests = () => {
   };
 
   const handleDialogCancel = async (requestId: number, reason?: string) => {
+    // Find the request to check if we need to restore balance
+    const request = requests.find(r => r.LeaveID === requestId);
+    
+    // Restore balance if cancelling an approved request
+    if (request && request.Status === 'approved') {
+      await balanceService.updateBalanceOnCancellation(request);
+      console.log('Balance restored for cancelled approved leave:', requestId);
+    }
+    
     await handleStatusUpdate(requestId, 'cancelled', reason);
     await fetchRequests(); // Refresh data
   };
