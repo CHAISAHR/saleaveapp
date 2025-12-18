@@ -445,11 +445,13 @@ router.get('/', authenticateToken, requireRole(['admin', 'cd', 'manager']), asyn
       // CD and Manager see only their managed team members
       console.log(`Fetching team balances for manager: ${req.user!.email}, year: ${year}`);
       
-      // Use the users table manager_email field instead of leave_balances Manager field
+      // Use the users table for current department and manager values
       balances = await executeQuery(
-        `SELECT lb.*, u.gender 
+        `SELECT lb.*, u.gender, u.department AS Department, u.manager_email AS Manager,
+                m.name AS ManagerName
          FROM leave_balances lb 
          LEFT JOIN users u ON lb.EmployeeEmail = u.email 
+         LEFT JOIN users m ON u.manager_email = m.email
          WHERE u.manager_email = ? AND lb.Year = ? AND u.is_active = 1 
          ORDER BY lb.EmployeeName`,
         [req.user!.email, year]
@@ -457,11 +459,13 @@ router.get('/', authenticateToken, requireRole(['admin', 'cd', 'manager']), asyn
       
       console.log(`Found ${balances.length} team members for manager ${req.user!.email}`);
     } else {
-      // Admin sees all, CD sees all for dashboard
+      // Admin sees all, CD sees all for dashboard - use users table for current values
       balances = await executeQuery(
-        `SELECT lb.*, u.gender 
+        `SELECT lb.*, u.gender, u.department AS Department, u.manager_email AS Manager,
+                m.name AS ManagerName
          FROM leave_balances lb 
          LEFT JOIN users u ON lb.EmployeeEmail = u.email 
+         LEFT JOIN users m ON u.manager_email = m.email
          WHERE lb.Year = ? ORDER BY lb.EmployeeName`,
         [year]
       );
