@@ -37,27 +37,28 @@ export class TerminationCalculations {
     return Number(proratedAmount.toFixed(1));
   }
 
-  // Calculate termination balance using new formula
+  // Calculate termination balance: Current Balance + prorated leave for termination month
+  // This preserves the existing balance and only adds the earned leave in the termination month
   static calculateTerminationBalance(balance: EmployeeBalance, terminationDate: string): number {
-    // Get accumulated leave at termination date based on days worked
-    const accumulatedAtTermination = AccumulatedLeaveCalculations.calculateAccumulatedLeaveAtTerminationDate(terminationDate);
+    // Calculate current balance (this includes brought forward, accumulated, used, forfeited, adjustments)
+    const currentBalance = balance.Broughtforward + balance.AccumulatedLeave - 
+      balance.AnnualUsed - balance.Forfeited - balance.Annual_leave_adjustments;
     
-    // New formula: Brought Forward - Annual Used - Forfeited - Adjustments + Accumulated Leave at termination
-    const terminationBalance = Number((
-      balance.Broughtforward - 
-      balance.AnnualUsed - 
-      balance.Forfeited - 
-      balance.Annual_leave_adjustments + 
-      accumulatedAtTermination
-    ).toFixed(1));
+    // Calculate prorated leave for termination month only
+    const terminationMonthLeave = this.calculateTerminationProration(terminationDate);
+    
+    // Termination balance = current balance + prorated termination month leave
+    const terminationBalance = Number((currentBalance + terminationMonthLeave).toFixed(1));
 
     console.log(`Termination balance calculation for ${balance.EmployeeName}:`, {
       terminationDate,
       broughtforward: balance.Broughtforward,
+      accumulatedLeave: balance.AccumulatedLeave,
       annualUsed: balance.AnnualUsed,
       forfeited: balance.Forfeited,
       adjustments: balance.Annual_leave_adjustments,
-      accumulatedAtTermination,
+      currentBalance: Number(currentBalance.toFixed(1)),
+      terminationMonthLeave,
       terminationBalance
     });
     
