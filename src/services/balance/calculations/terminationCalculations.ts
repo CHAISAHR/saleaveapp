@@ -37,18 +37,18 @@ export class TerminationCalculations {
     return Number(proratedAmount.toFixed(1));
   }
 
-  // Calculate termination balance: Current Balance + prorated leave for termination month
-  // This preserves the existing balance and only adds the earned leave in the termination month
+  // Calculate termination balance: Current Balance + leave earned from now until termination
+  // This preserves the existing balance and adds leave for remaining complete months + prorated termination month
   static calculateTerminationBalance(balance: EmployeeBalance, terminationDate: string): number {
     // Calculate current balance (this includes brought forward, accumulated, used, forfeited, adjustments)
     const currentBalance = balance.Broughtforward + balance.AccumulatedLeave - 
       balance.AnnualUsed - balance.Forfeited - balance.Annual_leave_adjustments;
     
-    // Calculate prorated leave for termination month only
-    const terminationMonthLeave = this.calculateTerminationProration(terminationDate);
+    // Calculate additional leave to be earned from now until termination
+    const additionalLeave = this.calculateLeaveUntilTermination(terminationDate);
     
-    // Termination balance = current balance + prorated termination month leave
-    const terminationBalance = Number((currentBalance + terminationMonthLeave).toFixed(1));
+    // Termination balance = current balance + additional leave until termination
+    const terminationBalance = Number((currentBalance + additionalLeave).toFixed(1));
 
     console.log(`Termination balance calculation for ${balance.EmployeeName}:`, {
       terminationDate,
@@ -58,10 +58,56 @@ export class TerminationCalculations {
       forfeited: balance.Forfeited,
       adjustments: balance.Annual_leave_adjustments,
       currentBalance: Number(currentBalance.toFixed(1)),
-      terminationMonthLeave,
+      additionalLeave,
       terminationBalance
     });
     
     return terminationBalance;
+  }
+
+  // Calculate leave earned from current month end until termination date
+  static calculateLeaveUntilTermination(terminationDate: string): number {
+    const today = new Date();
+    const termDate = new Date(terminationDate);
+    
+    // If termination is in the past or current month, just return prorated termination month
+    if (termDate <= today) {
+      return this.calculateTerminationProration(terminationDate);
+    }
+    
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const termMonth = termDate.getMonth();
+    const termYear = termDate.getFullYear();
+    
+    let additionalLeave = 0;
+    
+    // Count complete months between current month end and termination month
+    let month = currentMonth + 1;
+    let year = currentYear;
+    
+    while (year < termYear || (year === termYear && month < termMonth)) {
+      additionalLeave += 1.667;
+      
+      console.log(`Future complete month ${month + 1}/${year}: +1.667`);
+      
+      month++;
+      if (month > 11) {
+        month = 0;
+        year++;
+      }
+    }
+    
+    // Add prorated termination month
+    const terminationMonthLeave = this.calculateTerminationProration(terminationDate);
+    additionalLeave += terminationMonthLeave;
+    
+    console.log(`Leave until termination ${terminationDate}:`, {
+      completeMonths: Math.floor((additionalLeave - terminationMonthLeave) / 1.667),
+      terminationMonthLeave,
+      totalAdditional: Number(additionalLeave.toFixed(3))
+    });
+    
+    return Number(additionalLeave.toFixed(3));
   }
 }
