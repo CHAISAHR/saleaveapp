@@ -49,6 +49,9 @@ export const YearRolloverDialog = ({
     setRolloverStatus('idle');
 
     try {
+      console.log('Starting rollover from', currentYear, 'to', targetYear);
+      console.log('API endpoint:', `${apiConfig.endpoints.rollover}/year-rollover`);
+      
       const response = await fetch(`${apiConfig.endpoints.rollover}/year-rollover`, {
         method: 'POST',
         headers: getAuthHeaders(),
@@ -58,10 +61,14 @@ export const YearRolloverDialog = ({
         })
       });
 
+      console.log('Response status:', response.status);
       const data = await response.json();
+      console.log('Response data:', data);
 
       if (!response.ok) {
-        throw new Error(data.message || 'Rollover failed');
+        // Show specific error from backend
+        const errorMessage = data.message || `Rollover failed with status ${response.status}`;
+        throw new Error(errorMessage);
       }
 
       console.log('Rollover result:', data);
@@ -69,7 +76,7 @@ export const YearRolloverDialog = ({
       
       toast({
         title: "Year Rollover Complete",
-        description: data.message || `Successfully rolled over ${data.rolloverCount} employee balances to ${targetYear}.`,
+        description: data.message || `Successfully rolled over ${data.employeesProcessed} employee balances to ${targetYear}.`,
       });
 
       // Trigger parent component refresh
@@ -85,9 +92,11 @@ export const YearRolloverDialog = ({
       console.error('Year rollover failed:', error);
       setRolloverStatus('error');
       
+      const errorMessage = error.message || "Failed to complete year rollover";
+      
       toast({
         title: "Rollover Failed",
-        description: error.message || "Failed to complete year rollover. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -157,7 +166,8 @@ export const YearRolloverDialog = ({
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Rollover failed. Previous year data remains intact. Please check the logs and try again.
+                <p>Rollover failed. Previous year data remains intact.</p>
+                <p className="mt-1 text-xs">Check browser console (F12) for the specific error message.</p>
               </AlertDescription>
             </Alert>
           )}
