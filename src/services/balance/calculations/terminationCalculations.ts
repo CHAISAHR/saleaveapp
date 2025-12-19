@@ -65,31 +65,41 @@ export class TerminationCalculations {
     return terminationBalance;
   }
 
-  // Calculate leave earned from current month end until termination date
+  // Calculate leave earned from end of previous month until termination date
+  // AccumulatedLeave in balance is as of end of previous month, so we need to include:
+  // 1. Current month (if it will complete before termination)
+  // 2. Complete months between current month and termination month
+  // 3. Prorated termination month
   static calculateLeaveUntilTermination(terminationDate: string): number {
     const today = new Date();
     const termDate = new Date(terminationDate);
-    
-    // If termination is in the past or current month, just return prorated termination month
-    if (termDate <= today) {
-      return this.calculateTerminationProration(terminationDate);
-    }
     
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
     const termMonth = termDate.getMonth();
     const termYear = termDate.getFullYear();
     
+    // If termination is in the current month, just return prorated termination month
+    if (termYear === currentYear && termMonth === currentMonth) {
+      return this.calculateTerminationProration(terminationDate);
+    }
+    
+    // If termination is in the past, return 0 (balance already reflects this)
+    if (termDate < today && !(termYear === currentYear && termMonth === currentMonth)) {
+      return 0;
+    }
+    
     let additionalLeave = 0;
     
-    // Count complete months between current month end and termination month
-    let month = currentMonth + 1;
+    // Start from current month (since AccumulatedLeave is as of end of previous month)
+    let month = currentMonth;
     let year = currentYear;
     
+    // Count complete months from current month up to (but not including) termination month
     while (year < termYear || (year === termYear && month < termMonth)) {
       additionalLeave += 1.667;
       
-      console.log(`Future complete month ${month + 1}/${year}: +1.667`);
+      console.log(`Complete month ${month + 1}/${year}: +1.667`);
       
       month++;
       if (month > 11) {
@@ -103,7 +113,9 @@ export class TerminationCalculations {
     additionalLeave += terminationMonthLeave;
     
     console.log(`Leave until termination ${terminationDate}:`, {
-      completeMonths: Math.floor((additionalLeave - terminationMonthLeave) / 1.667),
+      currentMonth: currentMonth + 1,
+      termMonth: termMonth + 1,
+      completeMonthsAdded: Math.round((additionalLeave - terminationMonthLeave) / 1.667),
       terminationMonthLeave,
       totalAdditional: Number(additionalLeave.toFixed(3))
     });
