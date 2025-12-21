@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertTriangle, CheckCircle, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiConfig } from "@/config/apiConfig";
 
 interface YearRolloverDialogProps {
   open: boolean;
@@ -26,6 +27,14 @@ export const YearRolloverDialog = ({
   const [isRollingOver, setIsRollingOver] = useState(false);
   const [rolloverStatus, setRolloverStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
+  const getAuthHeaders = () => {
+    const authToken = localStorage.getItem('auth_token');
+    return {
+      'Authorization': `Bearer ${authToken}`,
+      'Content-Type': 'application/json'
+    };
+  };
+
   const handleRollover = async () => {
     if (targetYear <= currentYear) {
       toast({
@@ -40,17 +49,34 @@ export const YearRolloverDialog = ({
     setRolloverStatus('idle');
 
     try {
-      // Mock API call - in real implementation, this would call the backend
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API delay
+      console.log('Starting rollover from', currentYear, 'to', targetYear);
+      console.log('API endpoint:', `${apiConfig.endpoints.rollover}/year-rollover`);
       
-      console.log(`Rolling over balances from ${currentYear} to ${targetYear}`);
-      console.log(`Previous year (${currentYear}) data preserved as backup`);
-      
+      const response = await fetch(`${apiConfig.endpoints.rollover}/year-rollover`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          fromYear: currentYear,
+          toYear: targetYear
+        })
+      });
+
+      console.log('Response status:', response.status);
+      const data = await response.json();
+      console.log('Response data:', data);
+
+      if (!response.ok) {
+        // Show specific error from backend
+        const errorMessage = data.message || `Rollover failed with status ${response.status}`;
+        throw new Error(errorMessage);
+      }
+
+      console.log('Rollover result:', data);
       setRolloverStatus('success');
       
       toast({
         title: "Year Rollover Complete",
-        description: `Successfully rolled over employee balances to ${targetYear}. Previous year data preserved.`,
+        description: data.message || `Successfully rolled over ${data.employeesProcessed} employee balances to ${targetYear}.`,
       });
 
       // Trigger parent component refresh
@@ -62,13 +88,15 @@ export const YearRolloverDialog = ({
         setRolloverStatus('idle');
       }, 1500);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Year rollover failed:', error);
       setRolloverStatus('error');
       
+      const errorMessage = error.message || "Failed to complete year rollover";
+      
       toast({
         title: "Rollover Failed",
-        description: "Failed to complete year rollover. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -138,7 +166,8 @@ export const YearRolloverDialog = ({
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Rollover failed. Previous year data remains intact. Please check the logs and try again.
+                <p>Rollover failed. Previous year data remains intact.</p>
+                <p className="mt-1 text-xs">Check browser console (F12) for the specific error message.</p>
               </AlertDescription>
             </Alert>
           )}
