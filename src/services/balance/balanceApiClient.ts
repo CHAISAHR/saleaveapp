@@ -31,7 +31,7 @@ export class BalanceApiClient {
   static async getEmployeeBalance(employeeEmail: string, year: number = new Date().getFullYear()): Promise<EmployeeBalance | null> {
     try {
       const authToken = localStorage.getItem('auth_token');
-      console.log('BalanceApiClient - Fetching balance for:', employeeEmail);
+      console.log('BalanceApiClient - Fetching balance for:', employeeEmail, 'year:', year);
       
       // Use direct fetch to match AdminAllBalances behavior
       const response = await fetch(`${apiConfig.endpoints.balance}/${employeeEmail}?year=${year}`, {
@@ -49,6 +49,26 @@ export class BalanceApiClient {
         
         if (data.success && data.balance) {
           return data.balance;
+        }
+      } else if (response.status === 404 && year === new Date().getFullYear()) {
+        // If current year not found, try previous year (rollover may not have happened yet)
+        console.log('BalanceApiClient - Current year not found, trying previous year:', year - 1);
+        const prevYearResponse = await fetch(`${apiConfig.endpoints.balance}/${employeeEmail}?year=${year - 1}`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (prevYearResponse.ok) {
+          const prevData = await prevYearResponse.json();
+          console.log('BalanceApiClient - Previous year data found:', prevData);
+          
+          if (prevData.success && prevData.balance) {
+            // Return previous year data with a flag indicating rollover needed
+            console.warn('BalanceApiClient - Using previous year data. Year rollover may be needed.');
+            return { ...prevData.balance, _rolloverNeeded: true };
+          }
         }
       } else {
         console.error('BalanceApiClient - API error:', response.status, response.statusText);
