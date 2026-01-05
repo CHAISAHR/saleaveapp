@@ -10,6 +10,9 @@ import { AddEmployeeDialog } from "./admin/AddEmployeeDialog";
 import { apiConfig } from "@/config/apiConfig";
 import { usePagination } from "@/hooks/usePagination";
 import { useSorting } from "@/hooks/useSorting";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface EmployeeBalance {
   BalanceID: number;
@@ -62,6 +65,8 @@ export const AdminAllBalances = () => {
   const [balances, setBalances] = useState<EmployeeBalance[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddEmployeeDialog, setShowAddEmployeeDialog] = useState(false);
+  const [rolloverNeeded, setRolloverNeeded] = useState(false);
+  const [displayYear, setDisplayYear] = useState<number>(currentYear);
 
   const getAuthHeaders = () => {
     const authToken = localStorage.getItem('auth_token');
@@ -81,6 +86,19 @@ export const AdminAllBalances = () => {
         const data = await response.json();
         if (data.success && data.balances) {
           setBalances(data.balances);
+          // Check if API returned previous year data (rollover needed)
+          if (data.usedPreviousYear) {
+            setRolloverNeeded(true);
+            setDisplayYear(data.year);
+            toast({
+              title: "Year Rollover Needed",
+              description: `Showing ${data.year} data. Please run Year Rollover to create ${currentYear} balances.`,
+              variant: "destructive",
+            });
+          } else {
+            setRolloverNeeded(false);
+            setDisplayYear(data.year || currentYear);
+          }
         }
       } else {
         toast({
@@ -493,6 +511,9 @@ export const AdminAllBalances = () => {
   };
 
   const handleRolloverComplete = () => {
+    setRolloverNeeded(false);
+    setDisplayYear(currentYear);
+    fetchBalances(); // Refresh data after rollover
     toast({
       title: "Data Refreshed",
       description: "Employee balances have been updated after rollover.",
@@ -537,6 +558,27 @@ export const AdminAllBalances = () => {
 
   return (
     <div className="space-y-6">
+      {rolloverNeeded && (
+        <Alert variant="destructive" className="border-yellow-500 bg-yellow-50">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Year Rollover Required</AlertTitle>
+          <AlertDescription className="flex items-center justify-between">
+            <span>
+              Displaying {displayYear} data. No balances found for {currentYear}. 
+              Please run Year Rollover to create {currentYear} balances.
+            </span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowRolloverDialog(true)}
+              className="ml-4"
+            >
+              Run Rollover Now
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <AdminAllBalancesHeader
         isAfterJuly31={isAfterJuly31()}
         onRolloverWarning={handleRolloverWarning}
