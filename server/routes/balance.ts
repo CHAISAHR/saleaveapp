@@ -20,13 +20,32 @@ router.get('/:email', authenticateToken, async (req: AuthRequest, res) => {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
-    const balances = await executeQuery(
+    let balances = await executeQuery(
       `SELECT lb.*, u.gender 
        FROM leave_balances lb 
        LEFT JOIN users u ON lb.EmployeeEmail = u.email 
        WHERE lb.EmployeeEmail = ? AND lb.Year = ?`,
       [email, year]
     );
+
+    // If no balance found for current year, check if previous year exists (rollover may not have happened)
+    if (balances.length === 0) {
+      const currentYear = new Date().getFullYear();
+      if (parseInt(year as string) === currentYear) {
+        console.log(`No balance found for ${email} in ${year}, checking previous year...`);
+        balances = await executeQuery(
+          `SELECT lb.*, u.gender 
+           FROM leave_balances lb 
+           LEFT JOIN users u ON lb.EmployeeEmail = u.email 
+           WHERE lb.EmployeeEmail = ? AND lb.Year = ?`,
+          [email, currentYear - 1]
+        );
+        
+        if (balances.length > 0) {
+          console.log(`Found previous year balance for ${email}. Year rollover may be needed.`);
+        }
+      }
+    }
 
     if (balances.length === 0) {
       return res.status(404).json({ success: false, message: 'Balance not found' });
@@ -377,7 +396,7 @@ router.put('/accumulated-leave', authenticateToken, async (req: AuthRequest, res
 // Get all balances (admin only, CD with view parameter)
 router.get('/', authenticateToken, requireRole(['admin', 'cd', 'manager']), async (req: AuthRequest, res) => {
   try {
-    const year = req.query.year || new Date().getFullYear();
+    let year = req.query.year || new Date().getFullYear();
     const viewParam = req.query.view || '';
     
     // Dynamic accumulated leave calculation function
@@ -439,37 +458,55 @@ router.get('/', authenticateToken, requireRole(['admin', 'cd', 'manager']), asyn
     };
 
     let balances;
+    let usedPreviousYear = false;
     
-    // CD can see all balances for dashboard, or only team balances if view=team parameter is set
-    if ((normalizeRole(req.user!.role) === 'cd' || normalizeRole(req.user!.role) === 'manager') && viewParam === 'team') {
-      // CD and Manager see only their managed team members
-      console.log(`Fetching team balances for manager: ${req.user!.email}, year: ${year}`);
-      
-      // Use the users table for current department and manager values
-      balances = await executeQuery(
-        `SELECT lb.*, u.gender, u.department AS Department, u.manager_email AS Manager,
-                m.name AS ManagerName
-         FROM leave_balances lb 
-         LEFT JOIN users u ON lb.EmployeeEmail = u.email 
-         LEFT JOIN users m ON u.manager_email = m.email
-         WHERE u.manager_email = ? AND lb.Year = ? AND u.is_active = 1 
-         ORDER BY lb.EmployeeName`,
-        [req.user!.email, year]
-      );
-      
-      console.log(`Found ${balances.length} team members for manager ${req.user!.email}`);
-    } else {
-      // Admin sees all, CD sees all for dashboard - use users table for current values
-      balances = await executeQuery(
-        `SELECT lb.*, u.gender, u.department AS Department, u.manager_email AS Manager,
-                m.name AS ManagerName
-         FROM leave_balances lb 
-         LEFT JOIN users u ON lb.EmployeeEmail = u.email 
-         LEFT JOIN users m ON u.manager_email = m.email
-         WHERE lb.Year = ? ORDER BY lb.EmployeeName`,
-        [year]
-      );
+    // Helper function to fetch balances
+    const fetchBalances = async (fetchYear: any) => {
+      if ((normalizeRole(req.user!.role) === 'cd' || normalizeRole(req.user!.role) === 'manager') && viewParam === 'team') {
+        console.log(`Fetching team balances for manager: ${req.user!.email}, year: ${fetchYear}`);
+        
+        return await executeQuery(
+          `SELECT lb.*, u.gender, u.department AS Department, u.manager_email AS Manager,
+                  m.name AS ManagerName
+           FROM leave_balances lb 
+           LEFT JOIN users u ON lb.EmployeeEmail = u.email 
+           LEFT JOIN users m ON u.manager_email = m.email
+           WHERE u.manager_email = ? AND lb.Year = ? AND u.is_active = 1 
+           ORDER BY lb.EmployeeName`,
+          [req.user!.email, fetchYear]
+        );
+      } else {
+        return await executeQuery(
+          `SELECT lb.*, u.gender, u.department AS Department, u.manager_email AS Manager,
+                  m.name AS ManagerName
+           FROM leave_balances lb 
+           LEFT JOIN users u ON lb.EmployeeEmail = u.email 
+           LEFT JOIN users m ON u.manager_email = m.email
+           WHERE lb.Year = ? ORDER BY lb.EmployeeName`,
+          [fetchYear]
+        );
+      }
+    };
+    
+    balances = await fetchBalances(year);
+    
+    // If no balances found for current year, try previous year (rollover may not have happened)
+    if (balances.length === 0) {
+      const currentYear = new Date().getFullYear();
+      if (parseInt(year as string) === currentYear) {
+        console.log(`No balances found for ${year}, checking previous year...`);
+        const previousYear = currentYear - 1;
+        balances = await fetchBalances(previousYear);
+        
+        if (balances.length > 0) {
+          console.log(`Found ${balances.length} balances from previous year ${previousYear}. Year rollover may be needed.`);
+          usedPreviousYear = true;
+          year = previousYear;
+        }
+      }
     }
+    
+    console.log(`Found ${balances.length} balances for year ${year}`);
 
     // Update all balances with dynamic accumulated leave calculation
     const updatedBalances = await Promise.all(balances.map(async (balance: any) => {
@@ -494,7 +531,13 @@ router.get('/', authenticateToken, requireRole(['admin', 'cd', 'manager']), asyn
       };
     }));
 
-    res.json({ success: true, balances: updatedBalances });
+    res.json({ 
+      success: true, 
+      balances: updatedBalances, 
+      year: parseInt(year as string),
+      usedPreviousYear,
+      message: usedPreviousYear ? `Showing data from ${year}. Year rollover may be needed.` : undefined
+    });
   } catch (error) {
     console.error('Get all balances error:', error);
     res.status(500).json({ success: false, message: 'Failed to get balances' });
