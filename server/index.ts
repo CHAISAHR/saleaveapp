@@ -12,6 +12,7 @@ import rolloverRoutes from './routes/rollover';
 import departmentRoutes from './routes/departments';
 import externalRoutes from './routes/external';
 import auditRoutes from './routes/audit';
+import systemRoutes from './routes/system';
 
 // Load environment variables
 dotenv.config();
@@ -42,6 +43,7 @@ app.use('/api/rollover', rolloverRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/external', externalRoutes); // External API endpoints
 app.use('/api/audit', auditRoutes); // Audit trail endpoints
+app.use('/api/system', systemRoutes); // System settings endpoints
 
 // Health check
 app.get('/health', (req, res) => {
