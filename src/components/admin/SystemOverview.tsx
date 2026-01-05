@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminStatsCards } from "./AdminStatsCards";
+import { MaintenanceModeToggle } from "./MaintenanceModeToggle";
 import { apiConfig, makeApiRequest } from "@/config/apiConfig";
 
 export const SystemOverview = () => {
@@ -113,6 +114,9 @@ export const SystemOverview = () => {
         <h2 className="text-2xl font-bold text-gray-900">System Overview</h2>
         <p className="text-gray-600">Monitor system-wide leave statistics and trends</p>
       </div>
+
+      {/* Maintenance Mode Toggle */}
+      <MaintenanceModeToggle />
 
       <AdminStatsCards />
 

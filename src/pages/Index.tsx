@@ -1,7 +1,9 @@
 
 import { useAuth } from "@/contexts/AuthContext";
+import { useMaintenanceMode } from "@/contexts/MaintenanceContext";
 import { AuthenticationPage } from "@/components/auth/AuthenticationPage";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { MaintenancePage } from "@/components/MaintenancePage";
 import { useUserRole } from "@/hooks/useUserRole";
 
 const Index = () => {
@@ -15,6 +17,7 @@ const Index = () => {
   } = useAuth();
 
   const { userRole, setUserRole, currentUser } = useUserRole(user);
+  const { isMaintenanceMode, loading: maintenanceLoading } = useMaintenanceMode();
 
   // Updated manualSignUp handler to include gender - now properly async
   const handleManualSignUp = async (userData: {
@@ -30,7 +33,7 @@ const Index = () => {
   };
 
   // Show loading state
-  if (loading) {
+  if (loading || maintenanceLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -50,6 +53,11 @@ const Index = () => {
         resetPassword={resetPassword}
       />
     );
+  }
+
+  // Show maintenance page for non-admin users when maintenance mode is active
+  if (isMaintenanceMode && userRole !== 'admin') {
+    return <MaintenancePage />;
   }
 
   return (
