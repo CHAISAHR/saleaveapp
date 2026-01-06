@@ -488,16 +488,17 @@ router.get('/requests', authenticateToken, async (req: AuthRequest, res) => {
                GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
       params = [req.user!.email, req.user!.email, req.user!.email, req.user!.email, req.user!.email, currentYear, nextYear];
     } else {
-      // Employee can only see their own requests for current year
+      // Employee can see their own requests for previous year, current year, and next year
+      const previousYear = currentYear - 1;
       query = `SELECT lt.LeaveID, lt.Title, lt.Detail, lt.StartDate, lt.EndDate, lt.LeaveType, 
                lt.Requester, lt.Approver, lt.AlternativeApprover, lt.ApproverReason, lt.Status, lt.Created, lt.Modified, 
                lt.Modified_By, u.name as ModifiedBy, lt.workingDays, COUNT(la.id) as attachment_count
                FROM leave_taken lt 
                LEFT JOIN leave_attachments la ON lt.LeaveID = la.leave_id
                LEFT JOIN users u ON lt.Modified_By = u.email
-               WHERE lt.Requester = ? AND YEAR(lt.StartDate) IN (?, ?)
+               WHERE lt.Requester = ? AND YEAR(lt.StartDate) IN (?, ?, ?)
                GROUP BY lt.LeaveID ORDER BY lt.Created DESC`;
-      params = [req.user!.email, currentYear, nextYear];
+      params = [req.user!.email, previousYear, currentYear, nextYear];
     }
 
     console.log(`Fetching leave requests for role: ${req.user!.role}, user: ${req.user!.email}, view: ${req.query.view || 'default'}, year filter: ${normalizeRole(req.user!.role) === 'admin' || (normalizeRole(req.user!.role) === 'cd' && req.query.view !== 'team') ? 'none' : `${currentYear}-${nextYear}`}`);
