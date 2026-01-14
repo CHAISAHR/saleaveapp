@@ -21,7 +21,7 @@ const parseDatabaseUrl = (url: string) => {
   };
 };
 
-const dbConfig: DatabaseConfig = process.env.DATABASE_URL || process.env.MYSQL_URL
+const baseConfig = process.env.DATABASE_URL || process.env.MYSQL_URL
   ? parseDatabaseUrl(process.env.DATABASE_URL || process.env.MYSQL_URL!)
   : {
       host: process.env.DB_HOST || 'localhost',
@@ -30,6 +30,12 @@ const dbConfig: DatabaseConfig = process.env.DATABASE_URL || process.env.MYSQL_U
       database: process.env.DB_NAME || 'leave_management',
       port: parseInt(process.env.DB_PORT || '3306'),
     };
+
+const dbConfig = {
+  ...baseConfig,
+  // Remove any row limits - allow unlimited results
+  rowsAsArray: false,
+};
 
 let connection: mysql.Connection;
 
@@ -71,7 +77,9 @@ export const executeQuery = async (query: string, params?: any[]): Promise<any> 
       console.log('No connection found, attempting to reconnect...');
       await connectDatabase();
     }
-    const [results] = await connection.execute(query, params);
+    // Use query() instead of execute() for unlimited result sets
+    // execute() uses prepared statements which can have implicit limits
+    const [results] = await connection.query(query, params);
     return results;
   } catch (error) {
     console.error('Query execution failed:', error);
@@ -84,7 +92,7 @@ export const executeQuery = async (query: string, params?: any[]): Promise<any> 
       console.log('Connection lost or closed, attempting to reconnect...');
       try {
         await connectDatabase();
-        const [results] = await connection.execute(query, params);
+        const [results] = await connection.query(query, params);
         return results;
       } catch (reconnectError) {
         console.error('Reconnection failed:', reconnectError);
