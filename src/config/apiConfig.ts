@@ -114,6 +114,16 @@ export const makeApiRequest = async (url: string, options: ApiRequestOptions = {
         console.log('Response status:', response.status);
         console.log('Response ok:', response.ok);
 
+        // If unauthorized, force logout and redirect to sign-in
+        if (response.status === 401 || response.status === 403) {
+            console.warn('Authentication expired or invalid. Forcing logout.');
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('manualUser');
+            localStorage.removeItem('mockUser');
+            window.location.href = '/';
+            throw new Error('Session expired. Please sign in again.');
+        }
+
         if (!response.ok) {
             const errorText = await response.text();
             console.error('API Error Response:', errorText);
@@ -135,9 +145,14 @@ export const makeApiRequest = async (url: string, options: ApiRequestOptions = {
     } catch (error) {
         console.error('API request failed:', error);
 
+        // Don't fall back to mock data - force re-authentication instead
         if (error instanceof Error && (error.message === 'Failed to fetch' || error.message.includes('fetch'))) {
-            console.warn('Backend unavailable or network error, falling back to mock data');
-            return createMockResponse(url, options.responseType);
+            console.warn('Backend unavailable or network error. Clearing session.');
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('manualUser');
+            localStorage.removeItem('mockUser');
+            window.location.href = '/';
+            throw new Error('Unable to connect to server. Please sign in again.');
         }
 
         throw error;
