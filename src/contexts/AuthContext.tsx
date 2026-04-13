@@ -351,9 +351,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Only set timer if user is authenticated
     if (user) {
-      inactivityTimerRef.current = setTimeout(() => {
+      inactivityTimerRef.current = setTimeout(async () => {
         console.log('[AuthContext] Auto-logout due to inactivity');
-        logout();
+        await logout();
+        // Force reload to ensure user is taken to sign-in page and all cached state is cleared
+        window.location.href = '/';
       }, INACTIVITY_TIMEOUT);
     }
   }, [user, INACTIVITY_TIMEOUT]);
