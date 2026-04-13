@@ -49,8 +49,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   
   // Activity tracking for auto-logout
-  const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 60 minutes in milliseconds
-  const inactivityTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
+  const inactivityTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const initializeAuth = async () => {
