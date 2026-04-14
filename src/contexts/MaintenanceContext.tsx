@@ -42,13 +42,33 @@ export const MaintenanceProvider = ({ children }: MaintenanceProviderProps) => {
   useEffect(() => {
     const fetchMaintenanceStatus = async () => {
       try {
-        const response = await makeApiRequest(`${apiConfig.baseURL}/api/system/maintenance`, {
-          headers: getAuthHeaders()
+        const url = `${apiConfig.baseURL}/api/system/maintenance`;
+        
+        // Skip polling if API URL is not configured
+        if (url.includes('MISSING_API_URL')) {
+          setIsMaintenanceMode(false);
+          setLoading(false);
+          return;
+        }
+
+        // Skip polling if user is not authenticated
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          setIsMaintenanceMode(false);
+          setLoading(false);
+          return;
+        }
+
+        // Use fetch directly to avoid aggressive 401/403 redirect loops
+        const response = await fetch(url, {
+          headers: getAuthHeaders(),
         });
         
         if (response.ok) {
           const data = await response.json();
           setIsMaintenanceMode(data.maintenanceMode || false);
+        } else {
+          setIsMaintenanceMode(false);
         }
       } catch (error) {
         console.error('Failed to fetch maintenance status:', error);

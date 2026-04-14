@@ -116,12 +116,19 @@ export const makeApiRequest = async (url: string, options: ApiRequestOptions = {
 
         // If unauthorized, force logout and redirect to sign-in
         if (response.status === 401 || response.status === 403) {
-            console.warn('Authentication expired or invalid. Forcing logout.');
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('manualUser');
-            localStorage.removeItem('mockUser');
-            window.location.href = '/';
-            throw new Error('Session expired. Please sign in again.');
+            if (response.status === 401) {
+                const hasSession = localStorage.getItem('auth_token');
+                if (hasSession) {
+                    console.warn('Authentication expired. Forcing logout.');
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('manualUser');
+                    localStorage.removeItem('mockUser');
+                    window.location.href = '/';
+                }
+                throw new Error('Session expired. Please sign in again.');
+            }
+            // 403 = permission denied, don't force redirect
+            throw new Error('You do not have permission to perform this action.');
         }
 
         if (!response.ok) {
