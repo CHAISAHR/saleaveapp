@@ -145,13 +145,16 @@ export const makeApiRequest = async (url: string, options: ApiRequestOptions = {
     } catch (error) {
         console.error('API request failed:', error);
 
-        // Don't fall back to mock data - force re-authentication instead
+        // On network errors, only force re-auth if user was actually logged in
         if (error instanceof Error && (error.message === 'Failed to fetch' || error.message.includes('fetch'))) {
-            console.warn('Backend unavailable or network error. Clearing session.');
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('manualUser');
-            localStorage.removeItem('mockUser');
-            window.location.href = '/';
+            const hasSession = localStorage.getItem('auth_token');
+            if (hasSession) {
+                console.warn('Backend unavailable while authenticated. Clearing session.');
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('manualUser');
+                localStorage.removeItem('mockUser');
+                window.location.href = '/';
+            }
             throw new Error('Unable to connect to server. Please sign in again.');
         }
 
