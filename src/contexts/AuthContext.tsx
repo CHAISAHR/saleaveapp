@@ -49,8 +49,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   
   // Activity tracking for auto-logout
-  const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 60 minutes in milliseconds
-  const inactivityTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
+  const inactivityTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -351,9 +351,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Only set timer if user is authenticated
     if (user) {
-      inactivityTimerRef.current = setTimeout(() => {
+      inactivityTimerRef.current = setTimeout(async () => {
         console.log('[AuthContext] Auto-logout due to inactivity');
-        logout();
+        await logout();
+        // Force reload to ensure user is taken to sign-in page and all cached state is cleared
+        window.location.href = '/';
       }, INACTIVITY_TIMEOUT);
     }
   }, [user, INACTIVITY_TIMEOUT]);
