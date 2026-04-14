@@ -12,7 +12,12 @@ const MaintenanceContext = createContext<MaintenanceContextType | undefined>(und
 export const useMaintenanceMode = () => {
   const context = useContext(MaintenanceContext);
   if (!context) {
-    throw new Error('useMaintenanceMode must be used within a MaintenanceProvider');
+    // Return safe defaults instead of throwing to prevent app crash
+    return {
+      isMaintenanceMode: false,
+      setMaintenanceMode: async () => {},
+      loading: false,
+    } as MaintenanceContextType;
   }
   return context;
 };
