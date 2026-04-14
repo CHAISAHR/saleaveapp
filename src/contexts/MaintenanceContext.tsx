@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { apiConfig } from '@/config/apiConfig';
+import { apiConfig, makeApiRequest } from '@/config/apiConfig';
 
 interface MaintenanceContextType {
   isMaintenanceMode: boolean;
