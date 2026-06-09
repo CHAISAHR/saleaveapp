@@ -66,7 +66,7 @@ router.post('/initiate', authenticateToken, requireRole(['manager', 'admin']), a
       [user_email]
     );
     if (users.length === 0 || !users[0].contract_expiry_date) {
-      return res.status(400).json({ success: false, message: 'User not found or no contract expiry date' });
+      return res.status(400).json({ success: false, message: 'User not found or no contract end date' });
     }
     const u = users[0];
     if (normalizeRole(req.user!.role) === 'manager' && u.manager_email !== req.user!.email) {
