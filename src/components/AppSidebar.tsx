@@ -16,7 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, Settings, Database, LogOut, User, FileText, Eye, ArrowLeftRight } from "lucide-react";
+import { Calendar, Users, Settings, Database, LogOut, User, FileText, Eye } from "lucide-react";
 
 interface AppSidebarProps {
   currentUser: any;
@@ -24,7 +24,6 @@ interface AppSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onRoleChange?: (role: 'employee' | 'manager' | 'admin' | 'cd') => void;
-  onSwitchApp?: () => void;
 }
 
 export const AppSidebar = ({ 
@@ -32,8 +31,7 @@ export const AppSidebar = ({
   userRole, 
   activeTab, 
   onTabChange,
-  onRoleChange,
-  onSwitchApp 
+  onRoleChange 
 }: AppSidebarProps) => {
   const { logout } = useAuth();
 
@@ -238,14 +236,6 @@ export const AppSidebar = ({
           <Badge variant={userRole === 'admin' ? 'default' : userRole === 'cd' ? 'default' : userRole === 'manager' ? 'secondary' : 'outline'} className="w-full justify-center">
             {userRole === 'cd' ? 'CD' : userRole.charAt(0).toUpperCase() + userRole.slice(1)}
           </Badge>
-          
-          {/* Switch app button */}
-          {onSwitchApp && (
-            <Button size="sm" onClick={onSwitchApp} className="w-full justify-start bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-sm">
-              <ArrowLeftRight className="h-4 w-4 mr-2" />
-              Switch App
-            </Button>
-          )}
           
           {/* Sign out button */}
           <Button variant="ghost" size="sm" onClick={handleSignOut} className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50">

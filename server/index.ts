@@ -13,11 +13,6 @@ import departmentRoutes from './routes/departments';
 import externalRoutes from './routes/external';
 import auditRoutes from './routes/audit';
 import systemRoutes from './routes/system';
-import travelConfigRoutes from './routes/travelConfig';
-import travelRequestRoutes from './routes/travelRequest';
-import expenseClaimRoutes from './routes/expenseClaim';
-import travelAttachmentRoutes from './routes/travelAttachments';
-import travelPdfRoutes from './routes/travelPdf';
 
 // Load environment variables
 dotenv.config();
@@ -49,11 +44,6 @@ app.use('/api/departments', departmentRoutes);
 app.use('/api/external', externalRoutes); // External API endpoints
 app.use('/api/audit', auditRoutes); // Audit trail endpoints
 app.use('/api/system', systemRoutes); // System settings endpoints
-app.use('/api/travel-config', travelConfigRoutes); // Per diem, PIDs, expense categories
-app.use('/api/travel', travelRequestRoutes); // Travel requests
-app.use('/api/expense-claims', expenseClaimRoutes); // Expense claims
-app.use('/api/travel-attachments', travelAttachmentRoutes); // File uploads (travel + expense)
-app.use('/api/travel-pdf', travelPdfRoutes); // PDF generation
 
 // Health check
 app.get('/health', (req, res) => {
