@@ -374,8 +374,9 @@ export const AdminAllBalances = () => {
       'SickBroughtforward', 'Sick', 'SickUsed', 'Maternity', 'MaternityUsed',
       'Parental', 'ParentalUsed', 'Family', 'FamilyUsed', 'Adoption', 'AdoptionUsed',
       'Study', 'StudyUsed', 'Wellness', 'WellnessUsed',
-      'Current_leave_balance', 'Leave_balance_previous_month', 'Contract_termination_date',
+      'Current_leave_balance', 'Leave_balance_previous_month', 'Contract_expiry_date', 'Contract_termination_date',
       'termination_balance', 'Comment', 'Annual_leave_adjustment_comments', 'Manager', 'Modified'
+
     ];
     
     const csvContent = [
@@ -410,7 +411,9 @@ export const AdminAllBalances = () => {
         balance.WellnessUsed,
         calculateCurrentBalance(balance),
         balance.Leave_balance_previous_month,
+        balance.Contract_expiry_date || '',
         balance.Contract_termination_date || '',
+
         calculateTerminationBalance(balance) || '',
         `"${balance.Comment || ''}"`,
         `"${balance.Annual_leave_adjustment_comments || ''}"`,
