@@ -621,7 +621,7 @@ router.put('/update-field', authenticateToken, requireRole(['admin']), async (re
       'Maternity', 'MaternityUsed', 'Parental', 'ParentalUsed', 'Family',
       'FamilyUsed', 'Adoption', 'AdoptionUsed', 'Study', 'StudyUsed',
       'Wellness', 'WellnessUsed', 'Comment', 'Annual_leave_adjustment_comments',
-      'Contract_termination_date', 'termination_balance', 'Leave_balance_previous_month'
+      'Contract_termination_date', 'Contract_expiry_date', 'termination_balance', 'Leave_balance_previous_month'
     ];
     
     if (!allowedFields.includes(field)) {
@@ -634,19 +634,21 @@ router.put('/update-field', authenticateToken, requireRole(['admin']), async (re
       WHERE BalanceID = ?
     `, [value, BalanceID]);
 
-    // Keep users.contract_termination_date in sync so reminder job uses the latest date
-    if (field === 'Contract_termination_date') {
+    // Keep users table in sync for date fields used by other modules (renewal reminders, terminations)
+    if (field === 'Contract_termination_date' || field === 'Contract_expiry_date') {
+      const userColumn = field === 'Contract_expiry_date' ? 'contract_expiry_date' : 'contract_termination_date';
       const rows = await executeQuery(
         'SELECT EmployeeEmail FROM leave_balances WHERE BalanceID = ?',
         [BalanceID]
       );
       if (rows.length > 0) {
         await executeQuery(
-          'UPDATE users SET contract_termination_date = ?, updated_at = NOW() WHERE email = ?',
+          `UPDATE users SET ${userColumn} = ?, updated_at = NOW() WHERE email = ?`,
           [value || null, rows[0].EmployeeEmail]
         );
       }
     }
+
 
     res.json({ success: true, message: 'Field updated successfully' });
   } catch (error) {
