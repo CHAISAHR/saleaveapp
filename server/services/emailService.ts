@@ -493,12 +493,12 @@ class EmailService {
       message: `
         Good day,
 
-        This is a reminder that the following team member's contract is approaching its expiry date and needs to be renewed:
+        This is a reminder that the following team member's contract is approaching its end date and needs to be renewed:
 
         Employee: ${employeeName}
         Email: ${employeeEmail}
         Department: ${department}
-        Contract Expiry Date: ${expiry}
+        Contract End Date: ${expiry}
         Days Remaining: ${daysLeft}
 
         Please initiate the contract renewal process and notify the HR & Operations team of your decision.
