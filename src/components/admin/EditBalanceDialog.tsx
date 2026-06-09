@@ -37,6 +37,7 @@ interface EmployeeBalance {
   Current_leave_balance: number;
   Leave_balance_previous_month: number;
   Contract_termination_date?: string;
+  Contract_expiry_date?: string;
   termination_balance?: number;
   Comment?: string;
   Annual_leave_adjustment_comments?: string;
@@ -238,6 +239,14 @@ export const EditBalanceDialog = ({
                   type="date"
                   value={selectedBalance.Contract_termination_date || ''}
                   onChange={(e) => onFieldChange('Contract_termination_date', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Contract Expiry Date</Label>
+                <Input
+                  type="date"
+                  value={selectedBalance.Contract_expiry_date || ''}
+                  onChange={(e) => onFieldChange('Contract_expiry_date', e.target.value)}
                 />
               </div>
             </div>
