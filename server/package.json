@@ -1,5 +1,6 @@
 
 {
+  "engines": { "node": ">=20.0.0" },
   "name": "leaveapp-backend",
   "version": "1.0.0",
   "description": "Backend for LeaveApp SA",
