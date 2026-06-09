@@ -69,6 +69,32 @@ export const AdminAllBalances = () => {
   const [showAddEmployeeDialog, setShowAddEmployeeDialog] = useState(false);
   const [rolloverNeeded, setRolloverNeeded] = useState(false);
   const [displayYear, setDisplayYear] = useState<number>(currentYear);
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSyncMissingUsers = async () => {
+    setSyncing(true);
+    try {
+      const response = await fetch(`${apiConfig.endpoints.balance}/sync-missing-users`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ year: currentYear }),
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        toast({
+          title: 'Sync complete',
+          description: data.message + (data.failed?.length ? ` ${data.failed.length} failed.` : ''),
+        });
+        await fetchBalances();
+      } else {
+        throw new Error(data.message || 'Sync failed');
+      }
+    } catch (err: any) {
+      toast({ title: 'Sync failed', description: err.message || 'Unknown error', variant: 'destructive' });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const getAuthHeaders = () => {
     const authToken = localStorage.getItem('auth_token');
@@ -645,6 +671,8 @@ export const AdminAllBalances = () => {
         onForfeitWarning={handleForfeitWarning}
         onDownloadCSV={downloadCSV}
         onAddEmployee={handleAddEmployee}
+        onSyncMissingUsers={handleSyncMissingUsers}
+        syncing={syncing}
       />
 
       <AdminAllBalancesTable

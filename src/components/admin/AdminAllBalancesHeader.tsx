@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Download, Plus, RotateCcw, AlertTriangle } from "lucide-react";
+import { Download, Plus, RotateCcw, AlertTriangle, RefreshCw } from "lucide-react";
 
 interface AdminAllBalancesHeaderProps {
   isAfterJuly31: boolean;
@@ -8,6 +8,8 @@ interface AdminAllBalancesHeaderProps {
   onForfeitWarning: () => void;
   onDownloadCSV: () => void;
   onAddEmployee: () => void;
+  onSyncMissingUsers: () => void;
+  syncing?: boolean;
 }
 
 export const AdminAllBalancesHeader = ({
@@ -15,7 +17,9 @@ export const AdminAllBalancesHeader = ({
   onRolloverWarning,
   onForfeitWarning,
   onDownloadCSV,
-  onAddEmployee
+  onAddEmployee,
+  onSyncMissingUsers,
+  syncing,
 }: AdminAllBalancesHeaderProps) => {
   return (
     <div className="flex justify-between items-center">
@@ -29,6 +33,15 @@ export const AdminAllBalancesHeader = ({
         )}
       </div>
       <div className="flex space-x-2">
+        <Button
+          onClick={onSyncMissingUsers}
+          variant="default"
+          className="bg-emerald-600 hover:bg-emerald-700"
+          disabled={syncing}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+          {syncing ? 'Syncing...' : 'Sync Missing Users'}
+        </Button>
         <Button 
           onClick={onRolloverWarning}
           variant="default"
