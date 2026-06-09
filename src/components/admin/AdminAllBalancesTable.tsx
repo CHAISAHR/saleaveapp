@@ -75,6 +75,7 @@ interface AdminAllBalancesTableProps {
   onForfeitedChange: (balanceId: number, value: string) => void;
   onDepartmentChange: (balanceId: number, value: string) => void;
   onManagerChange: (balanceId: number, value: string) => void;
+  onContractDateChange?: (balanceId: number, value: string, employeeEmail: string) => void;
   onEdit: (balance: EmployeeBalance) => void;
   onDelete: (balance: EmployeeBalance) => void;
 }
@@ -90,6 +91,7 @@ export const AdminAllBalancesTable = ({
   onForfeitedChange,
   onDepartmentChange,
   onManagerChange,
+  onContractDateChange,
   onEdit,
   onDelete
 }: AdminAllBalancesTableProps) => {
@@ -289,8 +291,12 @@ export const AdminAllBalancesTable = ({
                   </TableCell>
                   <TableCell>{Number(balance.Leave_balance_previous_month).toFixed(3)}</TableCell>
                   <TableCell>
-                    {balance.Contract_termination_date ? 
-                      new Date(balance.Contract_termination_date).toLocaleDateString() : '-'}
+                    <Input
+                      type="date"
+                      value={balance.Contract_termination_date ? new Date(balance.Contract_termination_date).toISOString().split('T')[0] : ''}
+                      onChange={(e) => onContractDateChange?.(balance.BalanceID, e.target.value, balance.EmployeeEmail)}
+                      className="w-36 h-8 text-sm"
+                    />
                   </TableCell>
                   <TableCell className="font-medium text-orange-600">
                     {calculateTerminationBalance(balance)?.toFixed(3) || '-'}
