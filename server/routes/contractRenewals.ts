@@ -13,17 +13,17 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
     const role = normalizeRole(req.user!.role);
     const me = req.user!.email;
 
-    // Pull active employees who have a contract_termination_date set
+    // Pull active employees who have a contract_expiry_date set
     let sql = `
       SELECT u.email AS user_email, u.name AS user_name, u.department, u.manager_email,
-             u.contract_termination_date, u.is_active,
+             u.contract_expiry_date, u.is_active,
              cr.id AS renewal_id, cr.status, cr.initiated_by, cr.initiated_at,
              cr.sent_to_hr_by, cr.sent_to_hr_at, cr.completed_by, cr.completed_at,
              cr.last_reminder_sent_at, cr.notes
       FROM users u
       LEFT JOIN contract_renewals cr
-        ON cr.user_email = u.email AND cr.contract_termination_date = u.contract_termination_date
-      WHERE u.is_active = TRUE AND u.contract_termination_date IS NOT NULL
+        ON cr.user_email = u.email AND cr.contract_expiry_date = u.contract_expiry_date
+      WHERE u.is_active = TRUE AND u.contract_expiry_date IS NOT NULL
     `;
     const params: any[] = [];
     if (role === 'manager') {
@@ -32,7 +32,7 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
     } else if (role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
-    sql += ' ORDER BY u.contract_termination_date ASC';
+    sql += ' ORDER BY u.contract_expiry_date ASC';
 
     const rows = await executeQuery(sql, params);
     res.json({ success: true, renewals: rows });
@@ -43,16 +43,16 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Helper to upsert renewal row
-async function ensureRenewalRow(userEmail: string, terminationDate: string, managerEmail: string | null) {
+async function ensureRenewalRow(userEmail: string, expiryDate: string, managerEmail: string | null) {
   const existing = await executeQuery(
-    'SELECT id FROM contract_renewals WHERE user_email = ? AND contract_termination_date = ?',
-    [userEmail, terminationDate]
+    'SELECT id FROM contract_renewals WHERE user_email = ? AND contract_expiry_date = ?',
+    [userEmail, expiryDate]
   );
   if (existing.length > 0) return existing[0].id;
   const result: any = await executeQuery(
-    `INSERT INTO contract_renewals (user_email, manager_email, contract_termination_date, status)
+    `INSERT INTO contract_renewals (user_email, manager_email, contract_expiry_date, status)
      VALUES (?, ?, ?, 'Initiated')`,
-    [userEmail, managerEmail, terminationDate]
+    [userEmail, managerEmail, expiryDate]
   );
   return result.insertId;
 }
@@ -62,18 +62,18 @@ router.post('/initiate', authenticateToken, requireRole(['manager', 'admin']), a
   try {
     const { user_email } = req.body;
     const users = await executeQuery(
-      'SELECT email, manager_email, contract_termination_date FROM users WHERE email = ? AND is_active = TRUE',
+      'SELECT email, manager_email, contract_expiry_date FROM users WHERE email = ? AND is_active = TRUE',
       [user_email]
     );
-    if (users.length === 0 || !users[0].contract_termination_date) {
-      return res.status(400).json({ success: false, message: 'User not found or no contract termination date' });
+    if (users.length === 0 || !users[0].contract_expiry_date) {
+      return res.status(400).json({ success: false, message: 'User not found or no contract expiry date' });
     }
     const u = users[0];
     if (normalizeRole(req.user!.role) === 'manager' && u.manager_email !== req.user!.email) {
       return res.status(403).json({ success: false, message: 'Not your team member' });
     }
-    const termDate = new Date(u.contract_termination_date).toISOString().split('T')[0];
-    const id = await ensureRenewalRow(u.email, termDate, u.manager_email);
+    const expiryDate = new Date(u.contract_expiry_date).toISOString().split('T')[0];
+    const id = await ensureRenewalRow(u.email, expiryDate, u.manager_email);
     await executeQuery(
       `UPDATE contract_renewals
        SET status = 'Initiated', initiated_by = ?, initiated_at = NOW()
@@ -86,6 +86,7 @@ router.post('/initiate', authenticateToken, requireRole(['manager', 'admin']), a
     res.status(500).json({ success: false, message: 'Failed to initiate renewal' });
   }
 });
+
 
 // Advance status: manager => 'Sent to HR'; admin => 'Completed'
 router.patch('/:id/status', authenticateToken, requireRole(['manager', 'admin']), async (req: AuthRequest, res) => {
@@ -143,14 +144,14 @@ router.patch('/:id/status', authenticateToken, requireRole(['manager', 'admin'])
 // Send reminders for contracts expiring within 60 days. Admin can trigger manually; cron also calls this.
 export async function runReminderJob(triggeredBy = 'system') {
   console.log(`[ContractRenewals] Reminder job started by ${triggeredBy}`);
-  // Active users with termination date in [today, today + 60 days]
+  // Active users with expiry date in [today, today + 60 days]
   const users = await executeQuery(
-    `SELECT email, name, department, manager_email, contract_termination_date
+    `SELECT email, name, department, manager_email, contract_expiry_date
      FROM users
      WHERE is_active = TRUE
-       AND contract_termination_date IS NOT NULL
-       AND contract_termination_date >= CURDATE()
-       AND contract_termination_date <= DATE_ADD(CURDATE(), INTERVAL 60 DAY)`,
+       AND contract_expiry_date IS NOT NULL
+       AND contract_expiry_date >= CURDATE()
+       AND contract_expiry_date <= DATE_ADD(CURDATE(), INTERVAL 60 DAY)`,
     []
   );
 
@@ -164,8 +165,8 @@ export async function runReminderJob(triggeredBy = 'system') {
   let sent = 0;
   for (const u of users) {
     try {
-      const termDate = new Date(u.contract_termination_date).toISOString().split('T')[0];
-      const id = await ensureRenewalRow(u.email, termDate, u.manager_email);
+      const expiryDate = new Date(u.contract_expiry_date).toISOString().split('T')[0];
+      const id = await ensureRenewalRow(u.email, expiryDate, u.manager_email);
 
       // Skip if reminder already sent in the last 7 days
       const recent = await executeQuery(
@@ -187,7 +188,7 @@ export async function runReminderJob(triggeredBy = 'system') {
         employeeName: u.name,
         employeeEmail: u.email,
         department: u.department,
-        terminationDate: termDate,
+        expiryDate,
       });
 
       await executeQuery(
@@ -203,6 +204,7 @@ export async function runReminderJob(triggeredBy = 'system') {
   console.log(`[ContractRenewals] Reminder job complete. Sent ${sent} reminder(s) for ${users.length} expiring contract(s).`);
   return { totalExpiring: users.length, sent };
 }
+
 
 router.post('/send-reminders', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
   try {
