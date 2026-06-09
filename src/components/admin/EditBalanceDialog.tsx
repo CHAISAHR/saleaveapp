@@ -241,6 +241,14 @@ export const EditBalanceDialog = ({
                   onChange={(e) => onFieldChange('Contract_termination_date', e.target.value)}
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Contract Expiry Date</Label>
+                <Input
+                  type="date"
+                  value={selectedBalance.Contract_expiry_date || ''}
+                  onChange={(e) => onFieldChange('Contract_expiry_date', e.target.value)}
+                />
+              </div>
             </div>
             <div className="space-y-2 mt-4">
               <Label>Comments</Label>
