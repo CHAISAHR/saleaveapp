@@ -634,6 +634,20 @@ router.put('/update-field', authenticateToken, requireRole(['admin']), async (re
       WHERE BalanceID = ?
     `, [value, BalanceID]);
 
+    // Keep users.contract_termination_date in sync so reminder job uses the latest date
+    if (field === 'Contract_termination_date') {
+      const rows = await executeQuery(
+        'SELECT EmployeeEmail FROM leave_balances WHERE BalanceID = ?',
+        [BalanceID]
+      );
+      if (rows.length > 0) {
+        await executeQuery(
+          'UPDATE users SET contract_termination_date = ?, updated_at = NOW() WHERE email = ?',
+          [value || null, rows[0].EmployeeEmail]
+        );
+      }
+    }
+
     res.json({ success: true, message: 'Field updated successfully' });
   } catch (error) {
     console.error('Error updating field:', error);

@@ -16,7 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, Settings, Database, LogOut, User, FileText, Eye } from "lucide-react";
+import { Calendar, Users, Settings, Database, LogOut, User, FileText, Eye, FileSignature } from "lucide-react";
 
 interface AppSidebarProps {
   currentUser: any;
@@ -108,6 +108,15 @@ export const AppSidebar = ({
         value: "documents",
         icon: FileText,
         label: "Documents"
+      });
+    }
+
+    // Contract Renewals for managers and admins
+    if (userRole === 'manager' || userRole === 'admin') {
+      baseItems.splice(-2, 0, {
+        value: "contract-renewals",
+        icon: FileSignature,
+        label: "Contract Renewals"
       });
     }
 
