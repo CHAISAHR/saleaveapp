@@ -13,6 +13,7 @@ import departmentRoutes from './routes/departments';
 import externalRoutes from './routes/external';
 import auditRoutes from './routes/audit';
 import systemRoutes from './routes/system';
+import contractRenewalRoutes, { runReminderJob } from './routes/contractRenewals';
 
 // Load environment variables
 dotenv.config();
@@ -44,6 +45,7 @@ app.use('/api/departments', departmentRoutes);
 app.use('/api/external', externalRoutes); // External API endpoints
 app.use('/api/audit', auditRoutes); // Audit trail endpoints
 app.use('/api/system', systemRoutes); // System settings endpoints
+app.use('/api/contract-renewals', contractRenewalRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -83,6 +85,15 @@ const startServer = async () => {
       console.log(`Server is running on port ${PORT}`);
       console.log(`Health check available at: http://localhost:${PORT}/health`);
     });
+
+    // Daily contract-renewal reminder job (runs every 24h; first run 30s after startup)
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    setTimeout(() => {
+      runReminderJob('startup').catch(err => console.error('Reminder job error:', err));
+      setInterval(() => {
+        runReminderJob('cron').catch(err => console.error('Reminder job error:', err));
+      }, DAY_MS);
+    }, 30 * 1000);
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);

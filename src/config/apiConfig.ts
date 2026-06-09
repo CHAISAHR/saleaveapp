@@ -78,7 +78,8 @@ export const apiConfig = {
         balance: `${API_BASE_URL}/api/balance`,
         holiday: `${API_BASE_URL}/api/holiday`,
         rollover: `${API_BASE_URL}/api/rollover`,
-        departments: `${API_BASE_URL}/api/departments`
+        departments: `${API_BASE_URL}/api/departments`,
+        contractRenewals: `${API_BASE_URL}/api/contract-renewals`
     }
 };
 
