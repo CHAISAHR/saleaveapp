@@ -13,7 +13,7 @@ interface Renewal {
   user_name: string;
   department: string;
   manager_email: string | null;
-  contract_termination_date: string;
+  contract_expiry_date: string;
   status: 'Initiated' | 'Sent to HR' | 'Completed' | null;
   initiated_by: string | null;
   initiated_at: string | null;
@@ -124,8 +124,9 @@ export const ContractRenewals = ({ userRole }: Props) => {
             <CardTitle>Contract Renewals</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
               {isAdmin
-                ? "All active employees with a contract end date. Reminders are sent automatically 2 months before expiry."
-                : "Your team members with an upcoming contract end date."}
+                ? "All active employees with a contract expiry date. Reminders are sent automatically 2 months before expiry."
+                : "Your team members with an upcoming contract expiry date."}
+
             </p>
           </div>
           {isAdmin && (
@@ -142,7 +143,7 @@ export const ContractRenewals = ({ userRole }: Props) => {
                   <TableHead>Employee</TableHead>
                   <TableHead>Department</TableHead>
                   <TableHead>Manager</TableHead>
-                  <TableHead>Contract End</TableHead>
+                  <TableHead>Contract Expiry</TableHead>
                   <TableHead>Days Left</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Last Reminder</TableHead>
@@ -158,17 +159,18 @@ export const ContractRenewals = ({ userRole }: Props) => {
                   </TableRow>
                 )}
                 {renewals.map((r) => {
-                  const dl = daysUntil(r.contract_termination_date);
+                  const dl = daysUntil(r.contract_expiry_date);
                   const status = r.status || 'Not started';
                   return (
-                    <TableRow key={`${r.user_email}-${r.contract_termination_date}`}>
+                    <TableRow key={`${r.user_email}-${r.contract_expiry_date}`}>
                       <TableCell>
                         <div className="font-medium">{r.user_name}</div>
                         <div className="text-xs text-muted-foreground">{r.user_email}</div>
                       </TableCell>
                       <TableCell>{r.department}</TableCell>
                       <TableCell className="text-xs">{r.manager_email || '-'}</TableCell>
-                      <TableCell>{new Date(r.contract_termination_date).toLocaleDateString()}</TableCell>
+                      <TableCell>{new Date(r.contract_expiry_date).toLocaleDateString()}</TableCell>
+
                       <TableCell className={dl <= 60 ? 'font-semibold text-orange-600' : ''}>
                         {dl < 0 ? `Expired ${-dl}d ago` : `${dl} days`}
                       </TableCell>
