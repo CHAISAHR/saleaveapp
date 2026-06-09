@@ -39,6 +39,8 @@ interface EmployeeBalance {
   Current_leave_balance: number;
   Leave_balance_previous_month: number;
   Contract_termination_date?: string;
+  Contract_expiry_date?: string;
+
   termination_balance?: number;
   Start_date?: string;
   start_date?: string;
@@ -75,6 +77,9 @@ interface AdminAllBalancesTableProps {
   onForfeitedChange: (balanceId: number, value: string) => void;
   onDepartmentChange: (balanceId: number, value: string) => void;
   onManagerChange: (balanceId: number, value: string) => void;
+  onContractDateChange?: (balanceId: number, value: string, employeeEmail: string) => void;
+  onContractExpiryChange?: (balanceId: number, value: string, employeeEmail: string) => void;
+
   onEdit: (balance: EmployeeBalance) => void;
   onDelete: (balance: EmployeeBalance) => void;
 }
@@ -90,6 +95,9 @@ export const AdminAllBalancesTable = ({
   onForfeitedChange,
   onDepartmentChange,
   onManagerChange,
+  onContractDateChange,
+  onContractExpiryChange,
+
   onEdit,
   onDelete
 }: AdminAllBalancesTableProps) => {
@@ -208,6 +216,14 @@ export const AdminAllBalancesTable = ({
                 <TableHead>Current Balance</TableHead>
                 <TableHead>Previous Month</TableHead>
                 <SortableTableHead 
+                  sortKey="Contract_expiry_date" 
+                  currentSortKey={sorting?.sortConfig?.key} 
+                  currentSortDirection={sorting?.sortConfig?.direction} 
+                  onSort={sorting?.onSort || (() => {})}
+                >
+                  Contract Expiry Date
+                </SortableTableHead>
+                <SortableTableHead 
                   sortKey="Contract_termination_date" 
                   currentSortKey={sorting?.sortConfig?.key} 
                   currentSortDirection={sorting?.sortConfig?.direction} 
@@ -216,6 +232,7 @@ export const AdminAllBalancesTable = ({
                   Contract Term Date
                 </SortableTableHead>
                 <TableHead>Termination Balance</TableHead>
+
                 <TableHead>Comment</TableHead>
                 <TableHead>Adjustment Comments</TableHead>
                 <SortableTableHead 
@@ -289,9 +306,22 @@ export const AdminAllBalancesTable = ({
                   </TableCell>
                   <TableCell>{Number(balance.Leave_balance_previous_month).toFixed(3)}</TableCell>
                   <TableCell>
-                    {balance.Contract_termination_date ? 
-                      new Date(balance.Contract_termination_date).toLocaleDateString() : '-'}
+                    <Input
+                      type="date"
+                      value={balance.Contract_expiry_date ? new Date(balance.Contract_expiry_date).toISOString().split('T')[0] : ''}
+                      onChange={(e) => onContractExpiryChange?.(balance.BalanceID, e.target.value, balance.EmployeeEmail)}
+                      className="w-36 h-8 text-sm"
+                    />
                   </TableCell>
+                  <TableCell>
+                    <Input
+                      type="date"
+                      value={balance.Contract_termination_date ? new Date(balance.Contract_termination_date).toISOString().split('T')[0] : ''}
+                      onChange={(e) => onContractDateChange?.(balance.BalanceID, e.target.value, balance.EmployeeEmail)}
+                      className="w-36 h-8 text-sm"
+                    />
+                  </TableCell>
+
                   <TableCell className="font-medium text-orange-600">
                     {calculateTerminationBalance(balance)?.toFixed(3) || '-'}
                   </TableCell>

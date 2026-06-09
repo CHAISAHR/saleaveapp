@@ -7,6 +7,7 @@ import { AdminPanel } from "@/components/AdminPanel";
 import { HolidayCalendar } from "@/components/HolidayCalendar";
 import { PolicyGuide } from "@/components/PolicyGuide";
 import { DocumentManager } from "@/components/DocumentManager";
+import { ContractRenewals } from "@/components/ContractRenewals";
 
 interface MainContentProps {
   activeTab: string;
@@ -56,6 +57,9 @@ export const MainContent = ({ activeTab, userRole, currentUser, onNewRequest }: 
 
       case 'documents':
         return (userRole === 'manager' || userRole === 'admin' || userRole === 'cd') ? <DocumentManager userRole={userRole} /> : null;
+
+      case 'contract-renewals':
+        return (userRole === 'manager' || userRole === 'admin') ? <ContractRenewals userRole={userRole} /> : null;
 
       case 'holidays':
         return <HolidayCalendar userRole={userRole} />;

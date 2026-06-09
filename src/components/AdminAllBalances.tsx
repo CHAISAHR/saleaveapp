@@ -45,6 +45,8 @@ interface EmployeeBalance {
   Current_leave_balance: number;
   Leave_balance_previous_month: number;
   Contract_termination_date?: string;
+  Contract_expiry_date?: string;
+
   termination_balance?: number;
   Comment?: string;
   Annual_leave_adjustment_comments?: string;
@@ -67,6 +69,32 @@ export const AdminAllBalances = () => {
   const [showAddEmployeeDialog, setShowAddEmployeeDialog] = useState(false);
   const [rolloverNeeded, setRolloverNeeded] = useState(false);
   const [displayYear, setDisplayYear] = useState<number>(currentYear);
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSyncMissingUsers = async () => {
+    setSyncing(true);
+    try {
+      const response = await fetch(`${apiConfig.endpoints.balance}/sync-missing-users`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ year: currentYear }),
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        toast({
+          title: 'Sync complete',
+          description: data.message + (data.failed?.length ? ` ${data.failed.length} failed.` : ''),
+        });
+        await fetchBalances();
+      } else {
+        throw new Error(data.message || 'Sync failed');
+      }
+    } catch (err: any) {
+      toast({ title: 'Sync failed', description: err.message || 'Unknown error', variant: 'destructive' });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const getAuthHeaders = () => {
     const authToken = localStorage.getItem('auth_token');
@@ -310,6 +338,61 @@ export const AdminAllBalances = () => {
     }
   };
 
+  const handleContractDateChange = async (balanceId: number, value: string, employeeEmail: string) => {
+    const balance = balances.find(b => b.BalanceID === balanceId);
+    if (!balance) return;
+    try {
+      const response = await fetch(`${apiConfig.endpoints.balance}/update-field`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          BalanceID: balanceId,
+          field: 'Contract_termination_date',
+          value: value || null
+        })
+      });
+      if (response.ok) {
+        setBalances(prev => prev.map(b =>
+          b.BalanceID === balanceId
+            ? { ...b, Contract_termination_date: value, Modified: new Date().toISOString() }
+            : b
+        ));
+        toast({ title: "Updated", description: `Contract end date saved for ${balance.EmployeeName}` });
+      } else throw new Error('Failed to update contract date');
+    } catch (error) {
+      console.error('Error updating contract date:', error);
+      toast({ title: "Update Failed", description: "Failed to save contract end date.", variant: "destructive" });
+    }
+  };
+
+  const handleContractExpiryChange = async (balanceId: number, value: string, employeeEmail: string) => {
+    const balance = balances.find(b => b.BalanceID === balanceId);
+    if (!balance) return;
+    try {
+      const response = await fetch(`${apiConfig.endpoints.balance}/update-field`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          BalanceID: balanceId,
+          field: 'Contract_expiry_date',
+          value: value || null
+        })
+      });
+      if (response.ok) {
+        setBalances(prev => prev.map(b =>
+          b.BalanceID === balanceId
+            ? { ...b, Contract_expiry_date: value, Modified: new Date().toISOString() }
+            : b
+        ));
+        toast({ title: "Updated", description: `Contract expiry date saved for ${balance.EmployeeName}` });
+      } else throw new Error('Failed to update contract expiry date');
+    } catch (error) {
+      console.error('Error updating contract expiry date:', error);
+      toast({ title: "Update Failed", description: "Failed to save contract expiry date.", variant: "destructive" });
+    }
+  };
+
+
   const downloadCSV = () => {
     const headers = [
       'BalanceID', 'EmployeeName', 'EmployeeEmail', 'Department', 'Status', 'Year',
@@ -317,8 +400,9 @@ export const AdminAllBalances = () => {
       'SickBroughtforward', 'Sick', 'SickUsed', 'Maternity', 'MaternityUsed',
       'Parental', 'ParentalUsed', 'Family', 'FamilyUsed', 'Adoption', 'AdoptionUsed',
       'Study', 'StudyUsed', 'Wellness', 'WellnessUsed',
-      'Current_leave_balance', 'Leave_balance_previous_month', 'Contract_termination_date',
+      'Current_leave_balance', 'Leave_balance_previous_month', 'Contract_expiry_date', 'Contract_termination_date',
       'termination_balance', 'Comment', 'Annual_leave_adjustment_comments', 'Manager', 'Modified'
+
     ];
     
     const csvContent = [
@@ -353,7 +437,9 @@ export const AdminAllBalances = () => {
         balance.WellnessUsed,
         calculateCurrentBalance(balance),
         balance.Leave_balance_previous_month,
+        balance.Contract_expiry_date || '',
         balance.Contract_termination_date || '',
+
         calculateTerminationBalance(balance) || '',
         `"${balance.Comment || ''}"`,
         `"${balance.Annual_leave_adjustment_comments || ''}"`,
@@ -585,6 +671,8 @@ export const AdminAllBalances = () => {
         onForfeitWarning={handleForfeitWarning}
         onDownloadCSV={downloadCSV}
         onAddEmployee={handleAddEmployee}
+        onSyncMissingUsers={handleSyncMissingUsers}
+        syncing={syncing}
       />
 
       <AdminAllBalancesTable
@@ -614,6 +702,9 @@ export const AdminAllBalances = () => {
         onForfeitedChange={handleForfeitedChange}
         onDepartmentChange={handleDepartmentChange}
         onManagerChange={handleManagerChange}
+        onContractDateChange={handleContractDateChange}
+        onContractExpiryChange={handleContractExpiryChange}
+
         onEdit={handleEdit}
         onDelete={handleDelete}
       />

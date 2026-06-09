@@ -621,7 +621,7 @@ router.put('/update-field', authenticateToken, requireRole(['admin']), async (re
       'Maternity', 'MaternityUsed', 'Parental', 'ParentalUsed', 'Family',
       'FamilyUsed', 'Adoption', 'AdoptionUsed', 'Study', 'StudyUsed',
       'Wellness', 'WellnessUsed', 'Comment', 'Annual_leave_adjustment_comments',
-      'Contract_termination_date', 'termination_balance', 'Leave_balance_previous_month'
+      'Contract_termination_date', 'Contract_expiry_date', 'termination_balance', 'Leave_balance_previous_month'
     ];
     
     if (!allowedFields.includes(field)) {
@@ -633,6 +633,22 @@ router.put('/update-field', authenticateToken, requireRole(['admin']), async (re
       SET ${field} = ?, Modified = NOW()
       WHERE BalanceID = ?
     `, [value, BalanceID]);
+
+    // Keep users table in sync for date fields used by other modules (renewal reminders, terminations)
+    if (field === 'Contract_termination_date' || field === 'Contract_expiry_date') {
+      const userColumn = field === 'Contract_expiry_date' ? 'contract_expiry_date' : 'contract_termination_date';
+      const rows = await executeQuery(
+        'SELECT EmployeeEmail FROM leave_balances WHERE BalanceID = ?',
+        [BalanceID]
+      );
+      if (rows.length > 0) {
+        await executeQuery(
+          `UPDATE users SET ${userColumn} = ?, updated_at = NOW() WHERE email = ?`,
+          [value || null, rows[0].EmployeeEmail]
+        );
+      }
+    }
+
 
     res.json({ success: true, message: 'Field updated successfully' });
   } catch (error) {
@@ -694,4 +710,68 @@ router.delete('/:balanceId', authenticateToken, requireRole(['admin', 'cd']), as
   }
 });
 
+// Sync: create leave_balances rows for active users missing them in the current year (admin only)
+router.post('/sync-missing-users', authenticateToken, requireRole(['admin', 'cd']), async (req: AuthRequest, res) => {
+  try {
+    const year = parseInt(req.body?.year) || new Date().getFullYear();
+
+    // Find active users without a balance row for the target year
+    const missing = await executeQuery(
+      `SELECT u.email, u.name, u.department, u.gender, u.manager_email, u.hire_date
+       FROM users u
+       LEFT JOIN leave_balances lb
+         ON lb.EmployeeEmail = u.email AND lb.Year = ?
+       WHERE u.is_active = 1 AND lb.BalanceID IS NULL`,
+      [year]
+    );
+
+    const created: string[] = [];
+    const failed: { email: string; error: string }[] = [];
+
+    for (const u of missing) {
+      try {
+        const maternityAllocation = (u.gender || '').toLowerCase() === 'male' ? 0 : 3;
+        const hireDate = u.hire_date ? new Date(u.hire_date) : new Date(`${year}-01-01`);
+        const startOfYear = new Date(`${year}-01-01`);
+        const effectiveStart = hireDate > startOfYear ? hireDate : startOfYear;
+        const now = new Date();
+        const monthsToAccumulate = now.getFullYear() > year
+          ? 12
+          : Math.max(0, (now.getMonth() + 1) - (effectiveStart.getMonth() + 1) + 1);
+        const proratedAccumulatedLeave = Math.min(monthsToAccumulate * 1.667, 20);
+
+        await executeQuery(
+          `INSERT INTO leave_balances (
+             EmployeeName, EmployeeEmail, Department, start_date, Year,
+             Broughtforward, Annual, AccumulatedLeave, AnnualUsed, Forfeited,
+             Annual_leave_adjustments, SickUsed, MaternityUsed, ParentalUsed,
+             FamilyUsed, AdoptionUsed, StudyUsed, WellnessUsed,
+             Manager, Maternity, Sick, Parental, Family, Adoption, Study, Wellness
+           ) VALUES (?, ?, ?, ?, ?, 0, 20, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ?, ?, 36, 4, 3, 4, 6, 2)`,
+          [
+            u.name, u.email, u.department, u.hire_date || `${year}-01-01`, year,
+            proratedAccumulatedLeave, u.manager_email || null, maternityAllocation,
+          ]
+        );
+        created.push(u.email);
+      } catch (err: any) {
+        console.error('Sync balance failed for', u.email, err);
+        failed.push({ email: u.email, error: err?.message || 'Unknown error' });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Synced ${created.length} of ${missing.length} missing user(s).`,
+      created,
+      failed,
+      year,
+    });
+  } catch (error) {
+    console.error('Sync missing users error:', error);
+    res.status(500).json({ success: false, message: 'Failed to sync missing users' });
+  }
+});
+
 export default router;
+

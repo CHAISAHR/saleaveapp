@@ -468,6 +468,53 @@ class EmailService {
       timestamp: new Date().toISOString()
     });
   }
+
+  // Send contract expiry reminder to manager (CC HR & Operations)
+  async notifyManagerOfContractExpiry(params: {
+    managerEmail: string;
+    ccEmails: string[];
+    employeeName: string;
+    employeeEmail: string;
+    department: string;
+    expiryDate: string;
+  }): Promise<void> {
+    const { managerEmail, ccEmails, employeeName, employeeEmail, department, expiryDate } = params;
+    const expiry = this.formatDateForDisplay(expiryDate);
+    const daysLeft = Math.ceil(
+      (new Date(expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+    );
+
+
+    const notification: EmailNotification = {
+      recipient_email: managerEmail,
+      sender_email: this.FROM_EMAIL,
+      cc_email: ccEmails.filter(e => e && e !== managerEmail).join(','),
+      subject: `Contract Renewal Reminder: ${employeeName} - contract expires ${expiry}`,
+      message: `
+        Good day,
+
+        This is a reminder that the following team member's contract is approaching its expiry date and needs to be renewed:
+
+        Employee: ${employeeName}
+        Email: ${employeeEmail}
+        Department: ${department}
+        Contract Expiry Date: ${expiry}
+        Days Remaining: ${daysLeft}
+
+        Please initiate the contract renewal process and notify the HR & Operations team of your decision.
+
+        You can track and update the renewal status in the Contract Renewals module: ${process.env.FRONTEND_URL}
+
+
+        Best regards,
+        Leave Management System
+      `,
+      notification_type: 'user_registration'
+    };
+
+    await this.sendEmail(notification);
+  }
 }
 
 export const emailService = new EmailService();
+
