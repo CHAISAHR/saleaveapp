@@ -45,6 +45,8 @@ interface EmployeeBalance {
   Current_leave_balance: number;
   Leave_balance_previous_month: number;
   Contract_termination_date?: string;
+  Contract_expiry_date?: string;
+
   termination_balance?: number;
   Comment?: string;
   Annual_leave_adjustment_comments?: string;
@@ -336,6 +338,34 @@ export const AdminAllBalances = () => {
       toast({ title: "Update Failed", description: "Failed to save contract end date.", variant: "destructive" });
     }
   };
+
+  const handleContractExpiryChange = async (balanceId: number, value: string, employeeEmail: string) => {
+    const balance = balances.find(b => b.BalanceID === balanceId);
+    if (!balance) return;
+    try {
+      const response = await fetch(`${apiConfig.endpoints.balance}/update-field`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          BalanceID: balanceId,
+          field: 'Contract_expiry_date',
+          value: value || null
+        })
+      });
+      if (response.ok) {
+        setBalances(prev => prev.map(b =>
+          b.BalanceID === balanceId
+            ? { ...b, Contract_expiry_date: value, Modified: new Date().toISOString() }
+            : b
+        ));
+        toast({ title: "Updated", description: `Contract expiry date saved for ${balance.EmployeeName}` });
+      } else throw new Error('Failed to update contract expiry date');
+    } catch (error) {
+      console.error('Error updating contract expiry date:', error);
+      toast({ title: "Update Failed", description: "Failed to save contract expiry date.", variant: "destructive" });
+    }
+  };
+
 
   const downloadCSV = () => {
     const headers = [
@@ -642,6 +672,8 @@ export const AdminAllBalances = () => {
         onDepartmentChange={handleDepartmentChange}
         onManagerChange={handleManagerChange}
         onContractDateChange={handleContractDateChange}
+        onContractExpiryChange={handleContractExpiryChange}
+
         onEdit={handleEdit}
         onDelete={handleDelete}
       />
